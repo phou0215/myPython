@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="b7a86af0-2c34-410c-b4bf-b3067ab0b2cf" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/newModule.py" root0="SKIP_INSPECTION" />
+  </component>
+  <component name="ProjectId" id="1fybRpFcv6eaN9geI4oIn71eWRN" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/.." />
+    <property name="settings.editor.selected.configurable" value="configurable.group.appearance" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\HANRIM\PycharmProjects\docBeFormater" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.newParser">
+    <configuration name="check" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="docBeFormater" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/check.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="hexaEncoder (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="docBeFormater" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/hexaEncoder.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="hexaEncoder" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="docBeFormater" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="C:\Users\HANRIM\PycharmProjects\docBeFormater\hexaEncoder.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="newParser" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="docBeFormater" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/newParser.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="pytest in check.py" type="tests" factoryName="py.test" temporary="true" nameIsGenerated="true">
+      <module name="docBeFormater" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="_new_keywords" value="&quot;&quot;" />
+      <option name="_new_parameters" value="&quot;&quot;" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;$PROJECT_DIR$/check.py&quot;" />
+      <option name="_new_targetType" value="&quot;PATH&quot;" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.newParser" />
+        <item itemvalue="Python.hexaEncoder (1)" />
+        <item itemvalue="Python.check" />
+        <item itemvalue="Python tests.pytest in check.py" />
+        <item itemvalue="Python.hexaEncoder" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="b7a86af0-2c34-410c-b4bf-b3067ab0b2cf" name="Default Changelist" comment="" />
+      <created>1597193273414</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1597193273414</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="995" y="321" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1597998234634">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state x="995" y="321" key="#com.intellij.fileTypes.FileTypeChooser/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1597998234634" />
+    <state x="1047" y="349" key="#com.intellij.tools.ToolEditorDialog" timestamp="1598000654041">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state x="1047" y="349" key="#com.intellij.tools.ToolEditorDialog/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1598000654041" />
+    <state x="1059" y="275" key="FileChooserDialogImpl" timestamp="1598402682094">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state x="1059" y="275" key="FileChooserDialogImpl/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1598402682094" />
+    <state width="2539" height="194" key="GridCell.Tab.0.bottom" timestamp="1598340859542">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state width="1899" height="168" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1597996533989" />
+    <state width="2539" height="168" key="GridCell.Tab.0.bottom/0.0.2560.1040@0.0.2560.1040" timestamp="1597997537014" />
+    <state width="2539" height="194" key="GridCell.Tab.0.bottom/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1598340859542" />
+    <state width="2539" height="194" key="GridCell.Tab.0.center" timestamp="1598340859542">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state width="1899" height="168" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1597996533989" />
+    <state width="2539" height="168" key="GridCell.Tab.0.center/0.0.2560.1040@0.0.2560.1040" timestamp="1597997537014" />
+    <state width="2539" height="194" key="GridCell.Tab.0.center/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1598340859542" />
+    <state width="2539" height="194" key="GridCell.Tab.0.left" timestamp="1598340859542">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state width="1899" height="168" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1597996533989" />
+    <state width="2539" height="168" key="GridCell.Tab.0.left/0.0.2560.1040@0.0.2560.1040" timestamp="1597997537013" />
+    <state width="2539" height="194" key="GridCell.Tab.0.left/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1598340859542" />
+    <state width="2539" height="194" key="GridCell.Tab.0.right" timestamp="1598340859542">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state width="1899" height="168" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1597996533989" />
+    <state width="2539" height="168" key="GridCell.Tab.0.right/0.0.2560.1040@0.0.2560.1040" timestamp="1597997537014" />
+    <state width="2539" height="194" key="GridCell.Tab.0.right/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1598340859542" />
+    <state width="2539" height="348" key="GridCell.Tab.1.bottom" timestamp="1598259690592">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state width="2539" height="348" key="GridCell.Tab.1.bottom/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1598259690592" />
+    <state width="2539" height="348" key="GridCell.Tab.1.center" timestamp="1598259690592">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state width="2539" height="348" key="GridCell.Tab.1.center/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1598259690592" />
+    <state width="2539" height="348" key="GridCell.Tab.1.left" timestamp="1598259690592">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state width="2539" height="348" key="GridCell.Tab.1.left/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1598259690592" />
+    <state width="2539" height="348" key="GridCell.Tab.1.right" timestamp="1598259690592">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state width="2539" height="348" key="GridCell.Tab.1.right/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1598259690592" />
+    <state x="781" y="164" key="SettingsEditor" timestamp="1598402662373">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state x="781" y="164" key="SettingsEditor/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1598402662373" />
+    <state x="943" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1597908657760">
+      <screen x="0" y="0" width="2560" height="1040" />
+    </state>
+    <state x="943" y="225" width="672" height="678" key="search.everywhere.popup/2560.0.1920.1040/0.0.2560.1040@0.0.2560.1040" timestamp="1597908657760" />
+  </component>
+</project>
