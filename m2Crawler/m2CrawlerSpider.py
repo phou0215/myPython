@@ -1568,22 +1568,22 @@ class SearchCrawl():
                 page_num = 0
                 extract_num = 0
                 flag_end = False
-                self.setPrint('{} {} 구역 페이지 크롤링 시작'.format(cafeName, item))
+
+                # nav_url parsing
+                list_text = item.split('(')
+                nav_url = list_text[0]
+                nav_name = list_text[1]
+                nav_name = nav_name[:len(nav_name) - 1]
+
+                self.setPrint('{} {} 구역 페이지 크롤링 시작'.format(cafeName, nav_name))
                 # 해당 페이지로 이동
-                category = self.driver.find_elements_by_xpath("//span[contains(text(), '"+item+"')]")
-                action = ActionChains(self.driver)
-                action.move_to_element(category[0]).perform()
-                self.action_click(mode='xpath', ele_val="//span[contains(text(), '"+item+"')]")
-                # # iframe으로 변경
-                #                 # frame_ele = self.get_elements(mode='id', ele_val='cafe_main')
-                #                 # self.change_frame(element=frame_ele[0], mode=1)
+                self.driver.get(nav_url)
 
                 # title 대기
                 self.action_wait(mode='css', ele_val='body > nav > div > h1')
                 # device_name , type_name 값 추출
                 device_name = '공통'
                 type_name = '공통'
-                nav_name = item
                 flag_search_mode = 'today'
                 sleep(self.delay_time)
 
@@ -1592,7 +1592,7 @@ class SearchCrawl():
                 if len(list_recent) != 0:
                     flag_search_mode = 'recent'
                     recent_num = int(list_recent[0]['bo_no'])
-                    self.setPrint("최근 {} 게시글 번호: {}".format(item, recent_num))
+                    self.setPrint("최근 {} 게시글 번호: {}".format(nav_name, recent_num))
 
                 self.setPrint('조회방법 : {}'.format(flag_search_mode))
                 # 순회 크롤링 시작
@@ -1653,15 +1653,15 @@ class SearchCrawl():
                                     list_main_article = self.get_main_article_cl()
 
                                     self.setPrint(
-                                        '게시번호: {}\n카페이름: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
-                                        (board_num, cafeName, type_name, device_name, title, reportDate, reportTime,
+                                        '게시번호: {}\n카페이름: {}\nnav: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
+                                        (board_num, cafeName, nav_name, type_name, device_name, title, reportDate, reportTime,
                                          view_num, reply_num,
                                          list_main_article[0], list_main_article[1], list_main_article[2],
                                          list_main_article[3]))
 
                                     # set each list value
                                     list_bo_no.append(board_num)
-                                    list_navi.append(item)
+                                    list_navi.append(nav_name)
                                     list_type.append(type_name)
                                     list_device.append(device_name)
                                     list_report_date.append(reportDate)
@@ -1747,15 +1747,15 @@ class SearchCrawl():
                                     list_main_article = self.get_main_article_cl()
 
                                     self.setPrint(
-                                        '게시번호: {}\n카페이름: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
-                                        (board_num, cafeName, type_name, device_name, title, reportDate, reportTime,
+                                        '게시번호: {}\n카페이름: {}\nnav: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
+                                        (board_num, cafeName, nav_name, type_name, device_name, title, reportDate, reportTime,
                                          view_num, reply_num,
                                          list_main_article[0], list_main_article[1], list_main_article[2],
                                          list_main_article[3]))
 
                                     # set each list value
                                     list_bo_no.append(board_num)
-                                    list_navi.append(item)
+                                    list_navi.append(nav_name)
                                     list_type.append(type_name)
                                     list_device.append(device_name)
                                     list_report_date.append(reportDate)
@@ -1785,7 +1785,7 @@ class SearchCrawl():
                                         self.setPrint('{} Page 페이지로 이동'.format(page_num + 1))
                                         break
                 # frame main content로 변경
-                self.setPrint('클리앙 커뮤니티 {} 구역 페이지 크롤링 종료 총 {} Data 추출 완료'.format(item, extract_num))
+                self.setPrint('클리앙 커뮤니티 {} 구역 페이지 크롤링 종료 총 {} Data 추출 완료'.format(nav_name, extract_num))
             # Upload data가 있다면
             if len(list_bo_no) != 0:
                 # generate dict_result
@@ -1823,8 +1823,10 @@ class SearchCrawl():
             sleep(self.delay_time)
             self.setPrint('{} 사이트 크롤링 작업 완료'.format(cafeName))
         except:
-            self.setPrint('Error Occurred : {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1],
-                                                                     sys.exc_info()[2].tb_lineno))
+            self.setPrint('Error Occurred : {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
+            # append empty dict to total result
+            self.list_result.append({'클리앙 커뮤니티': {}})
+            self.list_upload_status.append('Error Occurred : {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
             # self.process_flag = False
     # 삼성맴버스 실행 함수
     def activate_samsungHome(self, dict_object, name):
@@ -1872,24 +1874,26 @@ class SearchCrawl():
                 page_num = 1
                 extract_num = 0
                 flag_end = False
-                self.setPrint('{} {} 구역 페이지 크롤링 시작'.format(cafeName, item))
+
+                # nav_url parsing
+                list_text = item.split('(')
+                nav_url = list_text[0]
+                nav_name = list_text[1]
+                nav_name = nav_name[:len(nav_name) - 1]
+
+                self.setPrint('{} {} 구역 페이지 크롤링 시작'.format(cafeName, nav_name))
+                # 해당 페이지로 이동
+                self.driver.get(nav_url)
+
                 flag_search_mode = 'today'
-                nav_name = item
                 # DB에 최신 값을 조회한 후 DB가 비어 있다면 오늘 데이터만 찾는 방식이고 있다면 최신 보드 번호를 기록 후 이를 기준으로 이후 데이터만 크롤링이 실행된다
                 list_recent = self.myDB.check_recent(cafeName, nav_name, '공통', 1)
                 # 조회모드 선택
                 if len(list_recent) != 0:
                     flag_search_mode = 'recent'
                     recent_num = int(list_recent[0]['bo_no'])
-                    self.setPrint("최근 {} 게시글 번호: {}".format(cafeName, recent_num))
+                    self.setPrint("최근 {} 게시글 번호: {}".format(nav_name, recent_num))
                 self.setPrint('조회방법 : {}'.format(flag_search_mode))
-
-                # 마우스 hover on 커뮤니티
-                community = self.driver.find_element_by_css_selector('#kr-community-aria-label')
-                action = ActionChains(self.driver)
-                action.move_to_element(community).perform()
-                self.action_wait(mode='css', ele_val='#kr-community-megamenu')
-                self.action_click(mode='xpath', ele_val="//a[contains(text(), '" + item + "')]")
 
                 # 순회 크롤링 시작
                 # 서버에 데이터가 하나도 없는 경우 당일 데이터만 추출
@@ -1961,13 +1965,15 @@ class SearchCrawl():
                                     list_main_article = self.get_main_article_sm()
 
                                     self.setPrint(
-                                        '게시번호: {}\n카페이름: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
-                                        (board_num, cafeName, '공통', '공통', title, reportDate, reportTime, view_num, reply_num,
-                                        list_main_article[0], list_main_article[1], list_main_article[2], list_main_article[3]))
+                                        '게시번호: {}\n카페이름: {}\nnav: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
+                                        (board_num, cafeName, nav_name, '공통', '공통', title, reportDate, reportTime,
+                                         view_num, reply_num,
+                                         list_main_article[0], list_main_article[1], list_main_article[2],
+                                         list_main_article[3]))
 
                                     # set each list value
                                     list_bo_no.append(board_num)
-                                    list_navi.append(item)
+                                    list_navi.append(nav_name)
                                     list_type.append('공통')
                                     list_device.append('공통')
                                     list_report_date.append(reportDate)
@@ -2064,13 +2070,15 @@ class SearchCrawl():
                                     list_main_article = self.get_main_article_sm()
 
                                     self.setPrint(
-                                        '게시번호: {}\n카페이름: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
-                                        (board_num, cafeName, '공통', '공통', title, reportDate, reportTime, view_num, reply_num,
-                                        list_main_article[0], list_main_article[1], list_main_article[2], list_main_article[3]))
+                                        '게시번호: {}\n카페이름: {}\nnav: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
+                                        (board_num, cafeName, nav_name, '공통', '공통', title, reportDate, reportTime,
+                                         view_num, reply_num,
+                                         list_main_article[0], list_main_article[1], list_main_article[2],
+                                         list_main_article[3]))
 
                                     # set each list value
                                     list_bo_no.append(board_num)
-                                    list_navi.append(item)
+                                    list_navi.append(nav_name)
                                     list_type.append('공통')
                                     list_device.append('공통')
                                     list_report_date.append(reportDate)
@@ -2103,7 +2111,7 @@ class SearchCrawl():
                                         break
 
                 # frame main content로 변경
-                self.setPrint('삼성 커뮤니티 {} 구역 페이지 크롤링 종료 총 {} Data 추출 완료'.format(item, extract_num))
+                self.setPrint('삼성 커뮤니티 {} 구역 페이지 크롤링 종료 총 {} Data 추출 완료'.format(nav_name, extract_num))
 
             # Upload data가 있다면
             if len(list_bo_no) != 0:
@@ -2142,6 +2150,8 @@ class SearchCrawl():
             self.setPrint('{} 사이트 크롤링 작업 완료'.format(cafeName))
         except:
             self.setPrint('Error Occurred : {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
+            self.list_result.append({'삼성 커뮤니티': {}})
+            self.list_upload_status.append('Error Occurred : {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
             # self.process_flag = False
     # 삼성스마트폰 커뮤니티 실행 함수
     def activate_samsungComm(self, dict_object, name):
@@ -2191,14 +2201,19 @@ class SearchCrawl():
                 page_num = 1
                 extract_num = 0
                 flag_end = False
-                self.setPrint('{} {} 구역 페이지 크롤링 시작'.format(cafeName, item))
+
+                # nav_url parsing
+                list_text = item.split('(')
+                nav_url = list_text[0]
+                nav_name = list_text[1]
+                nav_name = nav_name[:len(nav_name) - 1]
+
+                self.setPrint('{} {} 구역 페이지 크롤링 시작'.format(cafeName, nav_name))
                 # main 프레임으로 변경
                 self.change_frame(mode=2)
                 # 해당 페이지로 이동
-                category = self.driver.find_elements_by_xpath("//a[contains(text(), '"+item+"')]")
-                action = ActionChains(self.driver)
-                action.move_to_element(category[0]).perform()
-                self.action_click(mode='xpath', ele_val="//a[contains(text(), '"+item+"')]")
+                self.driver.get(nav_url)
+                sleep(0.5)
 
                 # iframe으로 변경
                 frame_ele = self.get_elements(mode='id', ele_val='cafe_main')
@@ -2211,7 +2226,6 @@ class SearchCrawl():
                 titles = title_raw.split()
                 device_name = titles[0]
                 type_name = titles[1]
-                nav_name = item
                 flag_search_mode = 'today'
                 sleep(self.delay_time)
 
@@ -2220,9 +2234,10 @@ class SearchCrawl():
                 if len(list_recent) != 0:
                     flag_search_mode = 'recent'
                     recent_num = int(list_recent[0]['bo_no'])
-                    self.setPrint("최근 {} 게시글 번호: {}".format(item, recent_num))
+                    self.setPrint("최근 {} 게시글 번호: {}".format(nav_name, recent_num))
 
                 self.setPrint('조회방법 : {}'.format(flag_search_mode))
+
                 # 15개 보기를 50개 보는 방식으로 변경
                 self.action_wait(mode='css', ele_val='#main-area > div:nth-child(6) > table > tbody')
                 self.action_click(mode='css', ele_val='#listSizeSelectDiv > a')
@@ -2284,13 +2299,14 @@ class SearchCrawl():
                                     list_main_article = self.get_main_article_sc()
 
                                     self.setPrint(
-                                        '게시번호: {}\n카페이름: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
-                                        (board_num, cafeName, type_name, device_name, title, reportDate, reportTime, view_num, reply_num,
-                                         list_main_article[0], list_main_article[1], list_main_article[2], list_main_article[3]))
+                                        '게시번호: {}\n카페이름: {}\nnav: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
+                                        (board_num, cafeName, nav_name, type_name, device_name, title, reportDate, reportTime,
+                                         view_num, reply_num, list_main_article[0], list_main_article[1], list_main_article[2],
+                                         list_main_article[3]))
 
                                     # set each list value
                                     list_bo_no.append(board_num)
-                                    list_navi.append(item)
+                                    list_navi.append(nav_name)
                                     list_type.append(type_name)
                                     list_device.append(device_name)
                                     list_report_date.append(reportDate)
@@ -2376,13 +2392,14 @@ class SearchCrawl():
                                     list_main_article = self.get_main_article_sc()
 
                                     self.setPrint(
-                                        '게시번호: {}\n카페이름: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
-                                        (board_num, cafeName, type_name, device_name, title, reportDate, reportTime, view_num, reply_num,
-                                         list_main_article[0], list_main_article[1], list_main_article[2], list_main_article[3]))
+                                        '게시번호: {}\n카페이름: {}\nnav: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
+                                        (board_num, cafeName, nav_name, type_name, device_name, title, reportDate, reportTime,
+                                         view_num, reply_num, list_main_article[0], list_main_article[1], list_main_article[2],
+                                         list_main_article[3]))
 
                                     # set each list value
                                     list_bo_no.append(board_num)
-                                    list_navi.append(item)
+                                    list_navi.append(nav_name)
                                     list_type.append(type_name)
                                     list_device.append(device_name)
                                     list_report_date.append(reportDate)
@@ -2422,7 +2439,7 @@ class SearchCrawl():
                                         self.setPrint('{} Page 페이지로 이동'.format(page_num+1))
                                         break
                 # frame main content로 변경
-                self.setPrint('삼성스마트폰 커뮤니티 {} 구역 페이지 크롤링 종료 총 {} Data 추출 완료'.format(item, extract_num))
+                self.setPrint('삼성스마트폰 커뮤니티 {} 구역 페이지 크롤링 종료 총 {} Data 추출 완료'.format(nav_name, extract_num))
             # Upload data가 있다면
             if len(list_bo_no) != 0:
                 # generate dict_result
@@ -2460,6 +2477,8 @@ class SearchCrawl():
             self.setPrint('{} 사이트 크롤링 작업 완료'.format(cafeName))
         except:
             self.setPrint('Error Occurred : {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
+            self.list_result.append({'삼성스마트폰 커뮤니티': {}})
+            self.list_upload_status.append('Error Occurred : {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
             # self.process_flag = False
     # 엘지 커뮤니티 실행 함수
     def activate_lgComm(self, dict_object, name):
@@ -2509,14 +2528,19 @@ class SearchCrawl():
                 page_num = 1
                 extract_num = 0
                 flag_end = False
-                self.setPrint('{} {} 구역 페이지 크롤링 시작'.format(cafeName, item))
+
+                # nav_url parsing
+                list_text = item.split('(')
+                nav_url = list_text[0]
+                nav_name = list_text[1]
+                nav_name = nav_name[:len(nav_name) - 1]
+
+                self.setPrint('{} {} 구역 페이지 크롤링 시작'.format(cafeName, nav_name))
                 # main 프레임으로 변경
                 self.change_frame(mode=2)
                 # 해당 페이지로 이동
-                category = self.driver.find_elements_by_xpath("//a[contains(text(), '"+item+"')]")
-                action = ActionChains(self.driver)
-                action.move_to_element(category[0]).perform()
-                self.action_click(mode='xpath', ele_val="//a[contains(text(), '"+item+"')]")
+                self.driver.get(nav_url)
+                sleep(0.5)
 
                 # iframe으로 변경
                 frame_ele = self.get_elements(mode='id', ele_val='cafe_main')
@@ -2529,7 +2553,6 @@ class SearchCrawl():
                 titles = title_raw.split()
                 device_name = titles[0]
                 type_name = titles[1]
-                nav_name = item
                 flag_search_mode = 'today'
                 sleep(self.delay_time)
 
@@ -2602,13 +2625,14 @@ class SearchCrawl():
                                     list_main_article = self.get_main_article_lg()
 
                                     self.setPrint(
-                                        '게시번호: {}\n카페이름: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
-                                        (board_num, cafeName, type_name, device_name, title, reportDate, reportTime, view_num, reply_num,
-                                         list_main_article[0], list_main_article[1], list_main_article[2], list_main_article[3]))
+                                        '게시번호: {}\n카페이름: {}\nnav: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
+                                        (board_num, cafeName, nav_name, type_name, device_name, title, reportDate, reportTime,
+                                         view_num, reply_num, list_main_article[0], list_main_article[1], list_main_article[2],
+                                         list_main_article[3]))
 
                                     # set each list value
                                     list_bo_no.append(board_num)
-                                    list_navi.append(item)
+                                    list_navi.append(nav_name)
                                     list_type.append(type_name)
                                     list_device.append(device_name)
                                     list_report_date.append(reportDate)
@@ -2694,13 +2718,14 @@ class SearchCrawl():
                                     list_main_article = self.get_main_article_lg()
 
                                     self.setPrint(
-                                        '게시번호: {}\n카페이름: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
-                                        (board_num, cafeName, type_name, device_name, title, reportDate, reportTime, view_num, reply_num,
-                                         list_main_article[0], list_main_article[1], list_main_article[2], list_main_article[3]))
+                                        '게시번호: {}\n카페이름: {}\nnav: {}\n타입: {}\n디바이스: {}\n제목: {}\nDate: {} {}\n조회수: {}\n댓글수: {}\n내용:\n{}\n이미지:\n{}\n비디오:\n{}\n댓글:\n{}'.format
+                                        (board_num, cafeName, nav_name, type_name, device_name, title, reportDate, reportTime,
+                                        view_num, reply_num,list_main_article[0], list_main_article[1], list_main_article[2],
+                                         list_main_article[3]))
 
                                     # set each list value
                                     list_bo_no.append(board_num)
-                                    list_navi.append(item)
+                                    list_navi.append(nav_name)
                                     list_type.append(type_name)
                                     list_device.append(device_name)
                                     list_report_date.append(reportDate)
@@ -2740,7 +2765,7 @@ class SearchCrawl():
                                         self.setPrint('{} Page 페이지로 이동'.format(page_num+1))
                                         break
                 # frame main content로 변경
-                self.setPrint('엘지모바일 커뮤니티 {} 구역 페이지 크롤링 종료 총 {} Data 추출 완료'.format(item, extract_num))
+                self.setPrint('엘지모바일 커뮤니티 {} 구역 페이지 크롤링 종료 총 {} Data 추출 완료'.format(nav_name, extract_num))
             # Upload data가 있다면
             if len(list_bo_no) != 0:
                 # generate dict_result
@@ -2778,6 +2803,8 @@ class SearchCrawl():
             self.setPrint('{} 사이트 크롤링 작업 완료'.format(cafeName))
         except:
             self.setPrint('Error Occurred : {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
+            self.list_result.append({'엘지모바일 커뮤니티': {}})
+            self.list_upload_status.append('Error Occurred : {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
             # self.process_flag = False
 
     ###############################################################################__메인 실행__###############################################################################
