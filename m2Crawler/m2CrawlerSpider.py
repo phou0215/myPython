@@ -1292,6 +1292,8 @@ class SearchCrawl():
                                 # 번호 놀이는 제외
                                 if board_type == '번호놀이':
                                     continue
+                                if board_num in list_bo_no:
+                                    continue
                                 title = link_ele.text.strip()
                                 # view_num 부분
 
@@ -1399,6 +1401,8 @@ class SearchCrawl():
                                 # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                 # 번호 놀이는 제외
                                 if board_type == '번호놀이':
+                                    continue
+                                if board_num in list_bo_no:
                                     continue
                                 title = link_ele.text.strip()
                                 # view_num 부분
@@ -1519,6 +1523,8 @@ class SearchCrawl():
             self.setPrint('{} 사이트 크롤링 작업 완료'.format(cafeName))
         except:
             self.setPrint('Error Occurred : {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
+            self.list_result.append({'뽐뿌 커뮤니티': {}})
+            self.list_upload_status.append('Error Occurred : {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
             # self.process_flag = False
     # 클리앙 실행 함수
     def activate_clien(self, dict_object, name):
@@ -1617,6 +1623,8 @@ class SearchCrawl():
                                 if flag_end:
                                     break
                                 else:
+                                    if board_num in list_bo_no:
+                                        continue
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     title_ele = tr_ele[0].find_element_by_css_selector('div.list_title > a.list_subject > span.subject_fixed')
                                     title = title_ele.text.strip()
@@ -1710,6 +1718,8 @@ class SearchCrawl():
                                 if flag_end:
                                     break
                                 else:
+                                    if board_num in list_bo_no:
+                                        continue
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     title_ele = tr_ele[0].find_element_by_css_selector('div.list_title > a.list_subject > span.subject_fixed')
                                     title = title_ele.text.strip()
@@ -1929,6 +1939,8 @@ class SearchCrawl():
                                 if flag_end:
                                     break
                                 else:
+                                    if board_num in list_bo_no:
+                                        continue
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     title = link_ele.text.strip()
                                     # main article header view_num 부분
@@ -2034,6 +2046,8 @@ class SearchCrawl():
                                 if flag_end:
                                     break
                                 else:
+                                    if board_num in list_bo_no:
+                                        continue
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     title = link_ele.text.strip()
                                     # main article header view_num 부분
@@ -2269,6 +2283,8 @@ class SearchCrawl():
                                 if flag_end:
                                     break
                                 else:
+                                    if board_num in list_bo_no:
+                                        continue
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     title_ele = tr_ele[0].find_element_by_css_selector('td.td_article > div.board-list > div > a.article')
                                     title = title_ele.text.strip()
@@ -2366,6 +2382,8 @@ class SearchCrawl():
                                 if flag_end:
                                     break
                                 else:
+                                    if board_num in list_bo_no:
+                                        continue
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     title_ele = tr_ele[0].find_element_by_css_selector('td.td_article > div.board-list > div > a.article')
                                     title = title_ele.text.strip()
@@ -2595,6 +2613,8 @@ class SearchCrawl():
                                 if flag_end:
                                     break
                                 else:
+                                    if board_num in list_bo_no:
+                                        continue
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     title_ele = tr_ele[0].find_element_by_css_selector('td.td_article > div.board-list > div > a.article')
                                     title = title_ele.text.strip()
@@ -2692,6 +2712,8 @@ class SearchCrawl():
                                 if flag_end:
                                     break
                                 else:
+                                    if board_num in list_bo_no:
+                                        continue
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     title_ele = tr_ele[0].find_element_by_css_selector('td.td_article > div.board-list > div > a.article')
                                     title = title_ele.text.strip()
