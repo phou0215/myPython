@@ -1338,9 +1338,15 @@ class SearchCrawl():
                                     list_pages = self.driver.find_element_by_css_selector('#page_list')
                                     action = ActionChains(self.driver)
                                     action.move_to_element(list_pages).perform()
-                                    page_num = page_num + 1
-                                    page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="'+str(page_num)+'"]', ele_parent=list_pages)
-                                    page_ele[0].click()
+                                    if page_num % 10 == 0:
+                                        page_num = page_num + 1
+                                        page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
+                                        page_ele[0].click()
+                                    else:
+                                        page_num = page_num + 1
+                                        page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="'+str(page_num)+'"]', ele_parent=list_pages)
+                                        page_ele[0].click()
+
                                     self.setPrint('{} Page 페이지로 이동'.format(page_num))
                                     break
 
@@ -1449,11 +1455,16 @@ class SearchCrawl():
                                     list_pages = self.driver.find_element_by_css_selector('#page_list')
                                     action = ActionChains(self.driver)
                                     action.move_to_element(list_pages).perform()
-                                    page_num = page_num + 1
-                                    page_ele = self.get_elements(mode='xpath',
-                                                                 ele_val='//a[text()="' + str(page_num) + '"]',
-                                                                 ele_parent=list_pages)
-                                    page_ele[0].click()
+                                    if page_num % 10 == 0:
+                                        page_num = page_num + 1
+                                        page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
+                                        page_ele[0].click()
+                                    else:
+                                        page_num = page_num + 1
+                                        page_ele = self.get_elements(mode='xpath',
+                                                                     ele_val='//a[text()="' + str(page_num) + '"]',
+                                                                     ele_parent=list_pages)
+                                        page_ele[0].click()
                                     self.setPrint('{} Page 페이지로 이동'.format(page_num))
                                     break
 
@@ -1691,11 +1702,19 @@ class SearchCrawl():
 
                                     # 데이터 테이블의 마지막 행인 경우
                                     if idx == data_size:
-                                        page_num = page_num + 1
-                                        page_ele = self.get_elements(mode='css', ele_val='#pagingActiveId_'+str(page_num))
-                                        action = ActionChains(self.driver)
-                                        action.move_to_element(page_ele[0]).perform()
-                                        page_ele[0].click()
+                                        if page_num % 10 == 0:
+                                            page_num = page_num + 1
+                                            page_ele = self.get_elements(mode='css', ele_val='a.board-nav-next')
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(page_ele[0]).perform()
+                                            page_ele[0].click()
+                                        else:
+                                            page_num = page_num + 1
+                                            page_ele = self.get_elements(mode='css', ele_val='#pagingActiveId_'+str(page_num))
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(page_ele[0]).perform()
+                                            page_ele[0].click()
+
                                         self.setPrint('{} Page 페이지로 이동'.format(page_num + 1))
                                         break
                 # mongoDB에 최근 record가 있는 경우
@@ -1787,11 +1806,18 @@ class SearchCrawl():
 
                                     # 데이터 테이블의 마지막 행인 경우
                                     if idx == data_size:
-                                        page_num = page_num + 1
-                                        page_ele = self.get_elements(mode='css', ele_val='#pagingActiveId_'+str(page_num))
-                                        action = ActionChains(self.driver)
-                                        action.move_to_element(page_ele[0]).perform()
-                                        page_ele[0].click()
+                                        if page_num % 10 == 0:
+                                            page_num = page_num + 1
+                                            page_ele = self.get_elements(mode='css', ele_val='a.board-nav-next')
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(page_ele[0]).perform()
+                                            page_ele[0].click()
+                                        else:
+                                            page_num = page_num + 1
+                                            page_ele = self.get_elements(mode='css', ele_val='#pagingActiveId_'+str(page_num))
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(page_ele[0]).perform()
+                                            page_ele[0].click()
                                         self.setPrint('{} Page 페이지로 이동'.format(page_num + 1))
                                         break
                 # frame main content로 변경
@@ -2350,15 +2376,24 @@ class SearchCrawl():
 
                                     # 데이터 테이블의 마지막 행인 경우
                                     if idx == 49:
-                                        page_num = page_num + 1
-                                        list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
-                                        # page_ele = self.get_elements(mode='css', ele_val='#main-area > div.prev-next > a')
-                                        page_ele = self.get_elements(mode='xpath',
-                                                                     ele_val='//a[text()="' + str(page_num) + '"]',
-                                                                     ele_parent=list_pages)
-                                        action = ActionChains(self.driver)
-                                        action.move_to_element(page_ele[0]).perform()
-                                        page_ele[0].click()
+                                        if page_num % 10 == 0:
+                                            page_num = page_num + 1
+                                            list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
+                                            page_ele = self.get_elements(mode='css',
+                                                                         ele_val='a.pgR',
+                                                                         ele_parent=list_pages)
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(page_ele[0]).perform()
+                                            page_ele[0].click()
+                                        else:
+                                            page_num = page_num + 1
+                                            list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
+                                            page_ele = self.get_elements(mode='xpath',
+                                                                         ele_val='//a[text()="' + str(page_num) + '"]',
+                                                                         ele_parent=list_pages)
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(page_ele[0]).perform()
+                                            page_ele[0].click()
                                         self.setPrint('{} Page 페이지로 이동'.format(page_num+1))
                                         break
                 # mongoDB에 최근 record가 있는 경우
@@ -2445,15 +2480,24 @@ class SearchCrawl():
 
                                     # 데이터 테이블의 마지막 행인 경우
                                     if idx == 49:
-                                        page_num = page_num + 1
-                                        list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
-                                        # page_ele = self.get_elements(mode='css', ele_val='#main-area > div.prev-next > a')
-                                        page_ele = self.get_elements(mode='xpath',
-                                                                     ele_val='//a[text()="' + str(page_num) + '"]',
-                                                                     ele_parent=list_pages)
-                                        action = ActionChains(self.driver)
-                                        action.move_to_element(page_ele[0]).perform()
-                                        page_ele[0].click()
+                                        if page_num % 10 == 0:
+                                            page_num = page_num + 1
+                                            list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
+                                            page_ele = self.get_elements(mode='css',
+                                                                         ele_val='a.pgR',
+                                                                         ele_parent=list_pages)
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(page_ele[0]).perform()
+                                            page_ele[0].click()
+                                        else:
+                                            page_num = page_num + 1
+                                            list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
+                                            page_ele = self.get_elements(mode='xpath',
+                                                                         ele_val='//a[text()="' + str(page_num) + '"]',
+                                                                         ele_parent=list_pages)
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(page_ele[0]).perform()
+                                            page_ele[0].click()
                                         self.setPrint('{} Page 페이지로 이동'.format(page_num+1))
                                         break
                 # frame main content로 변경
@@ -2680,15 +2724,24 @@ class SearchCrawl():
 
                                     # 데이터 테이블의 마지막 행인 경우
                                     if idx == 49:
-                                        page_num = page_num + 1
-                                        list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
-                                        # page_ele = self.get_elements(mode='css', ele_val='#main-area > div.prev-next > a')
-                                        page_ele = self.get_elements(mode='xpath',
-                                                                     ele_val='//a[text()="' + str(page_num) + '"]',
-                                                                     ele_parent=list_pages)
-                                        action = ActionChains(self.driver)
-                                        action.move_to_element(page_ele[0]).perform()
-                                        page_ele[0].click()
+                                        if page_num % 10 == 0:
+                                            page_num = page_num + 1
+                                            list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
+                                            page_ele = self.get_elements(mode='css',
+                                                                         ele_val='a.pgR',
+                                                                         ele_parent=list_pages)
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(page_ele[0]).perform()
+                                            page_ele[0].click()
+                                        else:
+                                            page_num = page_num + 1
+                                            list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
+                                            page_ele = self.get_elements(mode='xpath',
+                                                                         ele_val='//a[text()="' + str(page_num) + '"]',
+                                                                         ele_parent=list_pages)
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(page_ele[0]).perform()
+                                            page_ele[0].click()
                                         self.setPrint('{} Page 페이지로 이동'.format(page_num+1))
                                         break
                 # mongoDB에 최근 record가 있는 경우
@@ -2775,15 +2828,24 @@ class SearchCrawl():
 
                                     # 데이터 테이블의 마지막 행인 경우
                                     if idx == 49:
-                                        page_num = page_num + 1
-                                        list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
-                                        # page_ele = self.get_elements(mode='css', ele_val='#main-area > div.prev-next > a')
-                                        page_ele = self.get_elements(mode='xpath',
-                                                                     ele_val='//a[text()="' + str(page_num) + '"]',
-                                                                     ele_parent=list_pages)
-                                        action = ActionChains(self.driver)
-                                        action.move_to_element(page_ele[0]).perform()
-                                        page_ele[0].click()
+                                        if page_num % 10 == 0:
+                                            page_num = page_num + 1
+                                            list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
+                                            page_ele = self.get_elements(mode='css',
+                                                                         ele_val='a.pgR',
+                                                                         ele_parent=list_pages)
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(page_ele[0]).perform()
+                                            page_ele[0].click()
+                                        else:
+                                            page_num = page_num + 1
+                                            list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
+                                            page_ele = self.get_elements(mode='xpath',
+                                                                         ele_val='//a[text()="' + str(page_num) + '"]',
+                                                                         ele_parent=list_pages)
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(page_ele[0]).perform()
+                                            page_ele[0].click()
                                         self.setPrint('{} Page 페이지로 이동'.format(page_num+1))
                                         break
                 # frame main content로 변경
