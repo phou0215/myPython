@@ -42,3 +42,7 @@ url = list_text[0]
 nav_name = list_text[1]
 nav_name = nav_name[:len(nav_name)-1]
 print(url, nav_name)
+
+num = 5
+print(num % 10)
+
