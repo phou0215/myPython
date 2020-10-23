@@ -62,39 +62,21 @@ class Formater(QThread):
         # FF0000 red
         # 0000FF blue
 
-        # self.brown_fill = PatternFill(start_color='DDD9C4', end_color='DDD9C4', fill_type='solid')
-        # self.light_brown_fill = PatternFill(start_color='EEECE1', end_color='EEECE1', fill_type='solid')
-        # self.gray_fill = PatternFill(start_color='E7E6E6', end_color='E7E6E6', fill_type='solid')
-        # self.dark_gray_fill = PatternFill(start_color='D9D9D9', end_color='D9D9D9', fill_type='solid')
-        # self.light_gray_fill = PatternFill(start_color='F2F2F2', end_color='F2F2F2', fill_type='solid')
-        # self.apricot_fill = PatternFill(start_color='FDE9D9', end_color='FDE9D9', fill_type='solid')
-        # self.skyBlue_fill = PatternFill(start_color='DCE6F1', end_color='DCE6F1', fill_type='solid')
-        # self.yellow_fill = PatternFill(start_color='FFFF00', end_color='FFFF00', fill_type='solid')
-        # self.orange_fill = PatternFill(start_color='FFC000', end_color='FFC000', fill_type='solid')
-        #
-        # # style font color and size
-        # self.top_font = Font(name='맑은 고딕', size=12, bold=True, color='2B2B2B')
-        # self.index_font = Font(name='맑은 고딕', size=11, bold=True, color='2B2B2B')
-        # self.value_font = Font(name='맑은 고딕', size=11, bold=False, color='2B2B2B')
-        # self.value2_font = Font(name='맑은 고딕', size=10, bold=True, color='2B2B2B')
-        # self.f2_value_font = Font(name='맑은 고딕', size=10, bold=False, color='2B2B2B')
-        # self.f2_blue_font = Font(name='맑은 고딕', size=10, bold=False, color='0000FF')
-        # self.f2_red_font = Font(name='맑은 고딕', size=10, bold=False, color='FF0000')
-        #
-        # # style Alignment
-        # self.general_alignment = Alignment(wrap_text=True, horizontal="center", vertical="center")
-        # self.top_alignment = Alignment(wrap_text=False, horizontal="left", vertical="center")
-        # self.top_alignment_2 = Alignment(wrap_text=True, horizontal="left", vertical="center")
-        # self.top_alignment_3 = Alignment(wrap_text=True, horizontal="left", vertical="top")
+        #Pattern_Fill
+        self.gray_fill = PatternFill(start_color='E7E6E6', end_color='E7E6E6', fill_type='solid')
+        self.dark_gray_fill = PatternFill(start_color='D9D9D9', end_color='D9D9D9', fill_type='solid')
+
+        # style font color and size
+        self.index_font = Font(name='맑은 고딕', size=11, bold=True, color='2B2B2B')
+        self.value_font = Font(name='맑은 고딕', size=11, bold=False, color='2B2B2B')
+
+        # style Alignment
+        self.general_alignment = Alignment(wrap_text=True, horizontal="center", vertical="center")
+        self.top_alignment = Alignment(wrap_text=True, horizontal="left", vertical="center")
 
         # # style border
-        # self.thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+        self.thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
-        # ftp 관련 변수 및 설정
-        # self.hostname = '192.168.0.108'
-        # self.port = 21
-        # self.username = 'voc'
-        # self.password = 'testenc@01'
 
     # 분석 처리 개수 체크 함수
     def getCountRows(self):
@@ -277,6 +259,7 @@ class Formater(QThread):
                 top_value = max(values)
                 list_return[2] = top_value
                 continue
+        self.setPrintText('/s Method 1 Return Array : {} /e'.format(list_return))
         return list_return
 
     # LTE UE Capabiility ab DL256QAM/ UL64QAM / ULCA / MC-PUSCH / 4X4 MIMO / CA 지원여부 / Max CC(7 unit)
@@ -394,6 +377,7 @@ class Formater(QThread):
                     list_return[6] = 'N'
                 break
         # retrun values
+        self.setPrintText('/s Method 2 Return Array : {} /e'.format(list_return))
         return list_return
 
     # ueCapaInfo Tab == > CRDX(Short) / CRDX(Long) / L2W H/O / SRVCC(B2) / SRVCC(CS H/O) / ANR(Inter Freq.)
@@ -551,6 +535,9 @@ class Formater(QThread):
                     list_return[4] = 'N'
                 tot_job_count = tot_job_count + 1
 
+        self.setPrintText('/s Method 3 Return Array : {} /e'.format(list_return))
+        return list_return
+
     # LTE UE Capabiility tab 지원주파수 EUTRA-FDD(B1) / EUTRA-FDD(B3) /EUTRA-FDD(B5) / EUTRA-FDD(B7) / EUTRA-FDD(B8) (5 unit)
     def get_conditional_4(self, ws):
 
@@ -578,17 +565,21 @@ class Formater(QThread):
                     list_return[4] = 'Y'
                 break
         # return band info
+        self.setPrintText('/s Method 4 Return Array : {} /e'.format(list_return))
         return list_return
 
-
     #  LTE UE Capabiility tab 지원 CA ==> 5CA(2UL 지원여부) / 5CA(B1+B3+B5+B7+B7) / 4CA(2UL 지원여부) / 4CA(B1+B3+B5+B7)
-    #  / 3DL+1UL(B1+B3+B5) / 3DL+2UL(B1+B3+B5) / 2DL+1UL(B1+B3) / 2DL+2UL(B1+B3) (8 unit)
+    #  / 3DL+1UL(B1+B3+B5) / 3DL+2UL(B1+B3+B5) / 2DL+1UL(B1+B3) / 2DL+2UL(B1+B3) (35 unit)
     def get_conditional_5(self, ws):
 
-        list_return = ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N']
+        list_return = []
+        # set default value list_return
+        for i in range(35):
+            list_return.append('N')
+        # variable of band and ca info
         list_band_info = []
         list_ca_info = []
-
+        # extract start
         for cell in ws['B']:
             if cell.value is None:
                 continue
@@ -603,7 +594,6 @@ class Formater(QThread):
                     ca_value = ca_value.replace('a', '')
                     list_band_info.append(band_value)
                     list_ca_info.append(ca_value)
-
                 # check band info
                 for idx, item in enumerate(list_band_info):
                     # size CA count
@@ -622,46 +612,424 @@ class Formater(QThread):
                     # check 1+3+5+7+7 band combination  in 5CA
                     if ca_count == 5:
                         ca_info = list_ca_info[idx]
+                        list_ca = ca_info.split('-')
+                        band_1_count = list_ca.count('1')
+                        band_3_count = list_ca.count('3')
+                        band_5_count = list_ca.count('5')
+                        band_7_count = list_ca.count('7')
+                        if band_1_count == 1 and band_3_count == 1 and band_5_count == 1 and band_7_count == 2:
+                            list_return[1] = 'Y'
+
+                    # check uplink support 2UL in 4CA
+                    if ca_count == 4:
+                        ul_count = 0
                         # check ul count on ca band
                         for ca in list_ca_band:
                             if 'ul' in ca:
                                 ul_count = ul_count + 1
                         if ul_count >= 2:
+                            list_return[2] = 'Y'
+
+                    # check 1+3+5+7/1+3+7+7/1+5+7+7/3+5+7+7 band combination  in 4CA
+                    if ca_count == 4:
+                        ca_info = list_ca_info[idx]
+                        list_ca = ca_info.split('-')
+                        band_1_count = list_ca.count('1')
+                        band_3_count = list_ca.count('3')
+                        band_5_count = list_ca.count('5')
+                        band_7_count = list_ca.count('7')
+                        if band_1_count == 1 and band_3_count == 1 and band_5_count == 1 and band_7_count == 1:
+                            list_return[3] = 'Y'
+                        if band_1_count == 1 and band_3_count == 1 and band_7_count == 2:
+                            list_return[4] = 'Y'
+                        if band_1_count == 1 and band_5_count == 1 and band_7_count == 2:
+                            list_return[5] = 'Y'
+                        if band_3_count == 1 and band_5_count == 1 and band_7_count == 2:
+                            list_return[6] = 'Y'
+
+                    # Check Band 3CA
+                    if ca_count == 3:
+                        ca_info = list_ca_info[idx]
+                        list_ca = ca_info.split('-')
+                        band_1_count = list_ca.count('1')
+                        band_3_count = list_ca.count('3')
+                        band_5_count = list_ca.count('5')
+                        band_7_count = list_ca.count('7')
+
+                        # check 1+3+5 band combination
+                        if band_1_count == 1 and band_3_count == 1 and band_5_count == 1:
+                            list_return[7] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[14] = 'Y'
+
+                        # check 1+3+7 band combination
+                        elif band_1_count == 1 and band_3_count == 1 and band_7_count == 1:
+                            list_return[8] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[15] = 'Y'
+
+                        # check 1+5+7 band combination
+                        elif band_1_count == 1 and band_5_count == 1 and band_7_count == 1:
+                            list_return[9] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[16] = 'Y'
+
+                        # check 3+5+7 band combination
+                        elif band_3_count == 1 and band_5_count == 1 and band_7_count == 1:
+                            list_return[10] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[17] = 'Y'
+
+                        # check 1+7+7 band combination
+                        elif band_1_count == 1 and band_7_count == 2:
+                            list_return[11] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[18] = 'Y'
+
+                        # check 3+7+7 band combination
+                        elif band_3_count == 1 and band_7_count == 2:
+                            list_return[12] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[19] = 'Y'
+
+                        # check 5+7+7 band combination
+                        elif band_5_count == 1 and band_7_count == 2:
+                            list_return[13] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[20] = 'Y'
+
+                    # Check Band 2CA
+                    if ca_count == 2:
+                        ca_info = list_ca_info[idx]
+                        list_ca = ca_info.split('-')
+                        band_1_count = list_ca.count('1')
+                        band_3_count = list_ca.count('3')
+                        band_5_count = list_ca.count('5')
+                        band_7_count = list_ca.count('7')
+
+                        # check 1+3 band combination
+                        if band_1_count == 1 and band_3_count == 1:
+                            list_return[21] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[28] = 'Y'
+
+                        # check 1+5 band combination
+                        elif band_1_count == 1 and band_5_count == 1:
+                            list_return[22] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[29] = 'Y'
+
+                        # check 1+7 band combination
+                        elif band_1_count == 1 and band_7_count == 1:
+                            list_return[23] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[30] = 'Y'
+
+                        # check 3+5 band combination
+                        elif band_3_count == 1 and band_5_count == 1:
+                            list_return[24] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[31] = 'Y'
+
+                        # check 3+7 band combination
+                        elif band_3_count == 1 and band_7_count == 1:
+                            list_return[25] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[32] = 'Y'
+
+                        # check 5+7 band combination
+                        elif band_5_count == 1 and band_7_count == 1:
+                            list_return[26] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[33] = 'Y'
+
+                        # check 7+7 band combination
+                        elif band_7_count == 2:
+                            list_return[27] = 'Y'
+                            ul_count = 0
+                            # check ul count on ca band
+                            for ca in list_ca_band:
+                                if 'ul' in ca:
+                                    ul_count = ul_count + 1
+                            if ul_count >= 2:
+                                list_return[34] = 'Y'
+                # stop method
+                break
+        # return band info
+        self.setPrintText('/s Method 5 Return Array : {} /e'.format(list_return))
+        return list_return
+
+    #  LTE UE Capabiility tab 지원 MIMO ==>(42 unit)
+    def get_conditional_6(self, ws):
+
+        list_return = []
+        # set default value list_return
+        for i in range(42):
+            list_return.append('N')
+        # variable of band and ca info
+        list_mimo_info = []
+        list_band_info = []
+        # extract start
+        for cell in ws['E']:
+            if cell.value is None:
+                continue
+            # first find 'band combination'
+            if '4x4 mimo layer' in cell.value.lower().strip():
+                cell_row = cell.row
+                max_row = ws.max_row
+                job_count = 0
+                # append MIMO and band info in list
+                for idx in range(cell_row + 1, max_row + 1):
+                    mimo_value = '-'
+                    band_value = '-'
+                    if ws['E'+str(idx)].value not in [None, '-', '']:
+                        mimo_value = ws['E'+str(idx)].value.lower().strip()
+                    if ws['B'+str(idx)].value not in [None, '-', '']:
+                        band_value = ws['B'+str(idx)].value.lower().strip()
+                    list_mimo_info.append(mimo_value)
+                    list_band_info.append(band_value)
+
+                # check band info
+                for idx, item in enumerate(list_band_info):
+                    if job_count == 42:
+                        break
+                    # size CA count
+                    list_ca_band = item.split('+')
+                    ca_count = len(list_ca_band)
+                    mimo_value = list_mimo_info[idx]
+                    list_mimo = mimo_value.split(',')
+
+                    # MIMO b1 포함 CA 조합 조회
+                    if 'b1' in mimo_value:
+                        if ca_count == 1:
                             list_return[0] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 2:
+                            list_return[1] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 3:
+                            list_return[2] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 4:
+                            list_return[3] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 5:
+                            list_return[4] = 'Y'
+                            job_count = job_count + 1
 
+                    # MIMO b3 포함 CA 조합 조회
+                    if 'b3' in mimo_value:
+                        if ca_count == 1:
+                            list_return[5] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 2:
+                            list_return[6] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 3:
+                            list_return[7] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 4:
+                            list_return[8] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 5:
+                            list_return[9] = 'Y'
+                            job_count = job_count + 1
 
+                    # MIMO b7 포함 CA 조합 조회
+                    if 'b7' in mimo_value:
+                        if ca_count == 1:
+                            list_return[10] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 2:
+                            list_return[11] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 3:
+                            list_return[12] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 4:
+                            list_return[13] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 5:
+                            list_return[14] = 'Y'
+                            job_count = job_count + 1
+
+                    # MIMO b1 + b3 포함 CA 조합 조회
+                    if 'b1' in mimo_value and 'b3' in mimo_value:
+                        if ca_count == 2:
+                            list_return[15] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 3:
+                            list_return[16] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 4:
+                            list_return[17] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 5:
+                            list_return[18] = 'Y'
+                            job_count = job_count + 1
+
+                    # MIMO b3 + b7 포함 CA 조합 조회
+                    if 'b3' in mimo_value and 'b7' in mimo_value:
+                        if ca_count == 2:
+                            list_return[19] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 3:
+                            list_return[20] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 4:
+                            list_return[21] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 5:
+                            list_return[22] = 'Y'
+                            job_count = job_count + 1
+
+                    # MIMO b1 + b7 포함 CA 조합 조회
+                    if 'b1' in mimo_value and 'b7' in mimo_value:
+                        if ca_count == 2:
+                            list_return[23] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 3:
+                            list_return[24] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 4:
+                            list_return[25] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 5:
+                            list_return[26] = 'Y'
+                            job_count = job_count + 1
+
+                    # MIMO b7 + b7 포함 CA 조합 조회
+                    if list_mimo.count('b7') >= 2:
+                        if ca_count == 2:
+                            list_return[27] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 3:
+                            list_return[28] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 4:
+                            list_return[29] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 5:
+                            list_return[30] = 'Y'
+                            job_count = job_count + 1
+
+                    # MIMO b1 + b3 + b7 포함 CA 조합 조회
+                    if 'b1' in mimo_value and 'b3' in mimo_value and 'b7' in mimo_value:
+                        if ca_count == 3:
+                            list_return[31] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 4:
+                            list_return[32] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 5:
+                            list_return[33] = 'Y'
+                            job_count = job_count + 1
+
+                    # MIMO b1 + b7 + b7 포함 CA 조합 조회
+                    if 'b1' in mimo_value and list_mimo.count('b7') == 2:
+                        if ca_count == 3:
+                            list_return[34] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 4:
+                            list_return[35] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 5:
+                            list_return[36] = 'Y'
+                            job_count = job_count + 1
+
+                    # MIMO b3 + b7 + b7 포함 CA 조합 조회
+                    if 'b3' in mimo_value and list_mimo.count('b7') == 2:
+                        if ca_count == 3:
+                            list_return[37] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 4:
+                            list_return[38] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 5:
+                            list_return[39] = 'Y'
+                            job_count = job_count + 1
+
+                    # MIMO b1 + b3 + b7 + b7 포함 CA 조합 조회
+                    if 'b1' in mimo_value and 'b3' in mimo_value and list_mimo.count('b7') == 2:
+                        if ca_count == 4:
+                            list_return[40] = 'Y'
+                            job_count = job_count + 1
+                        elif ca_count == 5:
+                            list_return[41] = 'Y'
+                            job_count = job_count + 1
+
+                # stop method
+                break
 
 
         # return band info
+        self.setPrintText('/s Method 6 Return Array : {} /e'.format(list_return))
         return list_return
-    def get_conditional_6(self, ws):
-        pass
-    def get_conditional_7(self, ws):
-        pass
-    def get_conditional_8(self, ws):
-        pass
-    def get_conditional_9(self, ws):
-        pass
-    def get_conditional_10(self, ws):
-        pass
-    def get_conditional_11(self, ws):
-        pass
-    def get_conditional_12(self, ws):
-        pass
-    def get_conditional_13(self, ws):
-        pass
-    def get_conditional14(self, ws):
-        pass
-    def get_conditional_15(self, ws):
-        pass
-    def get_conditional_16(self, ws):
-        pass
-    def get_conditional_17(self, ws):
-        pass
-    def get_conditional_18(self, ws):
-        pass
-    def get_conditional_19(self, ws):
-        pass
 
     # extract condition in extract sheet 'A', 'B', 'C' column
     def extract_condition(self, ws):
@@ -696,206 +1064,105 @@ class Formater(QThread):
         self.setPrintText('Check Empty Cell job is Completed')
         return return_ws
 
-    def bsp_generate_data(self):
+    # generate ca file data sheet and save
+    def generate_sheet(self, file_in_path, file_out_path, file_idx):
 
         try:
+            list_input_rows = []
+            wb_output = openpyxl.load_workbook(file_in_path, data_only=True)
+            list_sheets = wb_output.sheetnames
 
-            for idx, item in enumerate(self.list_files):
+            # 모든 필요 시트 충족 조건
+            if 'LTE UE Capabiility' in list_sheets and 'ueCapaInfo_LTE' in list_sheets and \
+                '추출정보' in list_sheets and '기본단말_Spec정보' in list_sheets:
 
-                net_type = ''
-                list_input_rows = []
-                wb_output = openpyxl.load_workbook(item, data_only=True)
-                list_sheets = wb_output.sheetnames
-                #check net type
-                if ('ENDC UE Capability' and 'ueCapaInfo_5G-NR' and '추출정보' and '기본단말_Spec정보') in list_sheets:
-                    net_type = '5G'
-                # LTE type
-                elif ('LTE UE Capabiility' and 'ueCapaInfo_LTE' and '추출정보', '기본단말_Spec정보') in list_sheets and \
-                        ('ENDC UE Capability' and 'ueCapaInfo_5G-NR') not in list_sheets:
-                    net_type = 'LTE'
-                else:
-                    net_type = 'unknown'
+                ws_lte_cap = wb_output['LTE UE Capabiility']
+                ws_lte_ueCap = wb_output['ueCapaInfo_LTE']
+                ws_spec = wb_output['기본단말_Spec정보']
+                ws_extract = wb_output['추출정보']
 
-                # 추출 작업 시작
-                if net_type == '5G':
+                ws_spec_re = self.check_condition(ws_spec)
+                ws_extract_re = self.check_condition(ws_extract)
 
-                    ws_lte_cap = wb_output['LTE UE Capabiility']
-                    ws_endc_cap = wb_output['ENDC UE Capability']
-                    ws_lte_ueCap = wb_output['ueCapaInfo_LTE']
-                    ws_5g_nr = wb_output['ueCapaInfo_5G-NR']
-                    ws_spec = wb_output['기본단말_Spec정보']
-                    ws_extract = wb_output['추출정보']
-                    ws_spec_re = self.check_condition(ws_spec)
-                    ws_extract_re = self.check_condition(ws_extract)
-                    # A, B, C column 조건 값 추출
-                    a_condi, b_condi, c_condi = self.extract_condition(ws_extract_re)
+                # A, B, C column 조건 값 추출
+                a_condi, b_condi, c_condi = self.extract_condition(ws_extract_re)
 
-                    # check row index match condition(입력해야 할 대상에 row 주소값 확인)
-                    for idx_2 in range(1, ws_spec_re.max_row + 1):
-                        value_a = ws_spec_re.cell(row=idx_2, column=1).value
-                        value_b = ws_spec_re.cell(row=idx_2, column=2).value
-                        value_c = ws_spec_re.cell(row=idx_2, column=3).value
-                        # generate condition
-                        for idx_3, data in enumerate(a_condi):
-                            if value_a == data and value_b == b_condi[idx_3] and value_c == c_condi[idx_3]:
-                                list_input_rows.append(idx_2)
-                                break
-                    # Check len count
-                    if len(list_input_rows) != 49:
-                        self.setPrintText('{} 파일에 추출정보에 있는 값 중 기본단말_Spec정보에 없는 것이 있습니다. 정보를 다시 확인해 주세요.'.format(item))
-                        break
-
-
-
-
-                elif net_type == 'LTE':
-                    pass
-                else:
-                    self.setPrintText('Net Type Unknown Check input sheet names')
-                    self.setPrintText('LTE Type only {}, {}, {}, {} sheet exists'.format('LTE UE Capabiility', 'ueCapaInfo_LTE', '추출정보', '기본단말_Spec정보'))
-                    self.setPrintText('5G Type {}, {}, {}, {}, {} sheet exists'.format('LTE UE Capabiility',
-                                                                                   'ENDC UE Capability', 'ueCapaInfo_LTE', 'ueCapaInfo_5G-NR', '추출정보', '기본단말_Spec정보'))
-                    continue
-
-
-                # option setting wb.output
-                sheet_in = wb_output['Profile']
-                wb_output.create_sheet('Comparison', 2)
-                sheet_out = wb_output['Comparison']
-                # 1st list items are fixed usim info, 2nd list items are variable usim info
-                list_find = [['ESN', 'HPPLMN', 'HPLMNNWACT', 'FPLMN', 'PWS', 'HPLMNwACT', 'DOMAIN'],
-                              ['IMEI', 'IMSI', 'KEYS', 'KEYSPS', 'MSISDN', 'SMSP', 'PSLOCI', 'ACC', 'LOCI', 'IMSI_M',
-                               'MDN', 'IRM', 'IMPI', 'IMPU', 'P_CSCF']]
-                list_fixed_item = []
-                list_variable_item = []
-                list_reference_item = [
-                    '0000FFFFFFFFFFFF',
-                    '01',
-                    '54F050400054F0508000FFFFFF0000FFFFFF0000FFFFFF0000FFFFFF0000FFFFFF0000FFFFFF0000FFFFFF0000FFFFFF0000',
-                    '54F08054F06054F00354F040',
-                    'FCFFFFFFFFFFFFFFFFFF',
-                    '54F050400054F0508000FFFFFF0000FFFFFF0000FFFFFF0000FFFFFF0000FFFFFF0000FFFFFF0000FFFFFF0000FFFFFF0000',
-                    '800A736B74696D732E6E6574FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
-                ]
-
-                total_row = len(sheet_in['A'])
-
-                # sheet row 1 handle
-                sheet_out.merge_cells('B1:E1')
-                sheet_out['B1'] = 'USIM DATA COMPARISON'
-                # sheet row 2 handle
-                sheet_out['B2'] = 'EF파일명'
-                sheet_out['C2'] = 'DATA값'
-                sheet_out['D2'] = '고정기준값'
-                sheet_out['E2'] = '비교'
-
-                # finding fixed value
-                for fixed in list_find[0]:
-                    for i in range(2, total_row+1):
-                        if sheet_in['A' + str(i)].value == fixed:
-                            data = sheet_in['Q' + str(i)].value.strip()
-                            data = re.sub(r'[\n,\s,\t]', '', data)
-                            list_fixed_item.append(data)
+                # check row index match condition(입력해야 할 대상에 row 주소값 확인)
+                for idx in range(1, ws_spec_re.max_row + 1):
+                    value_a = ws_spec_re.cell(row=idx, column=1).value
+                    value_b = ws_spec_re.cell(row=idx, column=2).value
+                    value_c = ws_spec_re.cell(row=idx, column=3).value
+                    # generate condition
+                    for idx_2, data in enumerate(a_condi):
+                        if value_a == data and value_b == b_condi[idx_2] and value_c == c_condi[idx_2]:
+                            list_input_rows.append(idx)
                             break
 
-                # finding variable value
-                for variable in list_find[1]:
-                    for i in range(2, total_row+1):
-                        if sheet_in['A' + str(i)].value == variable:
-                            data = sheet_in['Q' + str(i)].value.strip()
-                            data = re.sub(r'[\n,\s,\t]', '', data)
-                            list_variable_item.append(data)
-                            break
+                # Check len count
+                if len(list_input_rows) != 105:
+                    self.setPrintText('/s {} 파일에 추출정보에 있는 값 중 기본단말_Spec정보에 없는 것이 있습니다. 정보를 다시 확인해 주세요. /e'.format(file_in_path))
+                    return
 
-                # red
-                # 3~ 24 rows fill data
-                # 3~9까지 fixed
-                # 10~24까지 variable
+                ##########################################__1 method start__##########################################
+                list_tot_returns = self.get_conditional_1(ws_lte_cap)
 
+                ##########################################__2 method start__##########################################
+                list_tot_returns.extend(self.get_conditional_2(ws_lte_cap))
+
+                ##########################################__3 method start__##########################################
+                list_tot_returns.extend(self.get_conditional_3(ws_lte_ueCap))
+
+                ##########################################__4 method start__##########################################
+                list_tot_returns.extend(self.get_conditional_4(ws_lte_cap))
+
+                ##########################################__5 method start__##########################################
+                list_tot_returns.extend(self.get_conditional_5(ws_lte_cap))
+
+                ##########################################__6 method start__##########################################
+                list_tot_returns.extend(self.get_conditional_6(ws_lte_cap))
+
+                ##########################################__spec 시트에 값 입력__##########################################
+                for idx, item in list_tot_returns:
+                    row_num = list_input_rows[idx]
+                    ws_spec['E'+str(row_num)].value = item
+                    self.setPrintText('/s {} 번째 파일 "기본단말_Spec정보" 시트 {}행 데이터 입력 /e'.format(file_idx, row_num))
+
+                ##########################################__spec 시트 E열 옵션 조정__##########################################
                 # all cell font adjust
-                for mCell in sheet_out["B2:E24"]:
+                max_row = ws_spec.max_row
+                for mCell in ws_spec["E1:E"+str(max_row)]:
                     for cell in mCell:
-                        cell.font = self.f2_value_font
+                        if cell.row == 1:
+                            cell.fill = self.gray_fill
 
-                sheet_out['B1'].font = Font(name='맑은 고딕', size=22, bold=True, color='2B2B2B')
-                # 고정값 Set
-                for i, f_item in enumerate(list_fixed_item):
-                    sheet_out['B' + str(i + 3)] = list_find[0][i]
-                    sheet_out['B' + str(i + 3)].fill = self.yellow_fill
-                    sheet_out['C' + str(i + 3)] = f_item
-                    sheet_out['D' + str(i + 3)] = list_reference_item[i]
-                    sheet_out['D' + str(i + 3)].fill = self.yellow_fill
-
-                    if list_fixed_item[i] == list_reference_item[i]:
-                        sheet_out['E' + str(i + 3)] = 'True(일치함)'
-                        sheet_out['E' + str(i + 3)].font = self.f2_blue_font
-                    else:
-                        sheet_out['E' + str(i + 3)] = 'False(불일치)'
-                        sheet_out['E' + str(i + 3)].font = self.f2_red_font
-
-                    sheet_out['E' + str(i + 3)].fill = self.yellow_fill
-
-                # 가변값 Set
-                for i, v_item in enumerate(list_variable_item):
-                    sheet_out['B' + str(i + 10)] = list_find[1][i]
-                    sheet_out['B' + str(i + 10)].fill = self.orange_fill
-                    sheet_out['C' + str(i + 10)] = v_item
-                    sheet_out['D' + str(i + 10)].fill = self.orange_fill
-                    sheet_out['E' + str(i + 10)].fill = self.orange_fill
-
-                self.setPrintText('/s {}번 파일 "Comparison" 테이터 입력 완료 /e'.format(idx+1))
-
-                # set temp data
-
-                if self.opFlag:
-
-                    # all cell alignment adjust
-                    for mCell in sheet_out["B2:E24"]:
-                        for cell in mCell:
-                            cell.alignment = self.general_alignment
-
-                    # top alignment adjust
-                    for mCell in sheet_out["C4:C24"]:
-                        for cell in mCell:
-                            cell.alignment = self.top_alignment_3
-
-                    for mCell in sheet_out["D4:D24"]:
-                        for cell in mCell:
-                            cell.alignment = self.top_alignment_3
-
-                    # all cell border adjust
-                    for mCell in sheet_out["B2:E24"]:
-                        for cell in mCell:
-                            cell.border = self.thin_border
+                        cell.font = self.index_font
+                        cell.alignment = self.general_alignment
+                        cell.border = self.thin_border
 
                     # set filter
-                    sheet_out.auto_filter.ref = "B2:E24"
+                    ws_spec.auto_filter.ref = "A1:E"+str(max_row)
 
                     # each column width adjust
                     sheet_cell_list = ['A', 'B', 'C', 'D', 'E']
-                    sheet_width_list = [4.25, 14.75, 57, 57, 23]
-
+                    sheet_width_list = [21, 31.71, 31.71, 28.43, 28.43]
                     for i in range(len(sheet_cell_list)):
-                        sheet_out.column_dimensions[sheet_cell_list[i]].width = sheet_width_list[i]
-                    sheet_out.row_dimensions[1].height = 45
-
-                    # Set Pattern Fill
-                    sheet_out['B2'].fill = self.brown_fill
-                    sheet_out['C2'].fill = self.brown_fill
-                    sheet_out['D2'].fill = self.brown_fill
-                    sheet_out['E2'].fill = self.brown_fill
-
+                        ws_spec.column_dimensions[sheet_cell_list[i]].width = sheet_width_list[i]
+                    # ws_spec.row_dimensions[1].height = 45
 
                 self.currentRow = self.currentRow + 1
                 self.totalRows = self.totalRows + 1
                 self.progress_flag.emit()
                 self.setPrintText('/s {}번 파일 "Comparison" 시트 스타일 적용 완료 /e'.format(idx+1))
                 # save file
-                wb_output.save(self.list_out_files[idx])
+                wb_output.save(file_out_path)
+            else:
+                self.setPrintText('/s {} 파일에 필수 sheet가 없습니다! 다시 확인해주세요 /e'.format(file_in_path))
+                return
         except:
             self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno)+' /e')
             self.end_count = "y"
             self.end_flag.emit()
+
     # main method
     def run(self):
 
@@ -924,25 +1191,6 @@ class Formater(QThread):
 
                 #################################################################_RESULT FILE Generate_###########################################################################
                 # output file generate
-                for item in self.list_out_files:
-
-                    wb = Workbook()
-                    s1 = wb.active
-                    s1.title = "검증결과요약"
-                    wb.create_sheet('시험결과요약', 1)
-                    wb.create_sheet('TRP', 2)
-                    wb.create_sheet('TIS', 3)
-                    wb.create_sheet('속도', 4)
-                    wb.create_sheet('Call Setup Test', 5)
-                    wb.create_sheet('주파수동조', 6)
-                    wb.create_sheet('MOS', 7)
-                    wb.create_sheet('배터리소모전류(시간)', 8)
-                    wb.create_sheet('배터리소모전류 세부데이터', 9)
-                    wb.create_sheet('배터리소모전류(DOU)', 10)
-                    wb.create_sheet('첨부1. 측정기준 및 가점', 11)
-                    wb.create_sheet('첨부2. 납품검사', 12)
-                    wb.create_sheet('첨부3. 단말 상세 SPEC', 13)
-                    wb.save(item)
 
                 self.setPrintText("/s Complete making Result excel file /e")
                 self.setPrintText("/s Extract Original Data in each file /e")

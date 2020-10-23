@@ -108,6 +108,7 @@ class connMyDb(QThread):
 
 
     def deleteData(self, dataframe, dataframe_sort, dataframe_subscriber):
+
         self.ids = dataframe["issueId"].tolist()
         self.ids_sort = dataframe_sort["issueId"].tolist()
         self.ids_subs = dataframe_subscriber["고유번호"].tolist();
