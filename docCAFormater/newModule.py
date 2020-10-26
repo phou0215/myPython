@@ -174,7 +174,7 @@ class Formater(QThread):
     # LTE UE Capabiility Tab UE/UL/DL category (3 unit)
     def get_conditional_1(self, ws, index):
 
-        list_return = ['', '', '']
+        list_return = ['X', 'X', 'X']
         list_merged = ws.merged_cells.ranges
         list_merged = [str(x) for x in list_merged]
         # UE category, DL category, UL category value
@@ -208,7 +208,8 @@ class Formater(QThread):
                         values.append(0)
                 # top_value
                 top_value = max(values)
-                list_return[0] = top_value
+                if top_value != 0:
+                    list_return[0] = top_value
                 continue
             elif 'dl category' in str(cell.value).lower().strip():
                 values = []
@@ -236,7 +237,8 @@ class Formater(QThread):
                         values.append(0)
                 # top_value
                 top_value = max(values)
-                list_return[1] = top_value
+                if top_value != 0:
+                    list_return[1] = top_value
                 continue
             elif 'ul category' in str(cell.value).lower().strip():
                 values = []
@@ -264,7 +266,8 @@ class Formater(QThread):
                         values.append(0)
                 # top_value
                 top_value = max(values)
-                list_return[2] = top_value
+                if top_value != 0:
+                    list_return[2] = top_value
                 continue
         self.setPrintText('/s {} Method 1 Return Array : {} /e'.format(index, list_return))
         return list_return
@@ -272,7 +275,7 @@ class Formater(QThread):
     # LTE UE Capabiility Tab DL256QAM/ UL64QAM / ULCA / MC-PUSCH / 4X4 MIMO / CA 지원여부 / Max CC(7 unit)
     # [None, '-', '/', '']
     def get_conditional_2(self, ws, index):
-        list_return = ['', '', '', '', '', '', '']
+        list_return = ['N', 'N', 'N', 'N', 'N', 'N', 'N']
         #####__DL256QAM Data Get__#####
         for cell in ws['B']:
             if cell.value is None:
@@ -280,10 +283,12 @@ class Formater(QThread):
             if 'dl modulation' in str(cell.value).lower().strip():
                 cell_row = cell.row
                 c_value = ws['C'+str(cell_row)].value
-                if '256qam' in c_value:
+                if c_value is None:
                     list_return[0] = 'N'
-                else:
+                elif '256qam' in c_value.lower().strip():
                     list_return[0] = 'Y'
+                else:
+                    list_return[0] = 'N'
                 break
         #####__UL64QAM Data Get__#####
         for cell in ws['D']:
@@ -291,8 +296,10 @@ class Formater(QThread):
                 continue
             if 'ul modulation' in str(cell.value).lower().strip():
                 cell_row = cell.row
-                c_value = ws['C'+str(cell_row)].value
-                if '64qam' in c_value:
+                c_value = ws['E'+str(cell_row)].value
+                if c_value is None:
+                    list_return[1] = 'N'
+                elif '64qam' in c_value.lower().strip():
                     list_return[1] = 'Y'
                 else:
                     list_return[1] = 'N'
@@ -394,7 +401,6 @@ class Formater(QThread):
     def get_conditional_3(self, ws, index):
         list_return = ['', '', '', '', '', '', '', '', '', '', '', '', '']
         tot_job_count = 0
-        cs_ho_values = ['', '', '']
         ##__ueCapaInfo data extract__##
         for cell in ws['A']:
             if cell.value is None:
@@ -441,6 +447,7 @@ class Formater(QThread):
                 cell_row = cell.row
                 max_row = ws.max_row
                 feature_job_count = 0
+                cs_ho_values = ['', '', '']
                 for idx in range(cell_row + 1, max_row + 1):
                     ca_value = str(ws['A' + str(idx)].value).lower().strip()
                     if feature_job_count == 12:
@@ -484,17 +491,17 @@ class Formater(QThread):
                     #####__featrgrp_13__#####
                     if 'pc_featrgrp_13 :' in ca_value:
                         list_info = ca_value.split(':')
-                        cs_ho_values.append(list_info[1].lower().strip())
+                        cs_ho_values[0] = list_info[1].lower().strip()
                         feature_job_count = feature_job_count + 1
                     #####__featrgrp_25__#####
                     if 'pc_featrgrp_25 :' in ca_value:
                         list_info = ca_value.split(':')
-                        cs_ho_values.append(list_info[1].lower().strip())
+                        cs_ho_values[1] = list_info[1].lower().strip()
                         feature_job_count = feature_job_count + 1
                     #####__featrgrp_27__#####
                     if 'pc_featrgrp_27 :' in ca_value:
                         list_info = ca_value.split(':')
-                        cs_ho_values.append(list_info[1].lower().strip())
+                        cs_ho_values[2] = list_info[1].lower().strip()
                         feature_job_count = feature_job_count + 1
                     #####__ANR(Inter Freq.)__#####
                     if 'pc_featrgrp_18 :' in ca_value:
@@ -514,17 +521,24 @@ class Formater(QThread):
                             list_return[6] = 'N'
                         tot_job_count = tot_job_count + 1
                         feature_job_count = feature_job_count + 1
-                    #####__TTIB and MFBI__#####
+                    #####__TTIB__#####
                     if 'pc_featrgrp_28 :' in ca_value:
                         list_info = ca_value.split(':')
                         if list_info[1].lower().strip() == 'support':
                             list_return[7] = 'Y'
-                            list_return[8] = 'Y'
                         else:
                             list_return[7] = 'N'
+                        tot_job_count = tot_job_count + 1
+                        feature_job_count = feature_job_count + 1
+                    #####__MFBI__#####
+                    if 'pc_featrgrp_31 :' in ca_value:
+                        list_info = ca_value.split(':')
+                        if list_info[1].lower().strip() == 'support':
+                            list_return[8] = 'Y'
+                        else:
                             list_return[8] = 'N'
-                        tot_job_count = tot_job_count + 2
-                        feature_job_count = feature_job_count + 2
+                        tot_job_count = tot_job_count + 1
+                        feature_job_count = feature_job_count + 1
                     #####__A6 Event__#####
                     if 'pc_featrgrp_111 :' in ca_value:
                         list_info = ca_value.split(':')
@@ -536,9 +550,14 @@ class Formater(QThread):
                         feature_job_count = feature_job_count + 1
 
                 #####__SRVCC(CS H/O)__#####
-                set_cs_ho_values = set(cs_ho_values)
-                cs_ho_values = list(set_cs_ho_values)
-                if len(cs_ho_values) == 1 and cs_ho_values[0] == 'support':
+                flag_cs = True
+                for item in cs_ho_values:
+                    if item == 'support':
+                        pass
+                    else:
+                        flag_cs = False
+                        break
+                if flag_cs:
                     list_return[4] = 'Y'
                 else:
                     list_return[4] = 'N'
@@ -551,10 +570,10 @@ class Formater(QThread):
     def get_conditional_4(self, ws, index):
 
         list_return = ['N', 'N', 'N', 'N', 'N']
-        for cell in ws['B']:
+        for cell in ws['A']:
             if cell.value is None:
                 continue
-            if str(cell.value).lower().strip() == 'band list':
+            if str(cell.value).lower().strip() == 'single band':
                 row_idx = cell.row
                 c_value = str(ws['C' + str(row_idx)].value).lower().strip()
                 # band 1 check
@@ -1183,7 +1202,7 @@ class Formater(QThread):
             for idx, item in enumerate(self.list_files):
                 temp_filename = os.path.basename(item)
                 temp_filename = re.sub("(.xlsx|.xls)", "", temp_filename)
-                output_file = self.home+"\\Desktop\\CA\\result_"+temp_filename+"("+self.nowTime+").xlsx"
+                output_file = self.home+"\\Desktop\\CA\\"+temp_filename+"_result("+self.nowTime+").xlsx"
                 # self.list_out_files.append(output_file)
 
                 #Core Code
