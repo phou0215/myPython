@@ -64,7 +64,7 @@ class MyWindow(QMainWindow, form_class):
         self.search_flag = "n"
         self.moduler = None
         self.inputFile_path = ""
-        self.file_size = 1
+        self.file_size = 0
 
         self.progressValue = 0
         self.tabWidget.setCurrentIndex(0)
@@ -104,17 +104,15 @@ class MyWindow(QMainWindow, form_class):
         self.moduler.stop()
         self.tabWidget.setTabEnabled(0, True)
         self.controlAction(True, False)
+        self.file_size = 0
         self.progressValue = 0
         self.progressBar.setValue(0)
 
     @pyqtSlot()
     def progressFlag(self):
-        if self.mode_flag == 'f1':
-            self.progressValue = self.progressValue + int(100/12)
-            self.progressBar.setValue(self.progressValue)
-        else:
-            self.progressValue = self.progressValue + int(100/self.file_size)
-            self.progressBar.setValue(self.progressValue)
+
+        self.progressValue = self.progressValue + int(100/(6*self.file_size))
+        self.progressBar.setValue(self.progressValue)
 
     #####################################__VOC Parser method__#####################################
 

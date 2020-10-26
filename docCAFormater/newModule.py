@@ -56,7 +56,6 @@ class Formater(QThread):
         self.totalRows = 0
         self.currentRow = 0
         self.current_path = os.getcwd()
-        self.battery_spec = 0.0
 
         # style fill pattern
         # FF0000 red
@@ -67,8 +66,8 @@ class Formater(QThread):
         self.dark_gray_fill = PatternFill(start_color='D9D9D9', end_color='D9D9D9', fill_type='solid')
 
         # style font color and size
-        self.index_font = Font(name='맑은 고딕', size=11, bold=True, color='2B2B2B')
-        self.value_font = Font(name='맑은 고딕', size=11, bold=False, color='2B2B2B')
+        self.red_font = Font(name='맑은 고딕', size=10, bold=True, color='FF0000')
+        self.blue_font = Font(name='맑은 고딕', size=10, bold=True, color='0000FF')
 
         # style Alignment
         self.general_alignment = Alignment(wrap_text=True, horizontal="center", vertical="center")
@@ -163,9 +162,17 @@ class Formater(QThread):
         except:
             return False
 
+    def count_duplicate(self, list_data, element):
+        return_count = 0
+        for data in list_data:
+            if element in data:
+                return_count += 1
+        return return_count
+
+
     ####################################################################__condition method group__####################################################################
     # LTE UE Capabiility Tab UE/UL/DL category (3 unit)
-    def get_conditional_1(self, ws):
+    def get_conditional_1(self, ws, index):
 
         list_return = ['', '', '']
         list_merged = ws.merged_cells.ranges
@@ -174,7 +181,7 @@ class Formater(QThread):
         for cell in ws['A']:
             if cell.value is None:
                 continue
-            if 'ue category' in cell.value.lower().strip():
+            if 'ue category' in str(cell.value).lower().strip():
 
                 values = []
                 cell_address = cell.coordinate
@@ -203,7 +210,7 @@ class Formater(QThread):
                 top_value = max(values)
                 list_return[0] = top_value
                 continue
-            elif 'dl category' in cell.value.lower().strip():
+            elif 'dl category' in str(cell.value).lower().strip():
                 values = []
                 cell_address = cell.coordinate
                 cell_rows = [int(cell.row)]
@@ -231,7 +238,7 @@ class Formater(QThread):
                 top_value = max(values)
                 list_return[1] = top_value
                 continue
-            elif 'ul category' in cell.value.lower().strip():
+            elif 'ul category' in str(cell.value).lower().strip():
                 values = []
                 cell_address = cell.coordinate
                 cell_rows = [int(cell.row)]
@@ -259,33 +266,33 @@ class Formater(QThread):
                 top_value = max(values)
                 list_return[2] = top_value
                 continue
-        self.setPrintText('/s Method 1 Return Array : {} /e'.format(list_return))
+        self.setPrintText('/s {} Method 1 Return Array : {} /e'.format(index, list_return))
         return list_return
 
-    # LTE UE Capabiility ab DL256QAM/ UL64QAM / ULCA / MC-PUSCH / 4X4 MIMO / CA 지원여부 / Max CC(7 unit)
+    # LTE UE Capabiility Tab DL256QAM/ UL64QAM / ULCA / MC-PUSCH / 4X4 MIMO / CA 지원여부 / Max CC(7 unit)
     # [None, '-', '/', '']
-    def get_conditional_2(self, ws):
+    def get_conditional_2(self, ws, index):
         list_return = ['', '', '', '', '', '', '']
         #####__DL256QAM Data Get__#####
         for cell in ws['B']:
             if cell.value is None:
                 continue
-            if 'dl modulation' in cell.value.lower():
+            if 'dl modulation' in str(cell.value).lower().strip():
                 cell_row = cell.row
-                c_value = ws['C'+str(cell_row)].value.strip()
-                if c_value != '256QAM':
-                    list_return[0] = 'Y'
-                else:
+                c_value = ws['C'+str(cell_row)].value
+                if '256qam' in c_value:
                     list_return[0] = 'N'
+                else:
+                    list_return[0] = 'Y'
                 break
         #####__UL64QAM Data Get__#####
         for cell in ws['D']:
             if cell.value is None:
                 continue
-            if 'ul modulation' in cell.value.lower():
+            if 'ul modulation' in str(cell.value).lower().strip():
                 cell_row = cell.row
-                c_value = ws['C'+str(cell_row)].value.strip()
-                if c_value != '64QAM':
+                c_value = ws['C'+str(cell_row)].value
+                if '64qam' in c_value:
                     list_return[1] = 'Y'
                 else:
                     list_return[1] = 'N'
@@ -294,12 +301,12 @@ class Formater(QThread):
         for cell in ws['D']:
             if cell.value is None:
                 continue
-            if 'uplink' in cell.value.lower():
+            if 'uplink' in str(cell.value).lower().strip():
                 cell_row = cell.row
                 max_row = ws.max_row
                 flag_support = False
                 for idx in range(cell_row + 1, max_row + 1):
-                    ca_value = ws['D' + str(idx)].value.strip()
+                    ca_value = ws['D' + str(idx)].value
                     if '-' in ca_value:
                         flag_support = True
                         break
@@ -312,10 +319,12 @@ class Formater(QThread):
         for cell in ws['D']:
             if cell.value is None:
                 continue
-            if 'mc-pusch' in cell.value.lower():
+            if 'mc-pusch' in str(cell.value).lower().strip():
                 cell_row = cell.row
-                e_value = ws['E'+str(cell_row)].value.strip().lower()
-                if e_value.lower() == 'supported':
+                e_value = ws['E'+str(cell_row)].value
+                if e_value is None:
+                    list_return[3] = 'N'
+                if e_value.lower().strip() == 'supported':
                     list_return[3] = 'Y'
                 else:
                     list_return[3] = 'N'
@@ -324,12 +333,12 @@ class Formater(QThread):
         for cell in ws['E']:
             if cell.value is None:
                 continue
-            if 'mimo layer' in cell.value.lower():
+            if 'mimo layer' in str(cell.value).lower().strip():
                 cell_row = cell.row
                 max_row = ws.max_row
                 flag_support = False
                 for idx in range(cell_row + 1, max_row + 1):
-                    ca_value = ws['E' + str(idx)].value.strip()
+                    ca_value = ws['E' + str(idx)].value
                     if ca_value not in [None, '-', '/', '']:
                         flag_support = True
                         break
@@ -342,12 +351,12 @@ class Formater(QThread):
         for cell in ws['B']:
             if cell.value is None:
                 continue
-            if 'combination' in cell.value.lower():
+            if 'combination' in str(cell.value).lower().strip():
                 cell_row = cell.row
                 max_row = ws.max_row
                 flag_support = False
                 for idx in range(cell_row + 1, max_row + 1):
-                    ca_value = ws['B' + str(idx)].value.strip()
+                    ca_value = ws['B' + str(idx)].value
                     if '+' in ca_value:
                         flag_support = True
                         break
@@ -360,12 +369,12 @@ class Formater(QThread):
         for cell in ws['B']:
             if cell.value is None:
                 continue
-            if 'combination' in cell.value.lower():
+            if 'combination' in str(cell.value).lower().strip():
                 cell_row = cell.row
                 max_row = ws.max_row
                 max_cc = 0
                 for idx in range(cell_row + 1, max_row + 1):
-                    ca_value = ws['B' + str(idx)].value.strip()
+                    ca_value = ws['B' + str(idx)].value
                     if '+' in ca_value:
                         list_band = ca_value.split('+')
                         if len(list_band) > max_cc:
@@ -377,12 +386,12 @@ class Formater(QThread):
                     list_return[6] = 'N'
                 break
         # retrun values
-        self.setPrintText('/s Method 2 Return Array : {} /e'.format(list_return))
+        self.setPrintText('/s {} Method 2 Return Array : {} /e'.format(index, list_return))
         return list_return
 
     # ueCapaInfo Tab == > CRDX(Short) / CRDX(Long) / L2W H/O / SRVCC(B2) / SRVCC(CS H/O) / ANR(Inter Freq.)
     # / ANR(Inter RAT) / TTIB / MFBI / A6 Event / RoHC(Profile) 1 / RoHC(Profile) 2/ RoHC(Profile) 4(13 unit)
-    def get_conditional_3(self, ws):
+    def get_conditional_3(self, ws, index):
         list_return = ['', '', '', '', '', '', '', '', '', '', '', '', '']
         tot_job_count = 0
         cs_ho_values = ['', '', '']
@@ -393,13 +402,13 @@ class Formater(QThread):
             if tot_job_count == 13:
                 break
             # get just one value extract
-            if cell.value.lower().strip() == 'supportedrohc-profiles':
+            if str(cell.value).lower().strip() == 'supportedrohc-profiles':
                 cell_row = cell.row
                 max_row = ws.max_row
                 supported_job_count = 0
 
                 for idx in range(cell_row + 1, max_row + 1):
-                    ca_value = ws['A' + str(idx)].value.lower().strip()
+                    ca_value = str(ws['A' + str(idx)].value).lower().strip()
                     if supported_job_count == 3:
                         break
                     #####__profile0x0001__#####
@@ -428,16 +437,16 @@ class Formater(QThread):
                         tot_job_count = tot_job_count + 1
 
             # get 1 ~ 10 unit extract
-            if cell.value.lower().strip() == '[feature group indicators]':
+            if 'feature group indicators' in str(cell.value).lower().strip():
                 cell_row = cell.row
                 max_row = ws.max_row
                 feature_job_count = 0
                 for idx in range(cell_row + 1, max_row + 1):
-                    ca_value = ws['A' + str(idx)].value.lower().strip()
+                    ca_value = str(ws['A' + str(idx)].value).lower().strip()
                     if feature_job_count == 12:
                         break
                     #####__CRDX(Short)__#####
-                    if 'pc_featrgrp_4' in ca_value:
+                    if 'pc_featrgrp_4 :' in ca_value:
                         list_info = ca_value.split(':')
                         if list_info[1].lower().strip() == 'support':
                             list_return[0] = 'Y'
@@ -446,7 +455,7 @@ class Formater(QThread):
                         tot_job_count = tot_job_count + 1
                         feature_job_count = feature_job_count + 1
                     #####__CRDX(Long)__#####
-                    if 'pc_featrgrp_5' in ca_value:
+                    if 'pc_featrgrp_5 :' in ca_value:
                         list_info = ca_value.split(':')
                         if list_info[1].lower().strip() == 'support':
                             list_return[1] = 'Y'
@@ -455,7 +464,7 @@ class Formater(QThread):
                         tot_job_count = tot_job_count + 1
                         feature_job_count = feature_job_count + 1
                     #####__L2W H/O__#####
-                    if 'pc_featrgrp_8' in ca_value:
+                    if 'pc_featrgrp_8 :' in ca_value:
                         list_info = ca_value.split(':')
                         if list_info[1].lower().strip() == 'support':
                             list_return[2] = 'Y'
@@ -464,7 +473,7 @@ class Formater(QThread):
                         tot_job_count = tot_job_count + 1
                         feature_job_count = feature_job_count + 1
                     #####__SRVCC(B2)__#####
-                    if 'pc_featrgrp_22' in ca_value:
+                    if 'pc_featrgrp_22 :' in ca_value:
                         list_info = ca_value.split(':')
                         if list_info[1].lower().strip() == 'support':
                             list_return[3] = 'Y'
@@ -473,22 +482,22 @@ class Formater(QThread):
                         tot_job_count = tot_job_count + 1
                         feature_job_count = feature_job_count + 1
                     #####__featrgrp_13__#####
-                    if 'pc_featrgrp_13' in ca_value:
+                    if 'pc_featrgrp_13 :' in ca_value:
                         list_info = ca_value.split(':')
                         cs_ho_values.append(list_info[1].lower().strip())
                         feature_job_count = feature_job_count + 1
                     #####__featrgrp_25__#####
-                    if 'pc_featrgrp_25' in ca_value:
+                    if 'pc_featrgrp_25 :' in ca_value:
                         list_info = ca_value.split(':')
                         cs_ho_values.append(list_info[1].lower().strip())
                         feature_job_count = feature_job_count + 1
                     #####__featrgrp_27__#####
-                    if 'pc_featrgrp_27' in ca_value:
+                    if 'pc_featrgrp_27 :' in ca_value:
                         list_info = ca_value.split(':')
                         cs_ho_values.append(list_info[1].lower().strip())
                         feature_job_count = feature_job_count + 1
                     #####__ANR(Inter Freq.)__#####
-                    if 'pc_featrgrp_18' in ca_value:
+                    if 'pc_featrgrp_18 :' in ca_value:
                         list_info = ca_value.split(':')
                         if list_info[1].lower().strip() == 'support':
                             list_return[5] = 'Y'
@@ -497,7 +506,7 @@ class Formater(QThread):
                         tot_job_count = tot_job_count + 1
                         feature_job_count = feature_job_count + 1
                     #####__ANR(Inter RAT)__#####
-                    if 'pc_featrgrp_19' in ca_value:
+                    if 'pc_featrgrp_19 :' in ca_value:
                         list_info = ca_value.split(':')
                         if list_info[1].lower().strip() == 'support':
                             list_return[6] = 'Y'
@@ -506,7 +515,7 @@ class Formater(QThread):
                         tot_job_count = tot_job_count + 1
                         feature_job_count = feature_job_count + 1
                     #####__TTIB and MFBI__#####
-                    if 'pc_featrgrp_28' in ca_value:
+                    if 'pc_featrgrp_28 :' in ca_value:
                         list_info = ca_value.split(':')
                         if list_info[1].lower().strip() == 'support':
                             list_return[7] = 'Y'
@@ -517,7 +526,7 @@ class Formater(QThread):
                         tot_job_count = tot_job_count + 2
                         feature_job_count = feature_job_count + 2
                     #####__A6 Event__#####
-                    if 'pc_featrgrp_111' in ca_value:
+                    if 'pc_featrgrp_111 :' in ca_value:
                         list_info = ca_value.split(':')
                         if list_info[1].lower().strip() == 'support':
                             list_return[9] = 'Y'
@@ -535,19 +544,19 @@ class Formater(QThread):
                     list_return[4] = 'N'
                 tot_job_count = tot_job_count + 1
 
-        self.setPrintText('/s Method 3 Return Array : {} /e'.format(list_return))
+        self.setPrintText('/s {} Method 3 Return Array : {} /e'.format(index, list_return))
         return list_return
 
     # LTE UE Capabiility tab 지원주파수 EUTRA-FDD(B1) / EUTRA-FDD(B3) /EUTRA-FDD(B5) / EUTRA-FDD(B7) / EUTRA-FDD(B8) (5 unit)
-    def get_conditional_4(self, ws):
+    def get_conditional_4(self, ws, index):
 
         list_return = ['N', 'N', 'N', 'N', 'N']
         for cell in ws['B']:
             if cell.value is None:
                 continue
-            if cell.value.lower().strip() == 'band list':
+            if str(cell.value).lower().strip() == 'band list':
                 row_idx = cell.row
-                c_value = ws['C' + str(row_idx)].value.lower().strip()
+                c_value = str(ws['C' + str(row_idx)].value).lower().strip()
                 # band 1 check
                 if '1' in c_value:
                     list_return[0] = 'Y'
@@ -565,12 +574,12 @@ class Formater(QThread):
                     list_return[4] = 'Y'
                 break
         # return band info
-        self.setPrintText('/s Method 4 Return Array : {} /e'.format(list_return))
+        self.setPrintText('/s {} Method 4 Return Array : {} /e'.format(index, list_return))
         return list_return
 
     #  LTE UE Capabiility tab 지원 CA ==> 5CA(2UL 지원여부) / 5CA(B1+B3+B5+B7+B7) / 4CA(2UL 지원여부) / 4CA(B1+B3+B5+B7)
     #  / 3DL+1UL(B1+B3+B5) / 3DL+2UL(B1+B3+B5) / 2DL+1UL(B1+B3) / 2DL+2UL(B1+B3) (35 unit)
-    def get_conditional_5(self, ws):
+    def get_conditional_5(self, ws, index):
 
         list_return = []
         # set default value list_return
@@ -584,13 +593,13 @@ class Formater(QThread):
             if cell.value is None:
                 continue
             # first find 'band combination'
-            if cell.value.lower().strip() == 'band combination':
+            if str(cell.value).lower().strip() == 'band combination':
                 cell_row = cell.row
                 max_row = ws.max_row
                 # append band info in list_band_info
                 for idx in range(cell_row + 1, max_row + 1):
-                    band_value = ws['B'+str(idx)].value.lower().strip()
-                    ca_value = ws['C'+str(idx)].value.lower().strip()
+                    band_value = str(ws['B'+str(idx)].value).lower().strip()
+                    ca_value = str(ws['C'+str(idx)].value).lower().strip()
                     ca_value = ca_value.replace('a', '')
                     list_band_info.append(band_value)
                     list_ca_info.append(ca_value)
@@ -821,11 +830,11 @@ class Formater(QThread):
                 # stop method
                 break
         # return band info
-        self.setPrintText('/s Method 5 Return Array : {} /e'.format(list_return))
+        self.setPrintText('/s {} Method 5 Return Array : {} /e'.format(index, list_return))
         return list_return
 
     #  LTE UE Capabiility tab 지원 MIMO ==>(42 unit)
-    def get_conditional_6(self, ws):
+    def get_conditional_6(self, ws, index):
 
         list_return = []
         # set default value list_return
@@ -839,25 +848,23 @@ class Formater(QThread):
             if cell.value is None:
                 continue
             # first find 'band combination'
-            if '4x4 mimo layer' in cell.value.lower().strip():
+            if '4x4 mimo layer' in str(cell.value).lower().strip():
                 cell_row = cell.row
                 max_row = ws.max_row
-                job_count = 0
                 # append MIMO and band info in list
                 for idx in range(cell_row + 1, max_row + 1):
                     mimo_value = '-'
                     band_value = '-'
                     if ws['E'+str(idx)].value not in [None, '-', '']:
-                        mimo_value = ws['E'+str(idx)].value.lower().strip()
+                        mimo_value = str(ws['E'+str(idx)].value).lower().replace(' ', '')
                     if ws['B'+str(idx)].value not in [None, '-', '']:
-                        band_value = ws['B'+str(idx)].value.lower().strip()
+                        band_value = str(ws['B'+str(idx)].value).lower()
                     list_mimo_info.append(mimo_value)
                     list_band_info.append(band_value)
 
                 # check band info
                 for idx, item in enumerate(list_band_info):
-                    if job_count == 42:
-                        break
+
                     # size CA count
                     list_ca_band = item.split('+')
                     ca_count = len(list_ca_band)
@@ -868,167 +875,125 @@ class Formater(QThread):
                     if 'b1' in mimo_value:
                         if ca_count == 1:
                             list_return[0] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 2:
                             list_return[1] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 3:
                             list_return[2] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 4:
                             list_return[3] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 5:
                             list_return[4] = 'Y'
-                            job_count = job_count + 1
 
                     # MIMO b3 포함 CA 조합 조회
                     if 'b3' in mimo_value:
                         if ca_count == 1:
                             list_return[5] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 2:
                             list_return[6] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 3:
                             list_return[7] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 4:
                             list_return[8] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 5:
                             list_return[9] = 'Y'
-                            job_count = job_count + 1
 
                     # MIMO b7 포함 CA 조합 조회
                     if 'b7' in mimo_value:
                         if ca_count == 1:
                             list_return[10] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 2:
                             list_return[11] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 3:
                             list_return[12] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 4:
                             list_return[13] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 5:
                             list_return[14] = 'Y'
-                            job_count = job_count + 1
 
                     # MIMO b1 + b3 포함 CA 조합 조회
                     if 'b1' in mimo_value and 'b3' in mimo_value:
                         if ca_count == 2:
                             list_return[15] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 3:
                             list_return[16] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 4:
                             list_return[17] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 5:
                             list_return[18] = 'Y'
-                            job_count = job_count + 1
 
                     # MIMO b3 + b7 포함 CA 조합 조회
                     if 'b3' in mimo_value and 'b7' in mimo_value:
                         if ca_count == 2:
                             list_return[19] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 3:
                             list_return[20] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 4:
                             list_return[21] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 5:
                             list_return[22] = 'Y'
-                            job_count = job_count + 1
 
                     # MIMO b1 + b7 포함 CA 조합 조회
                     if 'b1' in mimo_value and 'b7' in mimo_value:
                         if ca_count == 2:
                             list_return[23] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 3:
                             list_return[24] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 4:
                             list_return[25] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 5:
                             list_return[26] = 'Y'
-                            job_count = job_count + 1
 
                     # MIMO b7 + b7 포함 CA 조합 조회
-                    if list_mimo.count('b7') >= 2:
+                    if list_mimo.count("b7") >= 2:
                         if ca_count == 2:
                             list_return[27] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 3:
                             list_return[28] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 4:
                             list_return[29] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 5:
                             list_return[30] = 'Y'
-                            job_count = job_count + 1
 
                     # MIMO b1 + b3 + b7 포함 CA 조합 조회
                     if 'b1' in mimo_value and 'b3' in mimo_value and 'b7' in mimo_value:
                         if ca_count == 3:
                             list_return[31] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 4:
                             list_return[32] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 5:
                             list_return[33] = 'Y'
-                            job_count = job_count + 1
 
                     # MIMO b1 + b7 + b7 포함 CA 조합 조회
-                    if 'b1' in mimo_value and list_mimo.count('b7') == 2:
+                    if 'b1' in mimo_value and list_mimo.count("b7") == 2:
                         if ca_count == 3:
                             list_return[34] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 4:
                             list_return[35] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 5:
                             list_return[36] = 'Y'
-                            job_count = job_count + 1
 
                     # MIMO b3 + b7 + b7 포함 CA 조합 조회
-                    if 'b3' in mimo_value and list_mimo.count('b7') == 2:
+                    if 'b3' in mimo_value and list_mimo.count("b7") == 2:
                         if ca_count == 3:
                             list_return[37] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 4:
                             list_return[38] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 5:
                             list_return[39] = 'Y'
-                            job_count = job_count + 1
 
                     # MIMO b1 + b3 + b7 + b7 포함 CA 조합 조회
-                    if 'b1' in mimo_value and 'b3' in mimo_value and list_mimo.count('b7') == 2:
+                    if 'b1' in mimo_value and 'b3' in mimo_value and list_mimo.count("b7") == 2:
                         if ca_count == 4:
                             list_return[40] = 'Y'
-                            job_count = job_count + 1
                         elif ca_count == 5:
                             list_return[41] = 'Y'
-                            job_count = job_count + 1
 
                 # stop method
                 break
 
 
         # return band info
-        self.setPrintText('/s Method 6 Return Array : {} /e'.format(list_return))
+        self.setPrintText('/s {} Method 6 Return Array : {} /e'.format(index, list_return))
         return list_return
 
     # extract condition in extract sheet 'A', 'B', 'C' column
@@ -1053,15 +1018,15 @@ class Formater(QThread):
         return return_data
 
     # check empty cell in sheet
-    def check_condition(self, ws):
+    def check_condition(self, ws, sheet_name):
         return_ws = ws
         max_row = ws.max_row
-        self.setPrintText('Check Empty Cell Count max_rows : {}'.format(max_row))
+        self.setPrintText('/s {} sheet Check Empty Cell Count max_rows : {}/e'.format(sheet_name, max_row))
         for item in ['A', 'B', 'C']:
             for cell in return_ws[item]:
                 if cell.value is None or cell.value == '' or cell.value.lower() in ['n/a', 'na', 'nt', 'n/t']:
                     cell.value = '-'
-        self.setPrintText('Check Empty Cell job is Completed')
+        self.setPrintText('/s {} sheet Check Empty Cell job is Completed /e'.format(sheet_name))
         return return_ws
 
     # generate ca file data sheet and save
@@ -1071,18 +1036,27 @@ class Formater(QThread):
             list_input_rows = []
             wb_output = openpyxl.load_workbook(file_in_path, data_only=True)
             list_sheets = wb_output.sheetnames
-
+            sheet_type = 1
             # 모든 필요 시트 충족 조건
-            if 'LTE UE Capabiility' in list_sheets and 'ueCapaInfo_LTE' in list_sheets and \
+            if 'LTE UE Capabiility' in list_sheets and ('ueCapaInfo_LTE' in list_sheets or 'ueCapaInfo' in list_sheets)and \
                 '추출정보' in list_sheets and '기본단말_Spec정보' in list_sheets:
+                # Capabiility sheet type 확인
+                if 'ueCapaInfo_LTE' in list_sheets:
+                    sheet_type = 2
 
                 ws_lte_cap = wb_output['LTE UE Capabiility']
-                ws_lte_ueCap = wb_output['ueCapaInfo_LTE']
+                # Capabiility '1'
+                if sheet_type == 1:
+                    ws_lte_ueCap = wb_output['ueCapaInfo']
+                # Capabiility '2'
+                else:
+                    ws_lte_ueCap = wb_output['ueCapaInfo_LTE']
+
                 ws_spec = wb_output['기본단말_Spec정보']
                 ws_extract = wb_output['추출정보']
 
-                ws_spec_re = self.check_condition(ws_spec)
-                ws_extract_re = self.check_condition(ws_extract)
+                ws_spec_re = self.check_condition(ws_spec, '기본단말_Spec정보')
+                ws_extract_re = self.check_condition(ws_extract, '추출정보')
 
                 # A, B, C column 조건 값 추출
                 a_condi, b_condi, c_condi = self.extract_condition(ws_extract_re)
@@ -1100,59 +1074,84 @@ class Formater(QThread):
 
                 # Check len count
                 if len(list_input_rows) != 105:
-                    self.setPrintText('/s {} 파일에 추출정보에 있는 값 중 기본단말_Spec정보에 없는 것이 있습니다. 정보를 다시 확인해 주세요. /e'.format(file_in_path))
+                    self.setPrintText('/s "{}" 파일의 추출정보에 있는 값 중 "기본단말_Spec정보" 에 없는 것이 있습니다. 정보를 다시 확인해 주세요. /e'.format(file_in_path))
                     return
 
                 ##########################################__1 method start__##########################################
-                list_tot_returns = self.get_conditional_1(ws_lte_cap)
-
+                list_tot_returns = self.get_conditional_1(ws_lte_cap, file_idx)
+                self.currentRow = 1
+                self.progress_flag.emit()
                 ##########################################__2 method start__##########################################
-                list_tot_returns.extend(self.get_conditional_2(ws_lte_cap))
-
+                list_tot_returns.extend(self.get_conditional_2(ws_lte_cap, file_idx))
+                self.currentRow = 2
+                self.progress_flag.emit()
                 ##########################################__3 method start__##########################################
-                list_tot_returns.extend(self.get_conditional_3(ws_lte_ueCap))
-
+                list_tot_returns.extend(self.get_conditional_3(ws_lte_ueCap, file_idx))
+                self.currentRow = 3
+                self.progress_flag.emit()
                 ##########################################__4 method start__##########################################
-                list_tot_returns.extend(self.get_conditional_4(ws_lte_cap))
-
+                list_tot_returns.extend(self.get_conditional_4(ws_lte_cap, file_idx))
+                self.currentRow = 4
+                self.progress_flag.emit()
                 ##########################################__5 method start__##########################################
-                list_tot_returns.extend(self.get_conditional_5(ws_lte_cap))
-
+                list_tot_returns.extend(self.get_conditional_5(ws_lte_cap, file_idx))
+                self.currentRow = 5
+                self.progress_flag.emit()
                 ##########################################__6 method start__##########################################
-                list_tot_returns.extend(self.get_conditional_6(ws_lte_cap))
-
+                list_tot_returns.extend(self.get_conditional_6(ws_lte_cap, file_idx))
+                self.currentRow = 6
+                self.progress_flag.emit()
                 ##########################################__spec 시트에 값 입력__##########################################
-                for idx, item in list_tot_returns:
+                ws_spec['F1'].value = '결과값 비교'
+                for idx, item in enumerate(list_tot_returns):
                     row_num = list_input_rows[idx]
+                    mark_data = str(ws_spec['D'+str(row_num)].value)
                     ws_spec['E'+str(row_num)].value = item
+                    if mark_data == str(item):
+                        ws_spec['F' + str(row_num)].value = 'Match'
+                    else:
+                        ws_spec['F' + str(row_num)].value = 'Mismatch'
                     self.setPrintText('/s {} 번째 파일 "기본단말_Spec정보" 시트 {}행 데이터 입력 /e'.format(file_idx, row_num))
 
                 ##########################################__spec 시트 E열 옵션 조정__##########################################
-                # all cell font adjust
+                # E column all cell font adjust
                 max_row = ws_spec.max_row
                 for mCell in ws_spec["E1:E"+str(max_row)]:
                     for cell in mCell:
                         if cell.row == 1:
                             cell.fill = self.gray_fill
 
-                        cell.font = self.index_font
+                        cell.font = self.red_font
                         cell.alignment = self.general_alignment
                         cell.border = self.thin_border
 
-                    # set filter
-                    ws_spec.auto_filter.ref = "A1:E"+str(max_row)
+                # F column all cell font adjust
+                max_row = ws_spec.max_row
+                for mCell in ws_spec["F1:F"+str(max_row)]:
+                    for cell in mCell:
+                        if cell.row == 1:
+                            cell.fill = self.gray_fill
+                            cell.font = self.red_font
 
-                    # each column width adjust
-                    sheet_cell_list = ['A', 'B', 'C', 'D', 'E']
-                    sheet_width_list = [21, 31.71, 31.71, 28.43, 28.43]
-                    for i in range(len(sheet_cell_list)):
-                        ws_spec.column_dimensions[sheet_cell_list[i]].width = sheet_width_list[i]
-                    # ws_spec.row_dimensions[1].height = 45
+                        if cell.value == 'Match':
+                            cell.font = self.blue_font
+                        elif cell.value == 'Mismatch':
+                            cell.font = self.red_font
 
-                self.currentRow = self.currentRow + 1
-                self.totalRows = self.totalRows + 1
-                self.progress_flag.emit()
-                self.setPrintText('/s {}번 파일 "Comparison" 시트 스타일 적용 완료 /e'.format(idx+1))
+                        cell.alignment = self.general_alignment
+                        cell.border = self.thin_border
+
+                # set filter
+                ws_spec.auto_filter.ref = "A1:F"+str(max_row)
+
+                # each column width adjust
+                sheet_cell_list = ['A', 'B', 'C', 'D', 'E', 'F']
+                sheet_width_list = [21, 31.71, 31.71, 32.43, 32.43, 16.57]
+                for i in range(len(sheet_cell_list)):
+                    ws_spec.column_dimensions[sheet_cell_list[i]].width = sheet_width_list[i]
+                # ws_spec.row_dimensions[1].height = 45
+
+                self.setPrintText('/s {}번 파일 "기본단말_Spec정보" 시트 스타일 적용 완료 /e'.format(file_idx))
                 # save file
                 wb_output.save(file_out_path)
             else:
@@ -1176,136 +1175,30 @@ class Formater(QThread):
 
             #################################################################_SETTING INPUT_###########################################################################
             # Save root directory
-            self.flag_root = os.path.isdir(self.home+"\\Desktop\\DOC\\")
+            self.flag_root = os.path.isdir(self.home+"\\Desktop\\CA\\")
             if not self.flag_root:
-                os.mkdir(self.home + "\\Desktop\\DOC\\")
+                os.mkdir(self.home + "\\Desktop\\CA\\")
 
             # extract file name each list_files and make every out file path
-            for item in self.list_files:
+            for idx, item in enumerate(self.list_files):
                 temp_filename = os.path.basename(item)
                 temp_filename = re.sub("(.xlsx|.xls)", "", temp_filename)
-                output_file = self.home+"\\Desktop\\DOC\\result_"+temp_filename+"("+self.nowTime+").xlsx"
-                self.list_out_files.append(output_file)
-
-            if self.modeFlag == "f1":
-
-                #################################################################_RESULT FILE Generate_###########################################################################
-                # output file generate
-
-                self.setPrintText("/s Complete making Result excel file /e")
-                self.setPrintText("/s Extract Original Data in each file /e")
+                output_file = self.home+"\\Desktop\\CA\\result_"+temp_filename+"("+self.nowTime+").xlsx"
+                # self.list_out_files.append(output_file)
 
                 #Core Code
                 self.start_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
                 #Excel input Data read
                 self.setPrintText("/s STARTED_TIME: "+self.start_time+" /e")
-
-                ########################################################################Start to generate openpyXL Sheet Style########################################################################
-                # 검증결과요약 텝 생성
-                self.summary_generate_data()
-                self.totalRows = 1
+                self.generate_sheet(item, output_file, idx+1)
                 self.currentRow = 0
-                self.progress_flag.emit()
+                self.totalRows = self.totalRows + 1
 
-                # 시험결과요약 텝 생성
-                self.test_generate_data()
-                self.totalRows = 2
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                # TRP 텝 생성
-                self.trp_generate_data()
-                self.totalRows = 3
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                # TIS 텝 생성
-                self.tis_generate_data()
-                self.totalRows = 4
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                # 속도 텝 생성
-                self.spd_generate_data()
-                self.totalRows = 5
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                # Call Setup Test 텝 생성
-                self.call_generate_data()
-                self.totalRows = 6
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                # 주파수동조 텝 생성
-                self.fre_generate_data()
-                self.totalRows = 7
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                # MOS 텝 생성
-                self.mos_generate_data()
-                self.totalRows = 8
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                # 베터리소모전류(DOU) 텝 생성
-                self.dou_generate_data()
-                self.totalRows = 9
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                # 베터리소모전류 세부테이터 텝 생성
-                self.bat_generate_data()
-                self.totalRows = 10
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                # 베터리소모전류 세부테이터 텝 생성
-                self.time_generate_data()
-                self.totalRows = 11
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                # 베터리소모전류 세부테이터 텝 생성
-                self.attach_generate_data_1()
-                self.totalRows = 12
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                # 베터리소모전류 세부테이터 텝 생성
-                self.attach_generate_data_2()
-                self.totalRows = 13
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                # 베터리소모전류 세부테이터 텝 생성
-                self.attach_generate_data_3()
-                self.totalRows = 14
-                self.currentRow = 0
-                self.progress_flag.emit()
-
-                #############################################__progress 100%__#############################################
-                self.end_count = "y"
-                self.end_flag.emit()
-
-                #Core Code
-                self.end_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-                #Excel input Data read
-                self.setPrintText("/s FINISHED_TIME: "+self.end_time+" /e")
-
-            else:
-                #Core Code
-                self.start_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-                #Excel input Data read
-                self.setPrintText("/s STARTED_TIME: "+self.start_time+" /e")
-                self.f2_generate_data()
-                self.end_count = "y"
-                self.end_flag.emit()
-                #Core Code
-                self.end_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-                #Excel input Data read
-                self.setPrintText("/s FINISHED_TIME: "+self.end_time+" /e")
+            # job closed
+            self.end_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+            self.setPrintText("/s FINISHED_TIME: " + self.end_time + " /e")
+            self.end_count = "y"
+            self.end_flag.emit()
 
         except:
             self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno)+' /e')
