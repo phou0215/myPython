@@ -33,19 +33,19 @@ class connMyDb(QThread):
         self.sheet_name_models = sheetName_models
         self.sheet_name_models2 = sheetName_models2
         self.db_name = 'testenc'
-        # self.dict_cols = {"네트워크본부":"netHead", "운용팀":"manageTeam", "운용사":"manageCo", "접수일":"regiDate", "접수시간":"regiTime",\
+        # self.dict_cols = {"네트워크본부":"netHead", "운용팀":"manageTeam", "운용사":"manageCo", "서비스관리번호":"serviceNum", "접수일":"regiDate", "접수시간":"regiTime",\
         #                   "상담유형1":"counsel1", "상담유형2":"counsel2", "상담유형3":"counsel3", "상담유형4":"counsel4", "상담사조치1":"action1",\
         #                   "상담사조치2":"action2", "상담사조치3":"action3", "상담사조치4":"action4", "단말기제조사":"manu", "단말기모델명":"model",\
         #                   "단말기모델명2":"model2", "단말기코드":"devCode", "단말기출시일":"devLaunchDate", "HDVoice단말여부":"hdvoiceFlag", "NETWORK방식2":"netMethod2",\
         #                   "발생시기1":"ocSpot1", "발생시기2":"ocSpot2", "지역1":"loc1", "지역2":"loc2", "지역3":"loc3", \
-        #                   "시/도":"state", "구/군명":"district", "요금제코드명":"planCode", "사용자AGENT":"userAgent", "단말기애칭":"petName",\
+        #                   "시/도":"state", "구/군명":"district", "요금제코드명":"planCode", "사용자AGENT":"userAgent", "단말기애칭":"petName", "최근로밍여부": "roamFlag", "T전화가입여부: "tFlag":
         #                   "USIM카드명":"usimName", "댁내중계기여부":"repeaterFlag", "VOC접수번호":"vocRecieve", "서비스변경일자":"changeDate", "메모":"memo", "메모요약":"memoSum", "메모분류":"class1",\
-        #                   "업데이트 유무":"updateFlag", "해외로밍 유무":"roamFlag", "소프트웨어":"swVer", "이슈번호":"issueId", "추출단어":"extractWd"}
+        #                   "업데이트 유무":"updateFlag", "소프트웨어":"swVer", "이슈번호":"issueId", "추출단어":"extractWd"}
 
-        self.list_cols1 = ["issueId", "netHead", "manageTeam", "manageCo", "regiDate", "regiTime", "counsel1", "counsel2", "counsel3", "counsel4"]
+        self.list_cols1 = ["issueId", "netHead", "manageTeam", "manageCo", "serviceNum", "regiDate", "regiTime", "counsel1", "counsel2", "counsel3", "counsel4"]
         self.list_cols2 = ["issueId", "action1", "action2", "action3", "action4", "manu", "model", "model2", "devCode", "devLaunchDate"]
-        self.list_cols3 = ["issueId", "hdvoiceFlag", "netMethod2","ocSpot1", "ocSpot2", "loc1", "loc2", "loc3", "state", "district"]
-        self.list_cols4 = ["issueId", "planCode", "userAgent", "petName", "usimName", "repeaterFlag", "vocRecieve", "changeDate", "memo", "memoSum", "class1", "updateFlag", "roamFlag", "swVer", "extractWord"]
+        self.list_cols3 = ["issueId", "hdvoiceFlag", "netMethod2", "ocSpot1", "ocSpot2", "loc1", "loc2", "loc3", "state", "district"]
+        self.list_cols4 = ["issueId", "planCode", "userAgent", "petName", "roamFlag", "tFlag", "usimName", "repeaterFlag", "vocRecieve", "changeDate", "memo", "memoSum", "class1", "updateFlag", "swVer", "extractWord"]
         self.temp_cols = self.list_cols1 + self.list_cols2 + self.list_cols3 + self.list_cols4
         #remove duplication columns for rename excel columns
         self.list_cols = []
@@ -106,9 +106,7 @@ class connMyDb(QThread):
         self.print_text = self.strToday+":\n"+self.text+"\n"
         self.print_conn_flag.emit(self.print_text)
 
-
     def deleteData(self, dataframe, dataframe_sort, dataframe_subscriber):
-
         self.ids = dataframe["issueId"].tolist()
         self.ids_sort = dataframe_sort["issueId"].tolist()
         self.ids_subs = dataframe_subscriber["고유번호"].tolist();
@@ -169,8 +167,11 @@ class connMyDb(QThread):
         self.netHead = dataframe["netHead"].tolist()
         self.manageTeam = dataframe["manageTeam"].tolist()
         self.manageCo = dataframe["manageCo"].tolist()
+        self.serviceNum = dataframe["serviceNum"].tolist()
         self.regiDate = dataframe["regiDate"].tolist()
+        self.regiDate = ["1970-01-01" if x=="" else x for x in self.regiDate]
         self.regiTime = dataframe["regiTime"].tolist()
+        self.regiTime = ["00:00:00" if x=="" else x for x in self.regiTime]
         self.counsel1 = dataframe["counsel1"].tolist()
         self.counsel2 = dataframe["counsel2"].tolist()
         self.counsel3 = dataframe["counsel3"].tolist()
@@ -189,7 +190,7 @@ class connMyDb(QThread):
         self.model2 = dataframe["model2"].tolist()
         self.devCode = dataframe["devCode"].tolist()
         self.devLaunchDate = dataframe["devLaunchDate"].tolist()
-        self.devLaunchDate = [None if x=="" else x for x in self.devLaunchDate]
+        self.devLaunchDate = [None if x == "" else x for x in self.devLaunchDate]
         self.hdvoiceFlag = dataframe["hdvoiceFlag"].tolist()
         self.netMethod2 = dataframe["netMethod2"].tolist()
         self.ocSpot1 = dataframe["ocSpot1"].tolist()
@@ -203,6 +204,8 @@ class connMyDb(QThread):
 
         self.planCode = dataframe["planCode"].tolist()
         self.userAgent = dataframe["userAgent"].tolist()
+        self.roamFlag = dataframe["roamFlag"].tolist()
+        self.tFlag = dataframe["tFlag"].tolist()
         self.petName = dataframe["petName"].tolist()
         self.usimName = dataframe["usimName"].tolist()
         self.repeaterFlag = dataframe["repeaterFlag"].tolist()
@@ -213,16 +216,15 @@ class connMyDb(QThread):
         self.memoSum = dataframe["memoSum"].tolist()
         self.class1 = dataframe["class1"].tolist()
         self.updateFlag = dataframe["updateFlag"].tolist()
-        self.roamFlag = dataframe["roamFlag"].tolist()
         self.swVer = dataframe["swVer"].tolist()
         self.extractWord = dataframe["extractWord"].tolist()
 
-        self.voc_values = [self.issueId, self.netHead, self.manageTeam, self.manageCo, self.regiDate, self.regiTime,\
+        self.voc_values = [self.issueId, self.netHead, self.manageTeam, self.manageCo, self.serviceNum, self.regiDate, self.regiTime,\
         self.counsel1, self.counsel2, self.counsel3, self.counsel4, self.receiveDate, self.action1, self.action2, self.action3,\
         self.action4, self.manu, self.model, self.model2, self.devCode, self.devLaunchDate, self.hdvoiceFlag, self.netMethod2,\
         self.ocSpot1, self.ocSpot2, self.loc1, self.loc2, self.loc3, self.state, self.district, self.planCode, self.userAgent,\
-        self.petName, self.usimName, self.repeaterFlag, self.vocRecieve, self.changeDate, self.memo, self.memoSum, self.class1, \
-        self.updateFlag, self.roamFlag, self.swVer, self.extractWord]
+        self.petName, self.roamFlag, self.tFlag, self.usimName, self.repeaterFlag, self.vocRecieve, self.changeDate, self.memo, self.memoSum, self.class1, \
+        self.updateFlag, self.swVer, self.extractWord]
 
 
         ####################### VOC sort Table #################################
@@ -230,8 +232,11 @@ class connMyDb(QThread):
         self.netHead_sort = dataframe_sort["netHead"].tolist()
         self.manageTeam_sort = dataframe_sort["manageTeam"].tolist()
         self.manageCo_sort = dataframe_sort["manageCo"].tolist()
+        self.serviceNum_sort = dataframe_sort["serviceNum"].tolist()
         self.regiDate_sort = dataframe_sort["regiDate"].tolist()
+        self.regiDate_sort = ["1970-01-01" if x=="" else x for x in self.regiDate_sort]
         self.regiTime_sort = dataframe_sort["regiTime"].tolist()
+        self.regiTime_sort = ["00:00:00" if x=="" else x for x in self.regiTime_sort]
         self.counsel1_sort = dataframe_sort["counsel1"].tolist()
         self.counsel2_sort = dataframe_sort["counsel2"].tolist()
         self.counsel3_sort = dataframe_sort["counsel3"].tolist()
@@ -261,6 +266,8 @@ class connMyDb(QThread):
         self.planCode_sort = dataframe_sort["planCode"].tolist()
         self.userAgent_sort = dataframe_sort["userAgent"].tolist()
         self.petName_sort = dataframe_sort["petName"].tolist()
+        self.roamFlag_sort = dataframe_sort["roamFlag"].tolist()
+        self.tFlag_sort = dataframe_sort["tFlag"].tolist()
         self.usimName_sort = dataframe_sort["usimName"].tolist()
         self.repeaterFlag_sort = dataframe_sort["repeaterFlag"].tolist()
         self.vocRecieve_sort = dataframe_sort["vocRecieve"].tolist()
@@ -270,23 +277,22 @@ class connMyDb(QThread):
         self.memoSum_sort = dataframe_sort["memoSum"].tolist()
         self.class1_sort = dataframe_sort["class1"].tolist()
         self.updateFlag_sort = dataframe_sort["updateFlag"].tolist()
-        self.roamFlag_sort = dataframe_sort["roamFlag"].tolist()
         self.swVer_sort = dataframe_sort["swVer"].tolist()
         self.extractWord_sort = dataframe_sort["extractWord"].tolist()
 
-        self.voc_values_sort = [self.issueId_sort, self.netHead_sort, self.manageTeam_sort, self.manageCo_sort, self.regiDate_sort, self.regiTime_sort,\
+        self.voc_values_sort = [self.issueId_sort, self.netHead_sort, self.manageTeam_sort, self.manageCo_sort, self.serviceNum_sort, self.regiDate_sort, self.regiTime_sort,\
         self.counsel1_sort, self.counsel2_sort, self.counsel3_sort, self.counsel4_sort, self.receiveDate, self.action1_sort, self.action2_sort, \
         self.action3_sort, self.action4_sort, self.manu_sort, self.model_sort, self.model2_sort, self.devCode_sort, self.devLaunchDate_sort, \
         self.hdvoiceFlag_sort, self.netMethod2_sort, self.ocSpot1_sort, self.ocSpot2_sort, self.loc1_sort, self.loc2_sort, self.loc3_sort, self.state_sort, \
-        self.district_sort, self.planCode_sort, self.userAgent_sort, self.petName_sort, self.usimName_sort, self.repeaterFlag_sort, self.vocRecieve_sort, \
-        self.changeDate_sort, self.memo_sort, self.memoSum_sort, self.class1_sort, self.updateFlag_sort, self.roamFlag_sort, self.swVer_sort, \
-        self.extractWord_sort]
+        self.district_sort, self.planCode_sort, self.userAgent_sort, self.petName_sort,  self.roamFlag_sort,  self.tFlag_sort, self.usimName_sort, self.repeaterFlag_sort, self.vocRecieve_sort, \
+        self.changeDate_sort, self.memo_sort, self.memoSum_sort, self.class1_sort, self.updateFlag_sort, self.swVer_sort, self.extractWord_sort]
 
 
         ####################### VOC subscriber Table #################################
 
         self.uniqueId = dataframe_subscriber["고유번호"].tolist()
         self.subsDate = dataframe_subscriber["일자"].tolist()
+        self.subsDate = ["1970-01-01" if x=="" else x for x in self.subsDate]
         self.model_subs = dataframe_subscriber["단말기명"].tolist()
         self.model2_subs = dataframe_subscriber["단말기모델명2"].tolist()
         self.hdv_subs = dataframe_subscriber["HD-V가입자"].tolist()
@@ -326,26 +332,26 @@ class connMyDb(QThread):
 
 
         # Generate tot sql
-        self.sql_insert = "INSERT INTO voc_tot_data(issueId, netHead, manageTeam, manageCo, regiDate, regiTime, counsel1, counsel2, counsel3, counsel4, receiveDate,"\
+        self.sql_insert = "REPLACE INTO voc_tot_data(issueId, netHead, manageTeam, manageCo, serviceNum, regiDate, regiTime, counsel1, counsel2, counsel3, counsel4, receiveDate,"\
         "action1, action2, action3, action4, manu, model, model2, devCode, devLaunchDate, hdvoiceFlag, netMethod2, ocSpot1, ocSpot2, loc1, loc2, loc3, state, district,"\
-        "planCode, userAgent, petName, usimName, repeaterFlag, vocRecieve, changeDate, memo, memoSum, class1, updateFlag, roamFlag, swVer, extractWord) "\
+        "planCode, userAgent, petName, roamFlag, tFlag, usimName, repeaterFlag, vocRecieve, changeDate, memo, memoSum, class1, updateFlag, swVer, extractWord) "\
         "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "\
-        "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         # Generate sort sql
-        self.sql_sort_insert = "INSERT INTO voc_sort_data(issueId, netHead, manageTeam, manageCo, regiDate, regiTime, counsel1, counsel2, counsel3, counsel4, receiveDate,"\
+        self.sql_sort_insert = "REPLACE INTO voc_sort_data(issueId, netHead, manageTeam, manageCo, serviceNum, regiDate, regiTime, counsel1, counsel2, counsel3, counsel4, receiveDate,"\
         "action1, action2, action3, action4, manu, model, model2, devCode, devLaunchDate, hdvoiceFlag, netMethod2, ocSpot1, ocSpot2, loc1, loc2, loc3, state, district,"\
-        "planCode, userAgent, petName, usimName, repeaterFlag, vocRecieve, changeDate, memo, memoSum, class1, updateFlag, roamFlag, swVer, extractWord) "\
+        "planCode, userAgent, petName, roamFlag, tFlag, usimName, repeaterFlag, vocRecieve, changeDate, memo, memoSum, class1, updateFlag, swVer, extractWord) "\
         "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "\
-        "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        "%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
 
         # Generate sort sql
-        self.sql_subs_insert = "INSERT INTO voc_subscriber(subsDate, model, model2, regiDate, subsHDV, subsLTE, subs5G, numSubs, uniqueId) "\
+        self.sql_subs_insert = "REPLACE INTO voc_subscriber(subsDate, model, model2, regiDate, subsHDV, subsLTE, subs5G, numSubs, uniqueId) "\
         "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
 
         # voc_model insert
-        self.sql_device_insert = "INSERT INTO voc_models (model, regiDate, flag, focusOn, launchDate, cellType, manu) VALUES(%s, %s, 1, 0, %s, %s, %s)"
+        self.sql_device_insert = "REPLACE INTO voc_models (model, regiDate, flag, focusOn, launchDate, cellType, manu) VALUES(%s, %s, 1, 0, %s, %s, %s)"
         # voc_model2 insert
-        self.sql_device_insert2 = "INSERT INTO voc_models2 (model, regiDate, flag, focusOn, launchDate, cellType, manu) VALUES(%s, %s, 1, 0, %s, %s, %s)"
+        self.sql_device_insert2 = "REPLACE INTO voc_models2 (model, regiDate, flag, focusOn, launchDate, cellType, manu) VALUES(%s, %s, 1, 0, %s, %s, %s)"
 
         try:
             self.setPrintText('/s DB Server에 통품전체 data 업로드 수행 중 /e')
@@ -463,7 +469,7 @@ class connMyDb(QThread):
             # self.thread_print.start()
             self.thread_count.start()
 
-            self.conn = pymysql.connect(host=self.address, user=self.user, password=self.password, db=self.db_name, charset='utf8')
+            self.conn = pymysql.connect(host=self.address, user=self.user, password=self.password, db=self.db_name, charset='utf8', autocommit=True)
             self.cur = self.conn.cursor(pymysql.cursors.DictCursor)
             # self.sql_update_db = "INSERT INTO "+self.table_name+"(question_text, pub_date) VALUES(%s,%s)"
             # 통품전체VOC

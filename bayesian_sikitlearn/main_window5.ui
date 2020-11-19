@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1234</width>
-    <height>873</height>
+    <width>1274</width>
+    <height>905</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -41,8 +41,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>1222</width>
-         <height>820</height>
+         <width>1262</width>
+         <height>852</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout">
@@ -148,6 +148,12 @@ background-color: rgb(60, 121, 182);</string>
                </item>
                <item>
                 <widget class="QGroupBox" name="groupBox_5">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>70</height>
+                  </size>
+                 </property>
                  <property name="title">
                   <string>Search Keyword</string>
                  </property>
@@ -284,6 +290,12 @@ background-color: rgb(60, 121, 182);</string>
                </item>
                <item>
                 <widget class="QGroupBox" name="groupBox_7">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>100</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
                    <width>16777215</width>
@@ -319,6 +331,12 @@ background-color: rgb(60, 121, 182);</string>
                </item>
                <item>
                 <widget class="QGroupBox" name="groupBox_17">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>100</height>
+                  </size>
+                 </property>
                  <property name="title">
                   <string>File Adjusting</string>
                  </property>
@@ -348,6 +366,12 @@ background-color: rgb(60, 121, 182);</string>
                </item>
                <item>
                 <widget class="QGroupBox" name="groupBox_18">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>190</height>
+                  </size>
+                 </property>
                  <property name="title">
                   <string>Parser Model Select</string>
                  </property>
@@ -395,6 +419,12 @@ background-color: rgb(60, 121, 182);</string>
                </item>
                <item>
                 <widget class="QGroupBox" name="groupBox_8">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>100</height>
+                  </size>
+                 </property>
                  <property name="maximumSize">
                   <size>
                    <width>16777215</width>
@@ -433,6 +463,12 @@ background-color: rgb(60, 121, 182);</string>
                </item>
                <item>
                 <widget class="QGroupBox" name="groupBox_6">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>85</height>
+                  </size>
+                 </property>
                  <property name="title">
                   <string>Control Button</string>
                  </property>
@@ -925,7 +961,7 @@ color: rgb(255, 255, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1234</width>
+     <width>1274</width>
      <height>21</height>
     </rect>
    </property>

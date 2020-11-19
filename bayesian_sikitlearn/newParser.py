@@ -527,10 +527,10 @@ class MyWindow(QMainWindow, form_class):
 
     def btn_start_conn(self):
         # set host db info
-        self.host_ip = self.lineEdit_address.text().replace(" ","")
-        self.host_port = self.lineEdit_port.text().replace(" ","")
-        self.host_id = self.lineEdit_id.text().replace(" ","")
-        self.host_pw = self.lineEdit_pw.text().replace(" ","")
+        self.host_ip = self.lineEdit_address.text().replace(" ", "")
+        self.host_port = self.lineEdit_port.text().replace(" ", "")
+        self.host_id = self.lineEdit_id.text().replace(" ", "")
+        self.host_pw = self.lineEdit_pw.text().replace(" ", "")
         self.updateFile_path = self.textEdit_browser_2.toPlainText().replace(" ","")
 
         self.flag = self.check_host(self.updateFile_path, self.host_ip, self.host_port, self.host_id, self.host_pw)

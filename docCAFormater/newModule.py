@@ -178,6 +178,7 @@ class Formater(QThread):
         list_merged = ws.merged_cells.ranges
         list_merged = [str(x) for x in list_merged]
         # UE category, DL category, UL category value
+
         for cell in ws['A']:
             if cell.value is None:
                 continue
@@ -1200,6 +1201,7 @@ class Formater(QThread):
 
             # extract file name each list_files and make every out file path
             for idx, item in enumerate(self.list_files):
+
                 temp_filename = os.path.basename(item)
                 temp_filename = re.sub("(.xlsx|.xls)", "", temp_filename)
                 output_file = self.home+"\\Desktop\\CA\\"+temp_filename+"_result("+self.nowTime+").xlsx"
