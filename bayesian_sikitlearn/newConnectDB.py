@@ -169,9 +169,9 @@ class connMyDb(QThread):
         self.manageCo = dataframe["manageCo"].tolist()
         self.serviceNum = dataframe["serviceNum"].tolist()
         self.regiDate = dataframe["regiDate"].tolist()
-        self.regiDate = ["1970-01-01" if x=="" else x for x in self.regiDate]
+        self.regiDate = ["1970-01-01" if x == "" else x for x in self.regiDate]
         self.regiTime = dataframe["regiTime"].tolist()
-        self.regiTime = ["00:00:00" if x=="" else x for x in self.regiTime]
+        self.regiTime = ["00:00:00" if x == "" else x for x in self.regiTime]
         self.counsel1 = dataframe["counsel1"].tolist()
         self.counsel2 = dataframe["counsel2"].tolist()
         self.counsel3 = dataframe["counsel3"].tolist()
@@ -211,7 +211,7 @@ class connMyDb(QThread):
         self.repeaterFlag = dataframe["repeaterFlag"].tolist()
         self.vocRecieve = dataframe["vocRecieve"].tolist()
         self.changeDate = dataframe["changeDate"].tolist()
-        self.changeDate = [None if x=="" else x for x in self.changeDate]
+        self.changeDate = [None if x == "" else x for x in self.changeDate]
         self.memo = dataframe["memo"].tolist()
         self.memoSum = dataframe["memoSum"].tolist()
         self.class1 = dataframe["class1"].tolist()
@@ -234,9 +234,9 @@ class connMyDb(QThread):
         self.manageCo_sort = dataframe_sort["manageCo"].tolist()
         self.serviceNum_sort = dataframe_sort["serviceNum"].tolist()
         self.regiDate_sort = dataframe_sort["regiDate"].tolist()
-        self.regiDate_sort = ["1970-01-01" if x=="" else x for x in self.regiDate_sort]
+        self.regiDate_sort = ["1970-01-01" if x == "" else x for x in self.regiDate_sort]
         self.regiTime_sort = dataframe_sort["regiTime"].tolist()
-        self.regiTime_sort = ["00:00:00" if x=="" else x for x in self.regiTime_sort]
+        self.regiTime_sort = ["00:00:00" if x == "" else x for x in self.regiTime_sort]
         self.counsel1_sort = dataframe_sort["counsel1"].tolist()
         self.counsel2_sort = dataframe_sort["counsel2"].tolist()
         self.counsel3_sort = dataframe_sort["counsel3"].tolist()
@@ -251,7 +251,7 @@ class connMyDb(QThread):
         self.model2_sort = dataframe_sort["model2"].tolist()
         self.devCode_sort = dataframe_sort["devCode"].tolist()
         self.devLaunchDate_sort = dataframe_sort["devLaunchDate"].tolist()
-        self.devLaunchDate_sort = [None if x=="" else x for x in self.devLaunchDate_sort]
+        self.devLaunchDate_sort = [None if x == "" else x for x in self.devLaunchDate_sort]
 
         self.hdvoiceFlag_sort = dataframe_sort["hdvoiceFlag"].tolist()
         self.netMethod2_sort = dataframe_sort["netMethod2"].tolist()
@@ -272,7 +272,7 @@ class connMyDb(QThread):
         self.repeaterFlag_sort = dataframe_sort["repeaterFlag"].tolist()
         self.vocRecieve_sort = dataframe_sort["vocRecieve"].tolist()
         self.changeDate_sort = dataframe_sort["changeDate"].tolist()
-        self.changeDate_sort = [None if x=="" else x for x in self.changeDate_sort]
+        self.changeDate_sort = [None if x == "" else x for x in self.changeDate_sort]
         self.memo_sort = dataframe_sort["memo"].tolist()
         self.memoSum_sort = dataframe_sort["memoSum"].tolist()
         self.class1_sort = dataframe_sort["class1"].tolist()
@@ -292,7 +292,7 @@ class connMyDb(QThread):
 
         self.uniqueId = dataframe_subscriber["고유번호"].tolist()
         self.subsDate = dataframe_subscriber["일자"].tolist()
-        self.subsDate = ["1970-01-01" if x=="" else x for x in self.subsDate]
+        self.subsDate = ["1970-01-01" if x == "" else x for x in self.subsDate]
         self.model_subs = dataframe_subscriber["단말기명"].tolist()
         self.model2_subs = dataframe_subscriber["단말기모델명2"].tolist()
         self.hdv_subs = dataframe_subscriber["HD-V가입자"].tolist()

@@ -1,1 +1,1 @@
-{"address": "192.168.0.42", "port": "3306", "id": "root", "pw": "navy1063"}
+{"address": "192.168.0.108", "port": "3306", "id": "m2", "pw": "testenc@01"}
