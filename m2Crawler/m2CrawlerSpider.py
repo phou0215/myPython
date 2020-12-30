@@ -903,7 +903,7 @@ class SearchCrawl():
         if renders:
 
             stories = renders[0].text
-            replys = soup.select('div.comment_wrapper div.comment_line > table > tbody > tr')
+            replys = soup.select('div.comment_wrapper')
             img_tag = renders[0].select('img')
             video_tag = renders[0].select('iframe')
 
@@ -916,6 +916,7 @@ class SearchCrawl():
                     url = ele['src']
                     url = self.encoding_url(url)
                     img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+
             # 동영상이 있으면 src url 모두 획득
             if video_tag:
                 for idx, ele in enumerate(video_tag):
@@ -930,15 +931,34 @@ class SearchCrawl():
             # 댓글 값 확인
             if replys:
                 for idx, item in enumerate(replys):
+                    reply_item = item.select('div.comment_line')
+                    print(len(reply_item))
+                    for idx2, item2 in enumerate(reply_item):
+                        # reply 날짜 형식 변경
+                        date_str = ''
+                        time_str = ''
+                        reportDate_raw = item2.select('font.eng-day')[0].text.strip()
+                        print(reportDate_raw)
+                        reportDate_str = re.findall('[0-9]{4}-[0-9]{2}-[0-9]{2}', reportDate_raw)
+                        print(reportDate_str)
+                        reportTime_str = re.findall('[0-9]{2}:[0-9]{2}:[0-9]{2}', reportDate_raw)
+                        print(reportTime_str)
+                        # date value check null
+                        if len(reportDate_str) == 0:
+                            date_str = ''
+                        else:
+                            date_str = reportDate_str[0]
+                        # time value check null
+                        if len(reportTime_str) == 0:
+                            time_str = ''
+                        else:
+                            time_str = reportTime_str[0]
+                        # 최종 값
 
-                    # reply 날짜 형식 변경
-                    reportDate_raw = item.select('td:nth-of-type(6) > font')[0].text.strip()
-                    reportDate_str = re.findall('[0-9]{4}-[0-9]{2}-[0-9]{2}', reportDate_raw)
-                    reportTime_str = re.findall('[0-9]{2}:[0-9]{2}:[0-9]{2}', reportDate_raw)
-                    # 최종 값
-                    reply_info = reportDate_str[0] + ' ' + reportTime_str[0]
-                    reply_main = item.select('td:nth-of-type(5) > div[id*=commentContent_]')[0].text.strip()
-                    reply_text = reply_text + str(idx+1) + ". " + reply_main + "(" + reply_info + ")\n"
+                        reply_info = date_str + ' ' + time_str
+                        reply_main = item2.select('div[id*=commentContent_]')[0].text.strip()
+                        print(reply_main)
+                        reply_text = reply_text + str(idx+1) + '-' + str(idx2+1) + ". " + reply_main + "(" + reply_info + ")\n"
             # 페이지 대기
             sleep(self.delay_time)
             # return values
@@ -1262,102 +1282,143 @@ class SearchCrawl():
                 basic_date = nowDate.strftime('%m-%d-%Y')
                 # 먼저 board number, title, reply_num, view_num, story_url을 추출하여 list에 입력
                 while True:
+                    self.setPrint('종료시그널 : {}'.format(flag_end))
                     if flag_end:
                         break
                     else:
                         self.action_wait(mode='css', ele_val='#revolution_main_table > tbody')
                         # article 데이터들
-                        text_xpath_node = '//*[@id="revolution_main_table"]/tbody/tr[@class="list1"] | //*[@id="revolution_main_table"]/tbody/tr[@class="list0"]'
+                        text_xpath_node = '//*[@id="revolution_main_table"]/tbody/tr[@class="list0" or @class="list1" or @class="list0 " or @class="list1 "]'
                         list_rows = self.get_elements(mode='xpath', ele_val=text_xpath_node)
                         article_size = len(list_rows)
-                        # 테이블 리스트 each tr 조회
-                        for idx, row in enumerate(list_rows):
-                            # article 값 추출
-                            # sleep(self.delay_time)
-                            # item = self.driver.find_element_by_css_selector('section > article:nth-child('+ str(idx) +')')
-                            link_ele = row.find_element_by_css_selector('td:nth-child(4) > a')
-                            story_url = link_ele.get_attribute('href').strip()
-                            board_ele = row.find_element_by_css_selector('td:nth-child(1)')
-                            board_num = board_ele.text.strip()
-                            board_num = int(board_num)
-                            board_date = row.find_element_by_css_selector('td:nth-child(5) > nobr').text.strip()
-                            # 게시물 타입(번호놀이 제외)
-                            board_type = row.find_element_by_css_selector('td:nth-child(2) > nobr').text.strip()
-                            # 당일 데이터만 획득
-                            flag_end = self.check_today(board_date)
-                            if flag_end:
-                                break
-                            else:
-                                # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
-                                # 번호 놀이는 제외
-                                if board_type == '번호놀이':
-                                    continue
-                                if board_num in list_bo_no:
-                                    continue
-                                title = link_ele.text.strip()
-                                # view_num 부분
-
-                                view_num = int(row.find_element_by_css_selector('td:nth-child(7)').text.strip().replace(",", ""))
-                                # reply_num 부분
-                                reply_num = 0
-                                reply_flag = self.is_element(mode='css', ele_val='td:nth-child(4) > span > span', ele_parent=row)
-                                if reply_flag:
-                                    reply_num = int(row.find_element_by_css_selector('td:nth-child(4) > span > span').text.strip().replace(",", ""))
-                                # 등록일 추출
-                                reportDate_raw = row.find_element_by_css_selector('td:nth-child(5)').get_attribute('title').strip()
-                                list_temp = reportDate_raw.split()
-
-                                # 날짜 형식 변경
-                                reportDate_str = list_temp[0]
-                                reportDate_date = datetime.strptime(reportDate_str, "%y.%m.%d")
-                                # 시간 형식 변경
-                                reportTime_str = list_temp[1]
-                                list_temp_time = reportTime_str.split(':')
-                                reportTime_str = list_temp_time[0]+':'+list_temp_time[1]
-                                # 최종 값
-                                reportDate = reportDate_date.strftime("%Y-%m-%d")
-                                reportTime = reportTime_str
-
-                                # 추출된 값 각 list에 입력
-                                list_bo_no.append(board_num)
-                                list_navi.append('공통')
-                                list_type.append('공통')
-                                list_device.append('공통')
-                                list_cate.append('Unknown')
-                                list_status.append('Unknown')
-                                list_reply_num.append(reply_num)
-                                list_view_num.append(view_num)
-                                list_title.append(title)
-                                list_story_url.append(story_url)
-                                list_report_date.append(reportDate)
-                                list_report_time.append(reportTime)
-                                self.setPrint('순번: {}\n게시번호: {}\n제목:{}'.format(idx, board_num, title))
-
-                                # 데이터 테이블의 마지막 행인 경우
-                                if idx == article_size - 1:
-                                    list_pages = self.driver.find_element_by_css_selector('#page_list')
-                                    action = ActionChains(self.driver)
-                                    action.move_to_element(list_pages).perform()
-                                    if page_num % 10 == 0:
-                                        page_num = page_num + 1
-                                        page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
-                                        page_ele[0].click()
-                                    else:
-                                        page_num = page_num + 1
-                                        page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="'+str(page_num)+'"]', ele_parent=list_pages)
-                                        page_ele[0].click()
-
-                                    self.setPrint('{} Page 페이지로 이동'.format(page_num))
+                        # //article 값이 없으면
+                        if article_size == 0:
+                            self.setPrint('뽐뿌 계시글 엘러먼트 미 존재 종료')
+                            flag_end = True
+                        else:
+                            # 테이블 리스트 each tr 조회
+                            for idx, row in enumerate(list_rows):
+                                # article 값 추출
+                                link_ele = row.find_element_by_css_selector('td:nth-child(4) > a')
+                                story_url = link_ele.get_attribute('href').strip()
+                                board_ele = row.find_element_by_css_selector('td:nth-child(1)')
+                                board_num = board_ele.text.strip()
+                                board_num = int(board_num)
+                                board_date = row.find_element_by_css_selector('td:nth-child(5) > nobr').text.strip()
+                                # 게시물 타입(번호놀이 제외)
+                                board_type = row.find_element_by_css_selector('td:nth-child(2) > nobr').text.strip()
+                                # 당일 데이터만 획득
+                                flag_end = self.check_today(board_date)
+                                if flag_end:
                                     break
+                                else:
+                                    # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
+                                    # 번호 놀이 맴버쉽은 제외
+                                    if board_type in ['번호놀이', '맴버쉽']:
+                                        # 데이터 테이블의 마지막 행인 경우
+                                        if idx == article_size - 1:
+                                            list_pages = self.driver.find_element_by_css_selector('#page_list')
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(list_pages).perform()
+                                            if page_num % 10 == 0:
+                                                page_num = page_num + 1
+                                                page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
+                                                page_ele[0].click()
+                                            else:
+                                                page_num = page_num + 1
+                                                page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="'+str(page_num)+'"]', ele_parent=list_pages)
+                                                page_ele[0].click()
+
+                                            self.setPrint('{} Page 페이지로 이동'.format(page_num))
+                                            break
+                                        # 데이터 마지막 행이 아닌 경우
+                                        else:
+                                            continue
+                                    if board_num in list_bo_no:
+                                        # 데이터 테이블의 마지막 행인 경우
+                                        if idx == article_size - 1:
+                                            list_pages = self.driver.find_element_by_css_selector('#page_list')
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(list_pages).perform()
+                                            if page_num % 10 == 0:
+                                                page_num = page_num + 1
+                                                page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]',
+                                                                             ele_parent=list_pages)
+                                                page_ele[0].click()
+                                            else:
+                                                page_num = page_num + 1
+                                                page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="' + str(
+                                                    page_num) + '"]', ele_parent=list_pages)
+                                                page_ele[0].click()
+
+                                            self.setPrint('{} Page 페이지로 이동'.format(page_num))
+                                            break
+                                        # 데이터 마지막 행이 아닌 경우
+                                        else:
+                                            continue
+                                    title = link_ele.text.strip()
+                                    # view_num 부분
+
+                                    view_num = int(row.find_element_by_css_selector('td:nth-child(7)').text.strip().replace(",", ""))
+                                    # reply_num 부분
+                                    reply_num = 0
+                                    reply_flag = self.is_element(mode='css', ele_val='td:nth-child(4) > span > span', ele_parent=row)
+                                    if reply_flag:
+                                        reply_num = int(row.find_element_by_css_selector('td:nth-child(4) > span > span').text.strip().replace(",", ""))
+                                    # 등록일 추출
+                                    reportDate_raw = row.find_element_by_css_selector('td:nth-child(5)').get_attribute('title').strip()
+                                    list_temp = reportDate_raw.split()
+
+                                    # 날짜 형식 변경
+                                    reportDate_str = list_temp[0]
+                                    reportDate_date = datetime.strptime(reportDate_str, "%y.%m.%d")
+                                    # 시간 형식 변경
+                                    reportTime_str = list_temp[1]
+                                    list_temp_time = reportTime_str.split(':')
+                                    reportTime_str = list_temp_time[0]+':'+list_temp_time[1]
+                                    # 최종 값
+                                    reportDate = reportDate_date.strftime("%Y-%m-%d")
+                                    reportTime = reportTime_str
+
+                                    # 추출된 값 각 list에 입력
+                                    list_bo_no.append(board_num)
+                                    list_navi.append('공통')
+                                    list_type.append('공통')
+                                    list_device.append('공통')
+                                    list_cate.append('Unknown')
+                                    list_status.append('Unknown')
+                                    list_reply_num.append(reply_num)
+                                    list_view_num.append(view_num)
+                                    list_title.append(title)
+                                    list_story_url.append(story_url)
+                                    list_report_date.append(reportDate)
+                                    list_report_time.append(reportTime)
+                                    self.setPrint('순번: {}\n게시번호: {}\n제목: {}\nURL: {}'.format(idx, board_num, title, story_url))
+
+                                    # 데이터 테이블의 마지막 행인 경우
+                                    if idx == article_size - 1:
+                                        list_pages = self.driver.find_element_by_css_selector('#page_list')
+                                        action = ActionChains(self.driver)
+                                        action.move_to_element(list_pages).perform()
+                                        if page_num % 10 == 0:
+                                            page_num = page_num + 1
+                                            page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
+                                            page_ele[0].click()
+                                        else:
+                                            page_num = page_num + 1
+                                            page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="'+str(page_num)+'"]', ele_parent=list_pages)
+                                            page_ele[0].click()
+
+                                        self.setPrint('{} Page 페이지로 이동'.format(page_num))
+                                        break
 
                 # 해당 본문 페이지 이동
                 if len(list_bo_no) != 0:
-
                     for idx, item in enumerate(list_story_url):
                         self.driver.get(item)
                         sleep(self.delay_time)
                         ############################################본문 페이지 메인 엘러먼트##########################################
-                        self.action_wait(mode='css', ele_val='body')
+                        self.action_wait(mode='css', ele_val='.btn_recommand')
                         # story 또는 image_url 또는 video_url 또는 댓글 부분
                         list_main_article = self.get_main_article_pp()
                         # set each list value
@@ -1374,100 +1435,140 @@ class SearchCrawl():
                         # 추출 데이터 count 기록
                         extract_num = extract_num + 1
                         sleep(1)
+
             # mongoDB에 최근 record가 있는 경우
             else:
                 # 먼저 board number, title, reply_num, view_num, story_url을 추출하여 list에 입력
                 while True:
+                    self.setPrint('종료시그널 : {}'.format(flag_end))
                     if flag_end:
                         break
                     else:
                         self.action_wait(mode='css', ele_val='#revolution_main_table > tbody')
                         # article 데이터들
-                        text_xpath_node = '//*[@id="revolution_main_table"]/tbody/tr[@class="list1"] | //*[@id="revolution_main_table"]/tbody/tr[@class="list0"]'
+                        text_xpath_node = '//*[@id="revolution_main_table"]/tbody/tr[@class="list0" or @class="list1" or @class="list0 " or @class="list1 "]'
                         list_rows = self.get_elements(mode='xpath', ele_val=text_xpath_node)
                         article_size = len(list_rows)
                         # 테이블 리스트 each tr 조회
-                        for idx, row in enumerate(list_rows):
-                            # article 값 추출
-                            # sleep(self.delay_time)
-                            # item = self.driver.find_element_by_css_selector('section > article:nth-child('+ str(idx) +')')
-                            link_ele = row.find_element_by_css_selector('td:nth-child(4) > a')
-                            story_url = link_ele.get_attribute('href').strip()
-                            board_ele = row.find_element_by_css_selector('td:nth-child(1)')
-                            board_num = board_ele.text.strip()
-                            board_num = int(board_num)
-                            board_date = row.find_element_by_css_selector('td:nth-child(5) > nobr').text.strip()
-                            # 게시물 타입(번호놀이 제외)
-                            board_type = row.find_element_by_css_selector('td:nth-child(2) > nobr').text.strip()
-                            # 당일 데이터만 획득
-                            flag_end = self.compared_num(recent_num, board_num)
-                            if flag_end:
-                                break
-                            else:
-                                # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
-                                # 번호 놀이는 제외
-                                if board_type == '번호놀이':
-                                    continue
-                                if board_num in list_bo_no:
-                                    continue
-                                title = link_ele.text.strip()
-                                # view_num 부분
-                                view_num = int(row.find_element_by_css_selector('td:nth-child(7)').text.strip().replace(",", ""))
-                                # reply_num 부분
-                                reply_num = 0
-                                reply_flag = self.is_element(mode='css', ele_val='td:nth-child(4) > span > span',
-                                                             ele_parent=row)
-                                if reply_flag:
-                                    reply_num = int(row.find_element_by_css_selector('td:nth-child(4) > span > span').text.strip().replace(",", ""))
-                                # 등록일 추출
-                                reportDate_raw = row.find_element_by_css_selector('td:nth-child(5)').get_attribute(
-                                    'title').strip()
-                                list_temp = reportDate_raw.split()
-
-                                # 날짜 형식 변경
-                                reportDate_str = list_temp[0]
-                                reportDate_date = datetime.strptime(reportDate_str, "%y.%m.%d")
-                                # 시간 형식 변경
-                                reportTime_str = list_temp[1]
-                                list_temp_time = reportTime_str.split(':')
-                                reportTime_str = list_temp_time[0] + ':' + list_temp_time[1]
-                                # 최종 값
-                                reportDate = reportDate_date.strftime("%Y-%m-%d")
-                                reportTime = reportTime_str
-
-                                # 추출된 값 각 list에 입력
-                                list_bo_no.append(board_num)
-                                list_navi.append('공통')
-                                list_type.append('공통')
-                                list_device.append('공통')
-                                list_cate.append('Unknown')
-                                list_status.append('Unknown')
-                                list_reply_num.append(reply_num)
-                                list_view_num.append(view_num)
-                                list_title.append(title)
-                                list_story_url.append(story_url)
-                                list_report_date.append(reportDate)
-                                list_report_time.append(reportTime)
-                                self.setPrint('순번: {}\n게시번호: {}\n제목:{}'.format(idx, board_num, title))
-
-                                # 데이터 테이블의 마지막 행인 경우
-                                if idx == article_size - 1:
-                                    list_pages = self.driver.find_element_by_css_selector('#page_list')
-                                    action = ActionChains(self.driver)
-                                    action.move_to_element(list_pages).perform()
-                                    if page_num % 10 == 0:
-                                        page_num = page_num + 1
-                                        page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
-                                        page_ele[0].click()
-                                    else:
-                                        page_num = page_num + 1
-                                        page_ele = self.get_elements(mode='xpath',
-                                                                     ele_val='//a[text()="' + str(page_num) + '"]',
-                                                                     ele_parent=list_pages)
-                                        page_ele[0].click()
-                                    self.setPrint('{} Page 페이지로 이동'.format(page_num))
+                        if article_size == 0:
+                            self.setPrint('뽐뿌 계시글 엘러먼트 미 존재 종료')
+                            flag_end = True
+                        else:
+                            for idx, row in enumerate(list_rows):
+                                link_ele = row.find_element_by_css_selector('td:nth-child(4) > a')
+                                story_url = link_ele.get_attribute('href').strip()
+                                board_ele = row.find_element_by_css_selector('td:nth-child(1)')
+                                board_num = board_ele.text.strip()
+                                board_num = int(board_num)
+                                board_date = row.find_element_by_css_selector('td:nth-child(5) > nobr').text.strip()
+                                # 게시물 타입(번호놀이 제외)
+                                board_type = row.find_element_by_css_selector('td:nth-child(2) > nobr').text.strip()
+                                # 당일 데이터만 획득
+                                flag_end = self.compared_num(recent_num, board_num)
+                                if flag_end:
                                     break
+                                else:
+                                    # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
+                                    # 번호 놀이 맴버쉽은 제외
+                                    if board_type in ['번호놀이', '맴버쉽']:
+                                        # 데이터 테이블의 마지막 행인 경우
+                                        if idx == article_size - 1:
+                                            list_pages = self.driver.find_element_by_css_selector('#page_list')
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(list_pages).perform()
+                                            if page_num % 10 == 0:
+                                                page_num = page_num + 1
+                                                page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
+                                                page_ele[0].click()
+                                            else:
+                                                page_num = page_num + 1
+                                                page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="'+str(page_num)+'"]', ele_parent=list_pages)
+                                                page_ele[0].click()
 
+                                            self.setPrint('{} Page 페이지로 이동'.format(page_num))
+                                            break
+                                        # 데이터 마지막 행이 아닌 경우
+                                        else:
+                                            continue
+                                    if board_num in list_bo_no:
+                                        # 데이터 테이블의 마지막 행인 경우
+                                        if idx == article_size - 1:
+                                            list_pages = self.driver.find_element_by_css_selector('#page_list')
+                                            action = ActionChains(self.driver)
+                                            action.move_to_element(list_pages).perform()
+                                            if page_num % 10 == 0:
+                                                page_num = page_num + 1
+                                                page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]',
+                                                                             ele_parent=list_pages)
+                                                page_ele[0].click()
+                                            else:
+                                                page_num = page_num + 1
+                                                page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="' + str(
+                                                    page_num) + '"]', ele_parent=list_pages)
+                                                page_ele[0].click()
+
+                                            self.setPrint('{} Page 페이지로 이동'.format(page_num))
+                                            break
+                                        # 데이터 마지막 행이 아닌 경우
+                                        else:
+                                            continue
+                                    title = link_ele.text.strip()
+                                    # view_num 부분
+                                    view_num = int(row.find_element_by_css_selector('td:nth-child(7)').text.strip().replace(",", ""))
+                                    # reply_num 부분
+                                    reply_num = 0
+                                    reply_flag = self.is_element(mode='css', ele_val='td:nth-child(4) > span > span',
+                                                                 ele_parent=row)
+                                    if reply_flag:
+                                        reply_num = int(row.find_element_by_css_selector('td:nth-child(4) > span > span').text.strip().replace(",", ""))
+                                    # 등록일 추출
+                                    reportDate_raw = row.find_element_by_css_selector('td:nth-child(5)').get_attribute(
+                                        'title').strip()
+                                    list_temp = reportDate_raw.split()
+
+                                    # 날짜 형식 변경
+                                    reportDate_str = list_temp[0]
+                                    reportDate_date = datetime.strptime(reportDate_str, "%y.%m.%d")
+                                    # 시간 형식 변경
+                                    reportTime_str = list_temp[1]
+                                    list_temp_time = reportTime_str.split(':')
+                                    reportTime_str = list_temp_time[0] + ':' + list_temp_time[1]
+                                    # 최종 값
+                                    reportDate = reportDate_date.strftime("%Y-%m-%d")
+                                    reportTime = reportTime_str
+
+                                    # 추출된 값 각 list에 입력
+                                    list_bo_no.append(board_num)
+                                    list_navi.append('공통')
+                                    list_type.append('공통')
+                                    list_device.append('공통')
+                                    list_cate.append('Unknown')
+                                    list_status.append('Unknown')
+                                    list_reply_num.append(reply_num)
+                                    list_view_num.append(view_num)
+                                    list_title.append(title)
+                                    list_story_url.append(story_url)
+                                    list_report_date.append(reportDate)
+                                    list_report_time.append(reportTime)
+                                    self.setPrint('순번: {}\n게시번호: {}\n제목: {}\nURL: {}'.format(idx, board_num, title, story_url))
+
+                                    # 데이터 테이블의 마지막 행인 경우
+                                    if idx == article_size - 1:
+                                        list_pages = self.driver.find_element_by_css_selector('#page_list')
+                                        action = ActionChains(self.driver)
+                                        action.move_to_element(list_pages).perform()
+                                        if page_num % 10 == 0:
+                                            page_num = page_num + 1
+                                            page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
+                                            page_ele[0].click()
+                                        else:
+                                            page_num = page_num + 1
+                                            page_ele = self.get_elements(mode='xpath',
+                                                                         ele_val='//a[text()="' + str(page_num) + '"]',
+                                                                         ele_parent=list_pages)
+                                            page_ele[0].click()
+                                        self.setPrint('{} Page 페이지로 이동'.format(page_num))
+                                        break
                 # 해당 본문 페이지 이동
                 if len(list_bo_no) != 0:
 
@@ -1475,7 +1576,7 @@ class SearchCrawl():
                         self.driver.get(item)
                         sleep(self.delay_time)
                         ############################################본문 페이지 메인 엘러먼트##########################################
-                        self.action_wait(mode='css', ele_val='body')
+                        self.action_wait(mode='css', ele_val='.btn_recommand')
                         # story 또는 image_url 또는 video_url 또는 댓글 부분
                         list_main_article = self.get_main_article_pp()
                         # set each list value
