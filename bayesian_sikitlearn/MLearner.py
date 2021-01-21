@@ -447,7 +447,7 @@ class VOCLearner():
 
         except:
           self.setPrint('학습기 실행 중 에러 발생...')
-          self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2].tb_lineno))
+          self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0],  sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
 
 
 if __name__ == "__main__":

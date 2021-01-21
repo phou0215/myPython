@@ -179,7 +179,8 @@ class ScrapRun():
 
         if type[0] == 'cron':
             if parameters[0] == "Null":
-                self.sched_module.add_job(self.m2Spider.activate_spider, 'cron', hour="0-23", minute="0", id=str(self.job_size))
+                self.sched_module.add_job(self.m2Spider.activate_spider, 'cron', hour="0-23", minute="0", id=str(self.job_size),
+                                          misfire_grace_time=360, max_instances=1, replace_existing=False, coalesce=True)
             else:
                 self.job_size = len(parameters[0])
                 for idx, item in enumerate(parameters[0]):
@@ -192,14 +193,17 @@ class ScrapRun():
                     elif temp_minute[0] == '0':
                         temp_minute = temp_minute[1:]
 
-                    self.sched_module.add_job(self.m2Spider.activate_spider, 'cron', hour=temp_hour, minute=temp_minute, id=str(idx))
+                    self.sched_module.add_job(self.m2Spider.activate_spider, 'cron', hour=temp_hour, minute=temp_minute, id=str(idx),
+                                              misfire_grace_time=360, max_instances=1, replace_existing=False, coalesce=True)
 
         else:
             if parameters[1] == "Null":
-                self.sched_module.add_job(self.m2Spider.activate_spider, 'interval', hours=1, id=str(self.job_size))
+                self.sched_module.add_job(self.m2Spider.activate_spider, 'interval', hours=1, id=str(self.job_size),
+                                          misfire_grace_time=360, max_instances=1, replace_existing=False, coalesce=True)
             else:
                 temp_minute = int(parameters[1][0])
-                self.sched_module.add_job(self.m2Spider.activate_spider, 'interval', minutes=temp_minute, id=str(self.job_size))
+                self.sched_module.add_job(self.m2Spider.activatey_spider, 'interval', minutes=temp_minute, id=str(self.job_size),
+                                          misfire_grace_time=360, max_instances=1, replace_existing=False, coalesce=True)
 
 
     def start(self):
@@ -272,7 +276,7 @@ class ScrapRun():
                 sys.exit(0)
             elif not self.m2Spider.hold_flag:
                 self.setPrint("Running crawling process..")
-            sleep(120)
+            sleep(60)
 
             # count += 1
             # if count == 10:

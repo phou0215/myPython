@@ -2,16 +2,16 @@ from pywinauto import application
 import json
 from pywinauto.findwindows import WindowAmbiguousError, WindowNotFoundError
 
-# app = application.Application(backend='win32').connect(path="")
-#
-#
-# list_test = ['texst']
-# list_body = list_test[0]
-# list_rest = list_test[1:]
-# print(len(list_body))
-# print(len(list_rest))
-# print(list_body)
-# print(list_rest)
+app = application.Application(backend='win32').connect(path="")
+
+
+list_test = ['texst']
+list_body = list_test[0]
+list_rest = list_test[1:]
+print(len(list_body))
+print(len(list_rest))
+print(list_body)
+print(list_rest)
 # string_data = '2020.09.10. 08:45'
 # list_temp = string_data.split()
 # list_temp[0] = list_temp[0][0:len(list_temp[0])-1]
@@ -35,14 +35,3 @@ from pywinauto.findwindows import WindowAmbiguousError, WindowNotFoundError
 # df_test = pd.DataFrame(dict_empty, index=None)
 # df_test.rename(columns = {'가진': '너를', '자는': '위해'}, inplace = True)
 # print(df_test.head())
-
-string_text = 'https://www.clien.net/service/board/cm_andro(안드로메당)'
-list_text = string_text.split('(')
-url = list_text[0]
-nav_name = list_text[1]
-nav_name = nav_name[:len(nav_name)-1]
-print(url, nav_name)
-
-num = 5
-print(num % 10)
-

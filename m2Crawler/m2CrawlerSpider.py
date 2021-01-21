@@ -682,17 +682,23 @@ class SearchCrawl():
             if img_tag:
 
                 for idx, ele in enumerate(img_tag):
-                    url = ele['src']
-                    url = self.encoding_url(url)
-                    img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    try:
+                        url = ele['src']
+                        url = self.encoding_url(url)
+                        img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    except:
+                        continue
 
             # 동영상이 있으면 src url 모두 획득
             if iframe_tag:
 
                 for idx, ele in enumerate(iframe_tag):
-                    url = ele['src']
-                    url = self.encoding_url(url)
-                    video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    try:
+                        url = ele['src']
+                        url = self.encoding_url(url)
+                        video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    except:
+                        continue
 
             # NHN_Writeform이면 해당 로직 실행
             if nhn_tag:
@@ -721,17 +727,23 @@ class SearchCrawl():
                 if nhn_tag[0].select('img'):
                     img_tags = nhn_tag.select('img')
                     for idx, ele in enumerate(img_tags):
-                        url = ele['src']
-                        url = self.encoding_url(url)
-                        img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                        try:
+                            url = ele['src']
+                            url = self.encoding_url(url)
+                            img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                        except:
+                            continue
 
                 # 동영상이 있으면 src url 모두 획득
                 if nhn_tag[0].select('iframe'):
                     iframe_tags = nhn_tag[0].select('iframe')
                     for idx, ele in enumerate(iframe_tags):
-                        url = ele['src']
-                        url = self.encoding_url(url)
-                        video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                        try:
+                            url = ele['src']
+                            url = self.encoding_url(url)
+                            video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                        except:
+                            continue
         #########################################################__se viewer 타입__#########################################################
         elif se_viewer:
 
@@ -752,9 +764,12 @@ class SearchCrawl():
             # 이미지가 있으면 src url 모두 획득
             if img_tags:
                 for idx, ele in enumerate(img_tags):
-                    url = ele['src']
-                    url = self.encoding_url(url)
-                    img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    try:
+                        url = ele['src']
+                        url = self.encoding_url(url)
+                        img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    except:
+                        continue
 
             # 동영상이 있으면 src url 모두 획득
             if script_tags:
@@ -849,15 +864,21 @@ class SearchCrawl():
         # 이미지가 있으면 src url 모두 획득
         if img_tag:
             for idx, ele in enumerate(img_tag):
-                url = ele['src']
-                url = self.encoding_url(url)
-                img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                try:
+                    url = ele['src']
+                    url = self.encoding_url(url)
+                    img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                except:
+                    continue
         # 동영상이 있으면 src url 모두 획득
         if video_tag:
             for idx, ele in enumerate(video_tag):
-                url = ele['href']
-                url = self.encoding_url(url)
-                video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                try:
+                    url = ele['href']
+                    url = self.encoding_url(url)
+                    video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                except:
+                    continue
 
         ############################################################__댓글 값 추출__#########################################################
 
@@ -906,23 +927,30 @@ class SearchCrawl():
             replys = soup.select('div.comment_wrapper')
             img_tag = renders[0].select('img')
             video_tag = renders[0].select('iframe')
-
             # text가 있으면 모두 추출(div tag and p tag 포함)
             story_text = stories.strip()
 
             # 이미지가 있으면 src url 모두 획득
             if img_tag:
                 for idx, ele in enumerate(img_tag):
-                    url = ele['src']
-                    url = self.encoding_url(url)
-                    img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    try:
+                        url = ele['src']
+                        url = self.encoding_url(url)
+                        img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    # except KeyError:
+                    except:
+                        continue
 
             # 동영상이 있으면 src url 모두 획득
             if video_tag:
                 for idx, ele in enumerate(video_tag):
-                    url = ele['src']
-                    url = self.encoding_url(url)
-                    video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    try:
+                        url = ele['src']
+                        url = self.encoding_url(url)
+                        video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    # except KeyError:
+                    except:
+                        continue
 
             ############################################################__댓글 값 추출__#########################################################
             # soup.select('a[href*=london]')  # contains "london"
@@ -932,17 +960,13 @@ class SearchCrawl():
             if replys:
                 for idx, item in enumerate(replys):
                     reply_item = item.select('div.comment_line')
-                    print(len(reply_item))
                     for idx2, item2 in enumerate(reply_item):
                         # reply 날짜 형식 변경
                         date_str = ''
                         time_str = ''
                         reportDate_raw = item2.select('font.eng-day')[0].text.strip()
-                        print(reportDate_raw)
                         reportDate_str = re.findall('[0-9]{4}-[0-9]{2}-[0-9]{2}', reportDate_raw)
-                        print(reportDate_str)
                         reportTime_str = re.findall('[0-9]{2}:[0-9]{2}:[0-9]{2}', reportDate_raw)
-                        print(reportTime_str)
                         # date value check null
                         if len(reportDate_str) == 0:
                             date_str = ''
@@ -957,7 +981,6 @@ class SearchCrawl():
 
                         reply_info = date_str + ' ' + time_str
                         reply_main = item2.select('div[id*=commentContent_]')[0].text.strip()
-                        print(reply_main)
                         reply_text = reply_text + str(idx+1) + '-' + str(idx2+1) + ". " + reply_main + "(" + reply_info + ")\n"
             # 페이지 대기
             sleep(self.delay_time)
@@ -1003,16 +1026,22 @@ class SearchCrawl():
             # 이미지가 있으면 src url 모두 획득
             if img_tag:
                 for idx, ele in enumerate(img_tag):
-                    # url = 'http:' + ele['src']
-                    url = ele['src']
-                    url = self.encoding_url(url)
-                    img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    try:
+                        # url = 'http:' + ele['src']
+                        url = ele['src']
+                        url = self.encoding_url(url)
+                        img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    except:
+                        continue
             # 동영상이 있으면 src url 모두 획득
             if video_tag:
                 for idx, ele in enumerate(video_tag):
-                    url = ele['src']
-                    url = self.encoding_url(url)
-                    video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    try:
+                        url = ele['src']
+                        url = self.encoding_url(url)
+                        video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    except:
+                        continue
 
             ############################################################__댓글 값 추출__#########################################################
             # soup.select('a[href*=london]')  # contains "london"
@@ -1042,7 +1071,7 @@ class SearchCrawl():
         # 회원 전용 글의 경우
         else:
             return ['내용 무', img_url_text, video_url_text, reply_text]
-    # 삼성커뮤니티 본문 글 정리 함수
+    # 엘지모바일 본문 글 정리 함수
     def get_main_article_lg(self):
 
         sleep(self.delay_time)
@@ -1103,17 +1132,23 @@ class SearchCrawl():
             if img_tag:
 
                 for idx, ele in enumerate(img_tag):
-                    url = ele['src']
-                    url = self.encoding_url(url)
-                    img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    try:
+                        url = ele['src']
+                        url = self.encoding_url(url)
+                        img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    except:
+                        continue
 
             # 동영상이 있으면 src url 모두 획득
             if iframe_tag:
 
                 for idx, ele in enumerate(iframe_tag):
-                    url = ele['src']
-                    url = self.encoding_url(url)
-                    video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    try:
+                        url = ele['src']
+                        url = self.encoding_url(url)
+                        video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    except:
+                        continue
 
             # NHN_Writeform이면 해당 로직 실행
             if nhn_tag:
@@ -1142,17 +1177,24 @@ class SearchCrawl():
                 if nhn_tag[0].select('img'):
                     img_tags = nhn_tag.select('img')
                     for idx, ele in enumerate(img_tags):
-                        url = ele['src']
-                        url = self.encoding_url(url)
-                        img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                        try:
+                            url = ele['src']
+                            url = self.encoding_url(url)
+                            img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                        except:
+                            continue
 
                 # 동영상이 있으면 src url 모두 획득
                 if nhn_tag[0].select('iframe'):
                     iframe_tags = nhn_tag[0].select('iframe')
                     for idx, ele in enumerate(iframe_tags):
-                        url = ele['src']
-                        url = self.encoding_url(url)
-                        video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                        try:
+                            url = ele['src']
+                            url = self.encoding_url(url)
+                            video_url_text = video_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                        except:
+                            continue
+
         #########################################################__se viewer 타입__#########################################################
         elif se_viewer:
 
@@ -1173,9 +1215,12 @@ class SearchCrawl():
             # 이미지가 있으면 src url 모두 획득
             if img_tags:
                 for idx, ele in enumerate(img_tags):
-                    url = ele['src']
-                    url = self.encoding_url(url)
-                    img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    try:
+                        url = ele['src']
+                        url = self.encoding_url(url)
+                        img_url_text = img_url_text + str(idx+1) + '. ' + str(url) + '\n'
+                    except:
+                        continue
 
             # 동영상이 있으면 src url 모두 획득
             if script_tags:
@@ -1282,7 +1327,6 @@ class SearchCrawl():
                 basic_date = nowDate.strftime('%m-%d-%Y')
                 # 먼저 board number, title, reply_num, view_num, story_url을 추출하여 list에 입력
                 while True:
-                    self.setPrint('종료시그널 : {}'.format(flag_end))
                     if flag_end:
                         break
                     else:
@@ -1300,9 +1344,10 @@ class SearchCrawl():
                             for idx, row in enumerate(list_rows):
                                 # article 값 추출
                                 link_ele = row.find_element_by_css_selector('td:nth-child(4) > a')
-                                story_url = link_ele.get_attribute('href').strip()
+                                # story_url = link_ele.get_attribute('href').strip()
                                 board_ele = row.find_element_by_css_selector('td:nth-child(1)')
                                 board_num = board_ele.text.strip()
+                                story_url = 'https://www.ppomppu.co.kr/zboard/view.php?id=phone&no='+board_num
                                 board_num = int(board_num)
                                 board_date = row.find_element_by_css_selector('td:nth-child(5) > nobr').text.strip()
                                 # 게시물 타입(번호놀이 제외)
@@ -1314,32 +1359,33 @@ class SearchCrawl():
                                 else:
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     # 번호 놀이 맴버쉽은 제외
-                                    if board_type in ['번호놀이', '맴버쉽']:
-                                        # 데이터 테이블의 마지막 행인 경우
-                                        if idx == article_size - 1:
-                                            list_pages = self.driver.find_element_by_css_selector('#page_list')
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(list_pages).perform()
-                                            if page_num % 10 == 0:
-                                                page_num = page_num + 1
-                                                page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
-                                                page_ele[0].click()
-                                            else:
-                                                page_num = page_num + 1
-                                                page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="'+str(page_num)+'"]', ele_parent=list_pages)
-                                                page_ele[0].click()
-
-                                            self.setPrint('{} Page 페이지로 이동'.format(page_num))
-                                            break
-                                        # 데이터 마지막 행이 아닌 경우
-                                        else:
-                                            continue
+                                    # if board_type in ['번호놀이', '맴버쉽']:
+                                    #     # 데이터 테이블의 마지막 행인 경우
+                                    #     if idx == article_size - 1:
+                                    #         list_pages = self.driver.find_element_by_css_selector('#page_list')
+                                    #         action = ActionChains(self.driver)
+                                    #         action.move_to_element(list_pages).perform()
+                                    #         if page_num % 10 == 0:
+                                    #             page_num = page_num + 1
+                                    #             page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
+                                    #             page_ele[0].click()
+                                    #         else:
+                                    #             page_num = page_num + 1
+                                    #             page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="'+str(page_num)+'"]', ele_parent=list_pages)
+                                    #             page_ele[0].click()
+                                    #
+                                    #         self.setPrint('{} Page 페이지로 이동'.format(page_num))
+                                    #         break
+                                    #     # 데이터 마지막 행이 아닌 경우
+                                    #     else:
+                                    #         continue
                                     if board_num in list_bo_no:
                                         # 데이터 테이블의 마지막 행인 경우
                                         if idx == article_size - 1:
                                             list_pages = self.driver.find_element_by_css_selector('#page_list')
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(list_pages).perform()
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', list_pages)
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(list_pages).perform()
                                             if page_num % 10 == 0:
                                                 page_num = page_num + 1
                                                 page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]',
@@ -1398,8 +1444,9 @@ class SearchCrawl():
                                     # 데이터 테이블의 마지막 행인 경우
                                     if idx == article_size - 1:
                                         list_pages = self.driver.find_element_by_css_selector('#page_list')
-                                        action = ActionChains(self.driver)
-                                        action.move_to_element(list_pages).perform()
+                                        self.driver.execute_script('arguments[0].scrollIntoView();', list_pages)
+                                        # action = ActionChains(self.driver)
+                                        # action.move_to_element(list_pages).perform()
                                         if page_num % 10 == 0:
                                             page_num = page_num + 1
                                             page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
@@ -1418,7 +1465,7 @@ class SearchCrawl():
                         self.driver.get(item)
                         sleep(self.delay_time)
                         ############################################본문 페이지 메인 엘러먼트##########################################
-                        self.action_wait(mode='css', ele_val='.btn_recommand')
+                        self.action_wait(mode='css', ele_val='.sub-nav')
                         # story 또는 image_url 또는 video_url 또는 댓글 부분
                         list_main_article = self.get_main_article_pp()
                         # set each list value
@@ -1440,7 +1487,6 @@ class SearchCrawl():
             else:
                 # 먼저 board number, title, reply_num, view_num, story_url을 추출하여 list에 입력
                 while True:
-                    self.setPrint('종료시그널 : {}'.format(flag_end))
                     if flag_end:
                         break
                     else:
@@ -1456,9 +1502,10 @@ class SearchCrawl():
                         else:
                             for idx, row in enumerate(list_rows):
                                 link_ele = row.find_element_by_css_selector('td:nth-child(4) > a')
-                                story_url = link_ele.get_attribute('href').strip()
+                                # story_url = link_ele.get_attribute('href').strip()
                                 board_ele = row.find_element_by_css_selector('td:nth-child(1)')
                                 board_num = board_ele.text.strip()
+                                story_url = 'https://www.ppomppu.co.kr/zboard/view.php?id=phone&no='+board_num
                                 board_num = int(board_num)
                                 board_date = row.find_element_by_css_selector('td:nth-child(5) > nobr').text.strip()
                                 # 게시물 타입(번호놀이 제외)
@@ -1470,32 +1517,33 @@ class SearchCrawl():
                                 else:
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     # 번호 놀이 맴버쉽은 제외
-                                    if board_type in ['번호놀이', '맴버쉽']:
-                                        # 데이터 테이블의 마지막 행인 경우
-                                        if idx == article_size - 1:
-                                            list_pages = self.driver.find_element_by_css_selector('#page_list')
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(list_pages).perform()
-                                            if page_num % 10 == 0:
-                                                page_num = page_num + 1
-                                                page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
-                                                page_ele[0].click()
-                                            else:
-                                                page_num = page_num + 1
-                                                page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="'+str(page_num)+'"]', ele_parent=list_pages)
-                                                page_ele[0].click()
-
-                                            self.setPrint('{} Page 페이지로 이동'.format(page_num))
-                                            break
-                                        # 데이터 마지막 행이 아닌 경우
-                                        else:
-                                            continue
+                                    # if board_type in ['번호놀이', '맴버쉽']:
+                                    #     # 데이터 테이블의 마지막 행인 경우
+                                    #     if idx == article_size - 1:
+                                    #         list_pages = self.driver.find_element_by_css_selector('#page_list')
+                                    #         action = ActionChains(self.driver)
+                                    #         action.move_to_element(list_pages).perform()
+                                    #         if page_num % 10 == 0:
+                                    #             page_num = page_num + 1
+                                    #             page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
+                                    #             page_ele[0].click()
+                                    #         else:
+                                    #             page_num = page_num + 1
+                                    #             page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="'+str(page_num)+'"]', ele_parent=list_pages)
+                                    #             page_ele[0].click()
+                                    #
+                                    #         self.setPrint('{} Page 페이지로 이동'.format(page_num))
+                                    #         break
+                                    #     # 데이터 마지막 행이 아닌 경우
+                                    #     else:
+                                    #         continue
                                     if board_num in list_bo_no:
                                         # 데이터 테이블의 마지막 행인 경우
                                         if idx == article_size - 1:
                                             list_pages = self.driver.find_element_by_css_selector('#page_list')
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(list_pages).perform()
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', list_pages)
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(list_pages).perform()
                                             if page_num % 10 == 0:
                                                 page_num = page_num + 1
                                                 page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]',
@@ -1555,8 +1603,9 @@ class SearchCrawl():
                                     # 데이터 테이블의 마지막 행인 경우
                                     if idx == article_size - 1:
                                         list_pages = self.driver.find_element_by_css_selector('#page_list')
-                                        action = ActionChains(self.driver)
-                                        action.move_to_element(list_pages).perform()
+                                        self.driver.execute_script('arguments[0].scrollIntoView();', list_pages)
+                                        # action = ActionChains(self.driver)
+                                        # action.move_to_element(list_pages).perform()
                                         if page_num % 10 == 0:
                                             page_num = page_num + 1
                                             page_ele = self.get_elements(mode='xpath', ele_val='//a[text()="다음"]', ele_parent=list_pages)
@@ -1576,7 +1625,7 @@ class SearchCrawl():
                         self.driver.get(item)
                         sleep(self.delay_time)
                         ############################################본문 페이지 메인 엘러먼트##########################################
-                        self.action_wait(mode='css', ele_val='.btn_recommand')
+                        self.action_wait(mode='css', ele_val='.sub-nav')
                         # story 또는 image_url 또는 video_url 또는 댓글 부분
                         list_main_article = self.get_main_article_pp()
                         # set each list value
@@ -1806,17 +1855,19 @@ class SearchCrawl():
                                         if page_num % 10 == 0:
                                             page_num = page_num + 1
                                             page_ele = self.get_elements(mode='css', ele_val='a.board-nav-next')
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(page_ele[0]).perform()
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(page_ele[0]).perform()
                                             page_ele[0].click()
                                         else:
                                             page_num = page_num + 1
                                             page_ele = self.get_elements(mode='css', ele_val='#pagingActiveId_'+str(page_num))
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(page_ele[0]).perform()
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(page_ele[0]).perform()
                                             page_ele[0].click()
 
-                                        self.setPrint('{} Page 페이지로 이동'.format(page_num + 1))
+                                        self.setPrint('{} Page 페이지로 이동'.format(page_num))
                                         break
                 # mongoDB에 최근 record가 있는 경우
                 else:
@@ -1910,16 +1961,18 @@ class SearchCrawl():
                                         if page_num % 10 == 0:
                                             page_num = page_num + 1
                                             page_ele = self.get_elements(mode='css', ele_val='a.board-nav-next')
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(page_ele[0]).perform()
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(page_ele[0]).perform()
                                             page_ele[0].click()
                                         else:
                                             page_num = page_num + 1
                                             page_ele = self.get_elements(mode='css', ele_val='#pagingActiveId_'+str(page_num))
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(page_ele[0]).perform()
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(page_ele[0]).perform()
                                             page_ele[0].click()
-                                        self.setPrint('{} Page 페이지로 이동'.format(page_num + 1))
+                                        self.setPrint('{} Page 페이지로 이동'.format(page_num))
                                         break
                 # frame main content로 변경
                 self.setPrint('클리앙 커뮤니티 {} 구역 페이지 크롤링 종료 총 {} Data 추출 완료'.format(nav_name, extract_num))
@@ -2138,8 +2191,9 @@ class SearchCrawl():
                                     if idx == article_size:
                                         page_num = page_num + 1
                                         page_ele = self.get_elements(mode='css', ele_val='ul > li.lia-js-data-pageNum-'+str(page_num))
-                                        action = ActionChains(self.driver)
-                                        action.move_to_element(page_ele[0]).perform()
+                                        self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
+                                        # action = ActionChains(self.driver)
+                                        # action.move_to_element(page_ele[0]).perform()
                                         page_ele[0].click()
                                         self.setPrint('{} Page 페이지로 이동'.format(page_num))
                                         break
@@ -2245,8 +2299,9 @@ class SearchCrawl():
                                     if idx == article_size:
                                         page_num = page_num + 1
                                         page_ele = self.get_elements(mode='css', ele_val='ul.lia-paging-full-pages > li.lia-js-data-pageNum-'+str(page_num))
-                                        action = ActionChains(self.driver)
-                                        action.move_to_element(page_ele[0]).perform()
+                                        self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
+                                        # action = ActionChains(self.driver)
+                                        # action.move_to_element(page_ele[0]).perform()
                                         page_ele[0].click()
                                         self.setPrint('{} Page 페이지로 이동'.format(page_num))
                                         break
@@ -2415,7 +2470,8 @@ class SearchCrawl():
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     title_ele = tr_ele[0].find_element_by_css_selector('td.td_article > div.board-list > div > a.article')
                                     title = title_ele.text.strip()
-                                    story_url = title_ele.get_attribute('href').strip()
+                                    # story_url = title_ele.get_attribute('href').strip()
+                                    story_url = 'https://cafe.naver.com/anycallusershow/'+str(board_num)
                                     view_num = int(tr_ele[0].find_element_by_css_selector('td.td_view').text.strip().replace(",", ""))
                                     # 해당 본문 페이지 이동
                                     title_ele.click()
@@ -2482,20 +2538,22 @@ class SearchCrawl():
                                             list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
                                             page_ele = self.get_elements(mode='css',
                                                                          ele_val='a.pgR',
-                                                                         ele_parent=list_pages)
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(page_ele[0]).perform()
+                                                                         ele_parent=list_pages[0])
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(page_ele[0]).perform()
                                             page_ele[0].click()
                                         else:
                                             page_num = page_num + 1
                                             list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
                                             page_ele = self.get_elements(mode='xpath',
                                                                          ele_val='//a[text()="' + str(page_num) + '"]',
-                                                                         ele_parent=list_pages)
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(page_ele[0]).perform()
+                                                                         ele_parent=list_pages[0])
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(page_ele[0]).perform()
                                             page_ele[0].click()
-                                        self.setPrint('{} Page 페이지로 이동'.format(page_num+1))
+                                        self.setPrint('{} Page 페이지로 이동'.format(page_num))
                                         break
                 # mongoDB에 최근 record가 있는 경우
                 else:
@@ -2523,7 +2581,8 @@ class SearchCrawl():
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     title_ele = tr_ele[0].find_element_by_css_selector('td.td_article > div.board-list > div > a.article')
                                     title = title_ele.text.strip()
-                                    story_url = title_ele.get_attribute('href').strip()
+                                    # story_url = title_ele.get_attribute('href').strip()
+                                    story_url = 'https://cafe.naver.com/anycallusershow/'+str(board_num)
                                     view_num = int(tr_ele[0].find_element_by_css_selector('td.td_view').text.replace(',', '').strip())
                                     # 해당 본문 페이지 이동
                                     title_ele.click()
@@ -2586,20 +2645,22 @@ class SearchCrawl():
                                             list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
                                             page_ele = self.get_elements(mode='css',
                                                                          ele_val='a.pgR',
-                                                                         ele_parent=list_pages)
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(page_ele[0]).perform()
+                                                                         ele_parent=list_pages[0])
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(page_ele[0]).perform()
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
                                             page_ele[0].click()
                                         else:
                                             page_num = page_num + 1
                                             list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
                                             page_ele = self.get_elements(mode='xpath',
                                                                          ele_val='//a[text()="' + str(page_num) + '"]',
-                                                                         ele_parent=list_pages)
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(page_ele[0]).perform()
+                                                                         ele_parent=list_pages[0])
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(page_ele[0]).perform()
                                             page_ele[0].click()
-                                        self.setPrint('{} Page 페이지로 이동'.format(page_num+1))
+                                        self.setPrint('{} Page 페이지로 이동'.format(page_num))
                                         break
                 # frame main content로 변경
                 self.setPrint('삼성스마트폰 커뮤니티 {} 구역 페이지 크롤링 종료 총 {} Data 추출 완료'.format(nav_name, extract_num))
@@ -2763,7 +2824,8 @@ class SearchCrawl():
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     title_ele = tr_ele[0].find_element_by_css_selector('td.td_article > div.board-list > div > a.article')
                                     title = title_ele.text.strip()
-                                    story_url = title_ele.get_attribute('href').strip()
+                                    # story_url = title_ele.get_attribute('href').strip()
+                                    story_url = 'https://cafe.naver.com/optimuslteuser/'+str(board_num)
                                     view_num = int(tr_ele[0].find_element_by_css_selector('td.td_view').text.strip().replace(",", ""))
                                     # 해당 본문 페이지 이동
                                     title_ele.click()
@@ -2830,20 +2892,22 @@ class SearchCrawl():
                                             list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
                                             page_ele = self.get_elements(mode='css',
                                                                          ele_val='a.pgR',
-                                                                         ele_parent=list_pages)
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(page_ele[0]).perform()
+                                                                         ele_parent=list_pages[0])
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(page_ele[0]).perform()
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
                                             page_ele[0].click()
                                         else:
                                             page_num = page_num + 1
                                             list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
                                             page_ele = self.get_elements(mode='xpath',
                                                                          ele_val='//a[text()="' + str(page_num) + '"]',
-                                                                         ele_parent=list_pages)
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(page_ele[0]).perform()
+                                                                         ele_parent=list_pages[0])
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(page_ele[0]).perform()
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
                                             page_ele[0].click()
-                                        self.setPrint('{} Page 페이지로 이동'.format(page_num+1))
+                                        self.setPrint('{} Page 페이지로 이동'.format(page_num))
                                         break
                 # mongoDB에 최근 record가 있는 경우
                 else:
@@ -2871,7 +2935,8 @@ class SearchCrawl():
                                     # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, )))
                                     title_ele = tr_ele[0].find_element_by_css_selector('td.td_article > div.board-list > div > a.article')
                                     title = title_ele.text.strip()
-                                    story_url = title_ele.get_attribute('href').strip()
+                                    # story_url = title_ele.get_attribute('href').strip()
+                                    story_url = 'https://cafe.naver.com/optimuslteuser/'+str(board_num)
                                     view_num = int(tr_ele[0].find_element_by_css_selector('td.td_view').text.replace(',', '').strip())
                                     # 해당 본문 페이지 이동
                                     title_ele.click()
@@ -2934,20 +2999,22 @@ class SearchCrawl():
                                             list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
                                             page_ele = self.get_elements(mode='css',
                                                                          ele_val='a.pgR',
-                                                                         ele_parent=list_pages)
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(page_ele[0]).perform()
+                                                                         ele_parent=list_pages[0])
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(page_ele[0]).perform()
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
                                             page_ele[0].click()
                                         else:
                                             page_num = page_num + 1
                                             list_pages = self.driver.find_elements_by_css_selector('div.prev-next')
                                             page_ele = self.get_elements(mode='xpath',
                                                                          ele_val='//a[text()="' + str(page_num) + '"]',
-                                                                         ele_parent=list_pages)
-                                            action = ActionChains(self.driver)
-                                            action.move_to_element(page_ele[0]).perform()
+                                                                         ele_parent=list_pages[0])
+                                            # action = ActionChains(self.driver)
+                                            # action.move_to_element(page_ele[0]).perform()
+                                            self.driver.execute_script('arguments[0].scrollIntoView();', page_ele[0])
                                             page_ele[0].click()
-                                        self.setPrint('{} Page 페이지로 이동'.format(page_num+1))
+                                        self.setPrint('{} Page 페이지로 이동'.format(page_num))
                                         break
                 # frame main content로 변경
                 self.setPrint('엘지모바일 커뮤니티 {} 구역 페이지 크롤링 종료 총 {} Data 추출 완료'.format(nav_name, extract_num))
