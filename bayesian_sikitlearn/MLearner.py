@@ -131,15 +131,15 @@ class VOCLearner():
                 self.p_type = int(list_settings[1])
             if list_settings[2] != 'nan':
                 self.t_type = int(list_settings[2])
+            # if list_settings[3] != 'nan':
+            #     if list_settings[3] == 1:
+            #         self.flag_shuffle = True
+            #     else:
+            #         self.flag_shuffle = False
             if list_settings[3] != 'nan':
-                if list_settings[3] == 1:
-                    self.flag_shuffle = True
-                else:
-                    self.flag_shuffle = False
+                self.test_rate = float(list_settings[3])
             if list_settings[4] != 'nan':
-                self.test_rate = float(list_settings[4])
-            if list_settings[5] != 'nan':
-                self.test_path = list_settings[5]
+                self.test_path = list_settings[4]
 
             if self.t_type == 1:
 

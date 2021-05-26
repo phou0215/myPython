@@ -1,0 +1,30 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyPep8Inspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="E722" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="N813" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="false" level="WARNING" enabled_by_default="false">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="email.utils.COMMASPACE" />
+          <option value="m2Crawler.m2CrawlerSpider.keyB" />
+          <option value="m2Crawler.m2CrawlerSpider.m2CrawlerSender" />
+          <option value="keyB" />
+          <option value="m2Crawler.m2CrawlerRun.m2CrawlerSpider" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

@@ -1,7 +1,7 @@
 import os
 import sys
 import json
-import pkg_resources.py2_warn
+# import pkg_resources.py2_warn
 # from PyQt5.QtWidgets import *
 from os.path import expanduser
 from PyQt5.QtWidgets import QMainWindow

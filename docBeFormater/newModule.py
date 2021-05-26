@@ -8,7 +8,7 @@ import os
 import sys
 import re
 import openpyxl
-import pkg_resources.py2_warn
+# import pkg_resources.py2_warn
 from os.path import expanduser
 import threading
 

@@ -26,7 +26,6 @@ from datetime import timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 
 
-
 # 요청 형식
 # 일기예보
 # http://apis.data.go.kr/1360000/VilageFcstInfoService/getVilageFcst?serviceKey=96uh0W7mDdbpm2cUHdS12hg6HGxDKjQ4GU7DDCSFS8eKgocNkWdTdxnPXkZwwj7kOevMYo2W37VF0xqocdj3TA%3D%3D&numOfRows=300&pageNo=1&base_date=20210217&base_time=0000&nx=55&ny=108
@@ -34,6 +33,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 # http://apis.data.go.kr/1360000/VilageFcstInfoService/getUltraSrtNcst?serviceKey=96uh0W7mDdbpm2cUHdS12hg6HGxDKjQ4GU7DDCSFS8eKgocNkWdTdxnPXkZwwj7kOevMYo2W37VF0xqocdj3TA%3D%3D&numOfRows=3 00&pageNo=1&base_date=20210217&base_time=0000&nx=55&ny=108
 # 초단기 일기예보
 # http://apis.data.go.kr/1360000/VilageFcstInfoService/getUltraSrtFcst?serviceKey=96uh0W7mDdbpm2cUHdS12hg6HGxDKjQ4GU7DDCSFS8eKgocNkWdTdxnPXkZwwj7kOevMYo2W37VF0xqocdj3TA%3D%3D&numOfRows=3 00&pageNo=1&base_date=20210217&base_time=1141&nx=55&ny=108
+
 
 class GetWeather():
     # 클레스 초기화
@@ -88,7 +88,7 @@ class GetWeather():
         reform_base_time = datetime.strptime(base_time, '%H%M')
         return_base_time = reform_base_time.strftime('%H:%M')
 
-        return [return_base_date, return_base_time]
+        return return_base_date+' '+return_base_time
 
     # 구분자 포함을 확인한 후 배열로 리턴
     def set_values(self, value):
@@ -508,8 +508,8 @@ class GetWeather():
             base_date_request = current_time[3][0]
             base_time_request = current_time[3][1]
             list_col = ['UPLOAD_TIME', 'POP', 'PTY', 'R06', 'REH', 'S06', 'SKY', 'T3H', 'TMN', 'TMX', 'UUU',
-                        'VVV', 'WAV', 'VEC', 'WSD', 'NX', 'NY', 'STATE1', 'STATE2', 'STATE3',
-                        'BASE_DATE', 'BASE_TIME', 'FCST_DATE', 'FCST_TIME']
+                        'VVV', 'WAV', 'VEC', 'WSD', 'NX', 'NY', 'STATE1', 'STATE2', 'STATE3', 'LOCATION',
+                        'BASE_DATETIME', 'FCST_DATETIME']
             list_measure = ['POP', 'PTY', 'R06', 'REH', 'S06', 'SKY', 'T3H', 'TMN', 'TMX', 'UUU', 'VVV', 'WAV',
                             'VEC', 'WSD']
 
@@ -519,12 +519,13 @@ class GetWeather():
                 state1 = self.local_names[idx][0]
                 state2 = self.local_names[idx][1]
                 state3 = self.local_names[idx][2]
+                location = self.city_names[idx]
 
                 list_items = []
                 list_fcst_tuples = []
 
                 sql_insert = "REPLACE INTO forecast("+', '.join(list_col)+") \
-                VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s )"
+                VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
                 ########################################__실행해야 하는 지역코드 만큼 get api 실행 영역__########################################
                 dict_parameter = 'serviceKey='+self.service_key+'&base_date='+base_date_request+'&base_time='+base_time_request+\
                                  '&nx='+code[0]+'&ny='+code[1]+'&numOfRows=300&pageNo=1&dataType=JSON'
@@ -557,8 +558,6 @@ class GetWeather():
                     response.raise_for_status()
                 ############################################__items parsing 작업 실행 영역__############################################
                 return_base = self.change_format_bases(response_data[1][0]['baseDate'], response_data[1][0]['baseTime'])
-                base_date = return_base[0]
-                base_time = return_base[1]
 
                 # list unique fcst_date and fcst_time data
                 for item in response_data[1]:
@@ -569,13 +568,14 @@ class GetWeather():
 
                 # mysql dict에 response data 넣어 주기
                 for item in list_fcst_tuples:
-                    count = 0
+
                     creterion_fcst_date = item[0]
                     creterion_fcst_time = item[1]
+
                     return_fcst = self.change_format_bases(creterion_fcst_date, creterion_fcst_time)
                     mysql_items = {'UPLOAD_TIME': current_time[1], 'NX': code[0], 'NY': code[1], 'STATE1': state1,
-                                   'STATE2': state2, 'STATE3': state3, 'BASE_DATE': base_date, 'BASE_TIME': base_time,
-                                   'FCST_DATE': return_fcst[0], 'FCST_TIME': return_fcst[1]}
+                                   'STATE2': state2, 'STATE3': state3, 'BASE_DATETIME': return_base,
+                                   'FCST_DATETIME': return_fcst, 'LOCATION': location}
 
                     for item2 in response_data[1]:
 
@@ -643,7 +643,7 @@ class GetWeather():
         self.hold_flag = True
         self.conncet_db('초단기 일기예보 정보')
         list_col = ['UPLOAD_TIME', 'T1H', 'RN1', 'SKY', 'UUU', 'VVV', 'REH', 'PTY', 'LGT', 'VEC', 'WSD',
-                    'NX', 'NY', 'STATE1', 'STATE2', 'STATE3', 'BASE_DATE', 'BASE_TIME', 'FCST_DATE', 'FCST_TIME']
+                    'NX', 'NY', 'STATE1', 'STATE2', 'STATE3', 'LOCATION', 'BASE_DATETIME', 'FCST_DATETIME']
         list_measure = ['T1H', 'RN1', 'SKY', 'UUU', 'VVV', 'REH', 'PTY', 'LGT', 'VEC', 'WSD']
         try:
             header = {'Content-Type': 'application/json; charset=utf-8'}
@@ -657,12 +657,13 @@ class GetWeather():
                 state1 = self.local_names[idx][0]
                 state2 = self.local_names[idx][1]
                 state3 = self.local_names[idx][2]
+                location = self.city_names[idx]
 
                 list_items = []
                 list_fcst_tuples = []
 
                 sql_insert = "REPLACE INTO shortcast("+', '.join(list_col)+") \
-                VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
                 ########################################__실행해야 하는 지역코드 만큼 get api 실행 영역__########################################
                 dict_parameter = 'serviceKey='+self.service_key+'&base_date='+base_date_request+'&base_time='+base_time_request+\
                                  '&nx='+code[0]+'&ny='+code[1]+'&numOfRows=300&pageNo=1&dataType=JSON'
@@ -695,8 +696,6 @@ class GetWeather():
                     response.raise_for_status()
                 ############################################__items parsing 작업 실행 영역__############################################
                 return_base = self.change_format_bases(response_data[1][0]['baseDate'], response_data[1][0]['baseTime'])
-                base_date = return_base[0]
-                base_time = return_base[1]
 
                 # list unique fcst_date and fcst_time data
                 for item in response_data[1]:
@@ -707,13 +706,12 @@ class GetWeather():
 
                 # mysql dict에 response data 넣어 주기
                 for item in list_fcst_tuples:
-                    count = 0
                     creterion_fcst_date = item[0]
                     creterion_fcst_time = item[1]
                     return_fcst = self.change_format_bases(creterion_fcst_date, creterion_fcst_time)
                     mysql_items = {'UPLOAD_TIME': current_time[1], 'NX': code[0], 'NY': code[1], 'STATE1': state1,
-                                   'STATE2': state2, 'STATE3': state3, 'BASE_DATE': base_date, 'BASE_TIME': base_time,
-                                   'FCST_DATE': return_fcst[0], 'FCST_TIME': return_fcst[1]}
+                                   'STATE2': state2, 'STATE3': state3, 'BASE_DATETIME': return_base,
+                                   'FCST_DATETIME': return_fcst, 'LOCATION': location}
 
                     for item2 in response_data[1]:
 
@@ -776,11 +774,12 @@ class GetWeather():
                 state1 = self.local_names[idx][0]
                 state2 = self.local_names[idx][1]
                 state3 = self.local_names[idx][2]
+                location = self.city_names[idx]
 
                 mysql_items = {'UPLOAD_TIME': current_time[1], 'NX': code[0], 'NY': code[1], 'STATE1': state1,
-                               'STATE2': state2, 'STATE3': state3}
+                               'STATE2': state2, 'STATE3': state3, 'LOCATION': location}
                 list_col = ['UPLOAD_TIME', 'T1H', 'RN1', 'UUU', 'VVV', 'REH', 'PTY', 'VEC', 'WSD', 'NX', 'NY',
-                            'STATE1', 'STATE2', 'STATE3', 'BASE_DATE', 'BASE_TIME']
+                            'STATE1', 'STATE2', 'STATE3', 'LOCATION', 'BASE_DATETIME']
 
                 sql_insert = "REPLACE INTO weather("+', '.join(list_col)+") \
                 VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
@@ -821,8 +820,7 @@ class GetWeather():
                     value = item['obsrValue']
                     if idx2 == 0:
                         return_base = self.change_format_bases(item['baseDate'], item['baseTime'])
-                        mysql_items['BASE_DATE'] = return_base[0]
-                        mysql_items['BASE_TIME'] = return_base[1]
+                        mysql_items['BASE_DATETIME'] = return_base
 
                     mysql_items[category] = str(value)
 
@@ -960,7 +958,8 @@ class GetWeather():
                             continue
                         if key == 'locdate':
                             changes = self.change_format_bases(response_data[1][key], '0000')
-                            mysql_items[list_col[idx+1]] = changes[0]
+                            changes = changes.split()
+                            mysql_items[list_col[idx+1]] = changes[0].strip()
                             continue
 
                         mysql_items[list_col[idx+1]] = response_data[1][key]

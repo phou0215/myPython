@@ -1,6 +1,6 @@
 import pymysql
 import sys
-import pkg_resources.py2_warn
+# import pkg_resources.py2_warn
 # import numpy
 # import threading
 # import pandas as pd
