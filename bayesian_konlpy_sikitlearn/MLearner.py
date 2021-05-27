@@ -22,11 +22,11 @@ import matplotlib.pyplot as plt
 # from nltk.tokenize import word_tokenize
 
 # from xgboost import plot_importance
-# from xgboost import XGBClassifier
+from xgboost import XGBClassifier
 
 # from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
+# from sklearn.feature_extraction.text import TfidfTransformer
 
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline, make_pipeline
@@ -35,7 +35,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
-# from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score, KFold
 
 
@@ -78,6 +78,8 @@ class VOCLearner():
         self.model_svm = None
         self.model_svc = None
         self.model_linerSVC = None
+        self.model_random = None
+        self.model_xgboost = None
 
         self.pattern = re.compile("([1-9]{1,2}\.)")
         self.konlpy_parser = None
@@ -219,7 +221,7 @@ class VOCLearner():
                 # extract only training data 99.9%
                 self.Train_Data_X, Test_Data_X, \
                 self.Train_Data_Y, Test_Data_Y = train_test_split(self.list_memo, self.list_label,
-                                                                  test_size=0.1, random_state=42,
+                                                                  test_size=0.15, random_state=42,
                                                                   shuffle=self.flag_shuffle,
                                                                   stratify=self.list_label)
                 # Test data pd input
@@ -246,7 +248,7 @@ class VOCLearner():
                 # extract only test data 99%
                 train_Data_X, self.Test_Data_X, \
                 train_Data_Y, self.Test_Data_Y = train_test_split(test_list_memo, test_list_label,
-                                                                  test_size=0.95, random_state=42,
+                                                                  test_size=0.99, random_state=42,
                                                                   shuffle=self.flag_shuffle,
                                                                   stratify=test_list_label)
 
@@ -272,7 +274,7 @@ class VOCLearner():
             self.vectorizer = TfidfVectorizer(sublinear_tf=True,
                                               input="array",
                                               # max_features=3000,
-                                              tokenizer=self.subword_text,
+                                              # tokenizer=self.subword_text,
                                               max_df=0.8,
                                               min_df=2,
                                               norm='l2',
@@ -292,7 +294,7 @@ class VOCLearner():
         try:
             custom_vector = TfidfVectorizer(sublinear_tf=True,
                                             input="array",
-                                            tokenizer=self.subword_text,
+                                            # tokenizer=self.subword_text,
                                             max_df=0.8,
                                             min_df=2,
                                             norm='l2',
@@ -306,8 +308,8 @@ class VOCLearner():
             # self.setPrint('Custom Vocab Features {}'.format(custom_vector.get_feature_names()))
             # self.setPrint(tf_idf)
         except:
-            self.setPrint('Custom Vocab 생성 중 에러 발생...').exc_info(
-            self.setPrint('Error: {}. {}, line: {}'.format(sys)[0], sys.exc_info()[1],
+            self.setPrint('Custom Vocab 생성 중 에러 발생...')
+            self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1],
                                                            sys.exc_info()[2].tb_lineno))
 
     # make model pipeline
@@ -332,14 +334,22 @@ class VOCLearner():
             ('clf', LinearSVC(random_state=42))
         ])
         # n_estimators=1500
-        # self.model_random =  Pipeline([
-        # ('vect', TfidfVectorizer()),
-        # ('clf', RandomForestClassifier(n_estimators=1500, random_state=42))
-        # ])
-        # self.model_xgboost = Pipeline([
-        # ('vect', TfidfVectorizer()),
-        # ('clf', XGBClassifier(random_state=42))
-        # ])
+        # max_feature = auto
+        # max_depth = 3
+        self.model_random = Pipeline([
+            ('vect', self.vectorizer),
+            ('clf', RandomForestClassifier(n_estimators=1500, max_depth=10, criterion='gini', random_state=42))
+        ])
+        # google xgboost
+        self.model_xgboost = Pipeline([
+            ('vect', self.vectorizer),
+            ('clf', XGBClassifier(random_state=42,
+                                  max_depth=10,
+                                  objective='multi:softmax ',
+                                  n_estimators=1500,
+                                  learning_rate=0.1,
+                                  ))
+        ])
 
     # tokenizer 함수
     # def subword_text(self, text):
@@ -391,7 +401,7 @@ class VOCLearner():
             'url',
             text_data)
         # 그 외의 특수문자는 모두 삭제
-        text_data = re.sub(r'[-=+,_#/\?^$@*\"※~&%ㆍ!』\‘|\(\)\[\]\<\>\{\}`><\'\.:■◈▶●★☎]', ' ', text_data)
+        text_data = re.sub(r'[-=+,_#/\?^$@*\"※~&%ㆍ!』\‘|\(\)\[\]\<\>\{\}`><\'\.:;■◈▶●★☎]', ' ', text_data)
 
         # 앞서 list_rmstring 선언된 단어들 모두 제거
         for item in self.list_rmstring:
@@ -407,29 +417,35 @@ class VOCLearner():
     #  Text cleaning 함수
     def text_filter(self, list_doc):
 
-        list_return = list_doc
-        for idx, doc in enumerate(list_return):
-            # if doc's length is under 10, skip and exclude list_doc
-            if len(doc) < 10:
-                continue
-            for item in self.list_special:
-                if item in doc:
-                    spec_string = item
-                    doc = doc + "/e"
-                    text = self.find_between(doc, spec_string, "/e")
-                    if self.pattern.search(text):
-                        pattern_list = self.pattern.findall(text)
-                        doc = self.find_between(doc, spec_string, pattern_list[0])
-                    else:
-                        doc = doc.replace("/e", "")
-                    break
-            doc = self.remove_special(doc)
-            # # doc = "\n".join([s for s in doc.split('\n') if s])
-            # list_doc = self.subword_text(doc)
-            # doc = " ".join([s for s in list_doc if s])
-            list_return[idx] = doc
+        try:
+            list_return = list_doc
+            for idx, doc in enumerate(list_return):
+                # if doc's length is under 10, skip and exclude list_doc
+                if len(doc) < 10:
+                    continue
+                for item in self.list_special:
+                    if item in doc:
+                        spec_string = item
+                        doc = doc + "/e"
+                        text = self.find_between(doc, spec_string, "/e")
+                        if self.pattern.search(text):
+                            pattern_list = self.pattern.findall(text)
+                            doc = self.find_between(doc, spec_string, pattern_list[0])
+                        else:
+                            doc = doc.replace("/e", "")
+                        break
+                doc = self.remove_special(doc)
+                # # doc = "\n".join([s for s in doc.split('\n') if s])
+                list_doc = self.subword_text(doc)
+                doc = " ".join([s.strip() for s in list_doc if s])
+                list_return[idx] = doc
+            return list_return
 
-        return list_return
+        except:
+            self.setPrint('Custom Vocab 생성 중 에러 발생...')
+            self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1],
+                                                           sys.exc_info()[2].tb_lineno))
+            return None
 
     # # 메모 데이터 filtering 함수
     # def text_filter(self, list_doc):
@@ -477,33 +493,33 @@ class VOCLearner():
             self.setPrint('위치 : {}'.format(self.save_path + 'model_linerSVC.pkl'))
             # save_model = pickle.dumps(self.model_linerSVC)
             joblib.dump(self.model_linerSVC, self.save_path + 'model_linerSVC.pkl')
-        # elif self.l_type == 5:
-        #     self.setPrint('위치 : {}'.format(self.save_path+'model_random.pkl'))
-        #     # save_model = pickle.dumps(self.model_random)
-        #     joblib.dump(self.model_random, self.save_path+'model_random.pkl')
-        # elif self.l_type == 6:
-        #     self.setPrint('위치 : {}'.format(self.save_path+'model_xgboost.pkl'))
-        #     # save_model = pickle.dumps(self.model_xgboost)
-        #     joblib.dump(self.model_xgboost, self.save_path+'model_xgboost.pkl')
+        elif self.l_type == 5:
+            self.setPrint('위치 : {}'.format(self.save_path+'model_random.pkl'))
+            # save_model = pickle.dumps(self.model_random)
+            joblib.dump(self.model_random, self.save_path+'model_random.pkl')
+        elif self.l_type == 6:
+            self.setPrint('위치 : {}'.format(self.save_path+'model_xgboost.pkl'))
+            # save_model = pickle.dumps(self.model_xgboost)
+            joblib.dump(self.model_xgboost, self.save_path+'model_xgboost.pkl')
         else:
             self.setPrint('위치1 : {}'.format(self.save_path + 'model_nb.pkl'))
             self.setPrint('위치2 : {}'.format(self.save_path + 'model_svm.pkl'))
             self.setPrint('위치3 : {}'.format(self.save_path + 'model_svc.pkl'))
             self.setPrint('위치4 : {}'.format(self.save_path + 'model_linerSVC.pkl'))
-            # self.setPrint('위치5 : {}'.format(self.save_path+'model_random.pkl'))
-            # self.setPrint('위치6 : {}'.format(self.save_path+'model_xgboost.pkl'))
+            self.setPrint('위치5 : {}'.format(self.save_path+'model_random.pkl'))
+            self.setPrint('위치6 : {}'.format(self.save_path+'model_xgboost.pkl'))
+            joblib.dump(self.model_nb, self.save_path + 'model_nb.pkl')
+            joblib.dump(self.model_svm, self.save_path + 'model_svm.pkl')
+            joblib.dump(self.model_svc, self.save_path + 'model_svc.pkl')
+            joblib.dump(self.model_linerSVC, self.save_path + 'model_linerSVC.pkl')
+            joblib.dump(self.model_random, self.save_path+'model_random.pkl')
+            joblib.dump(self.model_xgboost, self.save_path+'model_xgboost.pkl')
             # save_model_1 = pickle.dumps(self.model_nb)
             # save_model_2 = pickle.dumps(self.model_svm)
             # save_model_3 = pickle.dumps(self.model_svc)
             # save_model_4 = pickle.dumps(self.model_linerSVC)
             # save_model_5 = pickle.dumps(self.model_random)
-            joblib.dump(self.model_nb, self.save_path + 'model_nb.pkl')
-            joblib.dump(self.model_svm, self.save_path + 'model_svm.pkl')
-            joblib.dump(self.model_svc, self.save_path + 'model_svc.pkl')
-            joblib.dump(self.model_linerSVC, self.save_path + 'model_linerSVC.pkl')
-            # joblib.dump(self.model_random, self.save_path+'model_random.pkl')
-            # joblib.dump(self.model_xgboost, self.save_path+'model_xgboost.pkl')
-        # joblib.dump(self.vectorizer, self.save_path + 'vectorizer.pkl')
+        joblib.dump(self.vectorizer, self.save_path + 'vectorizer.pkl')
         self.setPrint('모델 저장 작업 완료...')
 
     # 모델 저장 경로에 있는 모델 불러와서 Array 로 리턴
@@ -554,16 +570,14 @@ class VOCLearner():
 
             # vectorizer 생성
             self.generate_vector()
-            #
+
             # # train and test x_data reformat to tfidf transform
-            # self.Train_Data_X = self.vectorizer.transform(self.Train_Data_X).toarray()
             # for i in range(50):
-            #     self.setPrint("Train_Vector:\n{}".format(self.Train_Data_X[i]))
-            #     self.setPrint(self.Train_Data_Y[i])
-            # self.Test_Data_X = self.vectorizer.transform(self.Test_Data_X).toarray()
+            #     self.setPrint("[{}]Train X Data Parsed:\n{}".format(i, self.Train_Data_X[i]))
+            #     self.setPrint("[{}]Train Y Label : {}".format(i, self.Train_Data_Y[i]))
             # for i in range(50):
-            #     self.setPrint("Test_Vector:\n{}".format(self.Test_Data_X[i]))
-            #     self.setPrint(self.Test_Data_Y[i])
+            #     self.setPrint("[{}]Test X Data Parsed:\n{}".format(i, self.Test_Data_X[i]))
+            #     self.setPrint("[{}]Test Y Label : {}".format(i, self.Test_Data_Y[i]))
 
             # model pipeline 생성
             self.generate_pipeline()
@@ -604,24 +618,24 @@ class VOCLearner():
                 # 테스트 시작
                 self.cross_validation({'LinearSVC': self.model_linerSVC})
 
-            # elif self.l_type == 5:
-            #     self.setPrint('RandomForest classifier 모델 학습 시작...')
-            #     self.model_random = self.model_random.fit(self.Train_Data_X, self.Train_Data_Y)
-            #     self.setPrint('RandomForest classifier 모델 학습 완료...')
-            #     # 테스트 시작
-            #     self.cross_validation({'Random':self.model_random})
-            #
-            # elif self.l_type == 6:
-            #     self.setPrint('Xgboost classifier 모델 학습 시작...')
-            #     self.model_xgboost = self.model_xgboost.fit(self.Train_Data_X, self.Train_Data_Y)
-            #     self.setPrint('Xgboost classifier 모델 학습 완료...')
-            #     # 테스트 시작
-            #     self.cross_validation({'Xgboost':self.model_xgboost})
+            elif self.l_type == 5:
+                self.setPrint('RandomForest classifier 모델 학습 시작...')
+                self.model_random = self.model_random.fit(self.Train_Data_X, self.Train_Data_Y)
+                self.setPrint('RandomForest classifier 모델 학습 완료...')
+                # 테스트 시작
+                self.cross_validation({'Random':self.model_random})
+
+            elif self.l_type == 6:
+                self.setPrint('Xgboost classifier 모델 학습 시작...')
+                self.model_xgboost = self.model_xgboost.fit(self.Train_Data_X, self.Train_Data_Y)
+                self.setPrint('Xgboost classifier 모델 학습 완료...')
+                # 테스트 시작
+                self.cross_validation({'Xgboost':self.model_xgboost})
 
             # 둘다 모델 생성 처리
             else:
-                self.setPrint('4개 모델 학습 시작...')
-                self.mode_nb = self.model_nb.fit(self.Train_Data_X, self.Train_Data_Y)
+                self.setPrint('6개 모델 학습 시작...')
+                self.model_nb = self.model_nb.fit(self.Train_Data_X, self.Train_Data_Y)
                 self.setPrint('Naive Bayesian classifier 모델 학습 완료...')
                 self.model_svm = self.model_svm.fit(self.Train_Data_X, self.Train_Data_Y)
                 self.setPrint('SVM SGDClassifier 모델 학습 완료...')
@@ -629,42 +643,54 @@ class VOCLearner():
                 self.setPrint('SVC classifier 모델 학습 완료...')
                 self.model_linerSVC = self.model_linerSVC.fit(self.Train_Data_X, self.Train_Data_Y)
                 self.setPrint('LinerSVC classifier 모델 학습 완료...')
-                # self.model_random = self.model_random.fit(self.Train_Data_X, self.Train_Data_Y)
-                # self.setPrint('RandomForest classifier 모델 학습 완료...')
-                # self.model_xgboost = self.model_xgboost.fit(self.Train_Data_X, self.Train_Data_Y)
-                # self.setPrint('Xgboost classifier 모델 학습 완료...')
+                self.model_random = self.model_random.fit(self.Train_Data_X, self.Train_Data_Y)
+                self.setPrint('RandomForest classifier 모델 학습 완료...')
+                self.model_xgboost = self.model_xgboost.fit(self.Train_Data_X, self.Train_Data_Y)
+                self.setPrint('Xgboost classifier 모델 학습 완료...')
 
                 # 테스트 시작
                 self.setPrint('테스트 시작...')
                 self.cross_validation(
                     {'Naive Bayesian': self.model_nb, 'SGDClassifier': self.model_svm, 'SVC': self.model_svc,
-                     'LinearSVC': self.model_linerSVC})
-                # self.cross_validation({'Naive Bayesian':self.model_nb, 'SGDClassifier':self.model_svm, 'SVC':self.model_svc,
-                # 'LinearSVC':self.model_linerSVC, 'RandomFoest':self.model_random, 'Xgboost':self.model_xgboost})
+                     'LinearSVC': self.model_linerSVC, 'RandomForest': self.model_random, 'xgboost': self.model_xgboost})
 
-            self.save_models()
-            # self.load_model([self.save_path+'model_nb.pkl', self.save_path+'model_svm.pkl', self.save_path+'model_svc.pkl', self.save_path+'model_linerSVC.pkl'])
-            #
-            # sentence = ["카카오톡 이랑 카트라이더 앱 안됨 실행 시 튕기고 강제 종료 됨", "'핸드폰 자체 소프트웨어 업데이트 이후 문자발송시 글자수 제한되고 있음.  기존 동일한 문자정상 발송 되던것이나, 이용안됨 .  \
-            # - 80명 단체문자  - 이미지 동영상 문자메세지만 보낼수 있어요. 라고 나오면서 발신 불가 .   개별로 보내면 정상  > 제조사 문의 안내 . 연결"]
-            # sentence = [self.removeString(x) for x in sentence if x]
-            # label_1 = self.list_load_models[0].predict(sentence)
-            # label_2 = self.list_load_models[1].predict(sentence)
-            # label_3 = self.list_load_models[2].predict(sentence)
-            # label_4 = self.list_load_models[3].predict(sentence)
-            #
-            # self.setPrint(label_1)
-            # self.setPrint(label_2)
-            # self.setPrint(label_3)
-            # self.setPrint(label_4)
+
+            # self.save_models()
+            self.load_model([self.save_path + 'model_nb.pkl', self.save_path + 'model_svm.pkl',
+                             self.save_path + 'model_svc.pkl', self.save_path + 'model_linerSVC.pkl',
+                             self.save_path + 'model_random.pkl', self.save_path + 'model_xgboost.pkl',
+                             ])
+
+            sentence = ['카카오톡 이랑 카트라이더 앱 안됨 실행 시 튕기고 강제 종료 됨',
+                        "핸드폰 자체 소프트웨어 업데이트 이후 문자발송시 글자수 제한되고 있음. 기존 동일한 문자정상 발송 되던것이나, 이용안됨 ."
+                        " - 80명 단체문자  - 이미지 동영상 문자메세지만 보낼수 있어요. 라고 나오면서 발신 불가 ."
+                        "개별로 보내면 정상  > 제조사 문의 안내 . 연결"]
+
+            sentence = [self.text_filter(s) for s in sentence if s]
+            print(sentence)
+
+            label_1 = self.list_load_models[0].predict(sentence)
+            label_2 = self.list_load_models[1].predict(sentence)
+            label_3 = self.list_load_models[2].predict(sentence)
+            label_4 = self.list_load_models[3].predict(sentence)
+            label_5 = self.list_load_models[4].predict(sentence)
+            label_6 = self.list_load_models[5].predict(sentence)
+
+            self.setPrint('Sentence Naive Predict Label : {}'.format(label_1))
+            self.setPrint('Sentence SVM Predict Label : {}'.format(label_2))
+            self.setPrint('Sentence SVC Predict Label : {}'.format(label_3))
+            self.setPrint('Sentence LinearSVC Predict Label : {}'.format(label_4))
+            self.setPrint('Sentence Random Predict Label : {}'.format(label_5))
+            self.setPrint('Sentence XGboost Predict Label : {}'.format(label_6))
+
             end_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
             self.setPrint("FINISH_TIME : " + end_time)
             input("\nPress any key to exit")
 
         except:
             self.setPrint('학습기 실행 중 에러 발생...')
-            self.setPrint(
-                'Error: {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
+            self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                           sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
 
 
 if __name__ == "__main__":
