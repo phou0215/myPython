@@ -30,6 +30,7 @@ from openpyxl.styles.borders import Border, Side
 # ws.max_row
 # to print the maximum number of occupied columns in console
 # ws.max_column
+
 class Formater(QThread):
 
     print_flag = pyqtSignal(str)

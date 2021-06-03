@@ -45,6 +45,7 @@ from pywinauto.application import Application
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.base import JobLookupError
 
+
 class SearchCrawl():
 
     # 클래스 초기화

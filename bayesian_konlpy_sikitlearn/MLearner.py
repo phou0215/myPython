@@ -393,7 +393,7 @@ class VOCLearner():
         text_data = re.sub(r'(?!-)\d{2,4}[0]{2,4}(?!년)(?!.)|\d{1,3}[,/.]\d{3}', 'money', text_data)
         text_data = re.sub(r'[1-9]g', ' cellular ', text_data)
         text_data = re.sub(r'(유심|usim|sim|esim)', 'usim', text_data)
-        text_data = re.sub(r'(sms|mms|메시지)', 'text', text_data)
+        text_data = re.sub(r'(sms|mms|메시지)', 'message', text_data)
         text_data = re.sub(r'통신.?내역', 'list', text_data)
         # web 주소는 'url'로 변경
         text_data = re.sub(
