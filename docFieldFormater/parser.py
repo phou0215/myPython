@@ -153,7 +153,7 @@ class DocFormatter():
                         list_freq_temp = layer_freq.split(";")
                         measure_band = ""
                         for freq in list_freq_temp:
-                            if band.strip() == self.dict_band[freq]:
+                            if band.strip().lower() == self.dict_band[freq].lower():
                                 measure_band = self.dict_band[freq]
                                 break
 
