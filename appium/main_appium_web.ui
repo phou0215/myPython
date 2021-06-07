@@ -1,0 +1,559 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1189</width>
+    <height>809</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>AppiumRunner_v1.0</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../../Downloads/test2.png</normaloff>../../Downloads/test2.png</iconset>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="font">
+       <font>
+        <family>맑은 고딕</family>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: rgb(58, 58, 58);</string>
+      </property>
+      <property name="tabPosition">
+       <enum>QTabWidget::North</enum>
+      </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>17</width>
+        <height>17</height>
+       </size>
+      </property>
+      <widget class="QWidget" name="tab_1">
+       <attribute name="title">
+        <string>Appium Runner</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QGroupBox" name="groupBox_list">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>220</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="title">
+           <string>List Of Connect Devices</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <item>
+            <widget class="QLabel" name="label">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Serials of Device</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="listWidget_devices">
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(120, 120, 120);
+color: rgb(255, 255, 255);</string>
+             </property>
+             <property name="selectionMode">
+              <enum>QAbstractItemView::MultiSelection</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_sereset">
+             <property name="styleSheet">
+              <string notr="true">background-color: rgba(95, 154, 135, 0.8);</string>
+             </property>
+             <property name="text">
+              <string>Selected Reset</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_coreset">
+             <property name="styleSheet">
+              <string notr="true">background-color: rgba(95, 154, 135, 0.8);</string>
+             </property>
+             <property name="text">
+              <string>Connect Reset</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_log">
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="title">
+           <string>Display </string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <widget class="QWidget" name="widget" native="true">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>40</height>
+              </size>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <item>
+               <widget class="QLabel" name="label_2">
+                <property name="text">
+                 <string>Test Log</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_clearLog">
+                <property name="maximumSize">
+                 <size>
+                  <width>100</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgba(95, 154, 135, 0.8);</string>
+                </property>
+                <property name="text">
+                 <string>Clear Log</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPlainTextEdit" name="plainTextEdit_log">
+             <property name="sizeIncrement">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(58, 58, 58);
+color: rgb(255, 255, 255);</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupBox_controller">
+          <property name="minimumSize">
+           <size>
+            <width>260</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>250</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: rgb(255, 255, 255);</string>
+          </property>
+          <property name="title">
+           <string>Controller</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_7">
+           <item>
+            <widget class="QGroupBox" name="groupBox_setting">
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="title">
+              <string>Setting</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
+              <item>
+               <widget class="QLabel" name="label_file">
+                <property name="text">
+                 <string>Setting File Path</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_filepath">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgb(255, 255, 255);
+color: rgb(0, 0, 0);</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_browser">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>맑은 고딕</family>
+                  <pointsize>10</pointsize>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgb(255, 177, 20);
+color: rgb(255, 255, 255);</string>
+                </property>
+                <property name="text">
+                 <string>Browser</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_delay">
+                <property name="text">
+                 <string>Delay Time Each Step(sec)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_delay">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgb(255, 255, 255);
+color: rgb(0, 0, 0);</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_loop">
+                <property name="text">
+                 <string>Repeat Time Num(num)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="lineEdit_loop">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgb(248, 248, 248);
+color: rgb(0, 0, 0);</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_option">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>200</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true"/>
+             </property>
+             <property name="title">
+              <string>Start Options</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_8">
+              <item>
+               <widget class="QCheckBox" name="checkBox_data">
+                <property name="text">
+                 <string>Cell ON/OFF</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_wifi">
+                <property name="text">
+                 <string>Wifi ON/OFF</string>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_gps">
+                <property name="text">
+                 <string>GPS ON/OFF</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_nfc">
+                <property name="text">
+                 <string>NFC ON/OFF</string>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="groupBox_bright">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>100</height>
+                 </size>
+                </property>
+                <property name="title">
+                 <string>Brightness</string>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_4">
+                 <item>
+                  <widget class="QLCDNumber" name="lcdNumber_bright"/>
+                 </item>
+                 <item>
+                  <widget class="QSlider" name="horizontalSlider_bright">
+                   <property name="maximum">
+                    <number>255</number>
+                   </property>
+                   <property name="value">
+                    <number>128</number>
+                   </property>
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="invertedAppearance">
+                    <bool>false</bool>
+                   </property>
+                   <property name="tickPosition">
+                    <enum>QSlider::TicksBelow</enum>
+                   </property>
+                   <property name="tickInterval">
+                    <number>50</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_options">
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgb(53, 124, 255);</string>
+                </property>
+                <property name="text">
+                 <string>SET</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_run">
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>190</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Run Control</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_5">
+              <item>
+               <widget class="QPushButton" name="pushButton_Srun">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>맑은 고딕</family>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgba(197, 255, 201, 0.8);
+color: rgb(255, 255, 255);</string>
+                </property>
+                <property name="text">
+                 <string>Server Run</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_Crun">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>맑은 고딕</family>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgb(157, 205, 255);
+color: rgb(255, 255, 255);</string>
+                </property>
+                <property name="text">
+                 <string>Client Run</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_cancel">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <family>맑은 고딕</family>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgb(255, 152, 143);
+color: rgb(255, 255, 255);</string>
+                </property>
+                <property name="text">
+                 <string>Stop</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_3">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>progress</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QProgressBar" name="progressBar">
+                <property name="value">
+                 <number>24</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1189</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
