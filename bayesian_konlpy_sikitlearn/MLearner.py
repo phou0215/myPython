@@ -604,7 +604,7 @@ class VOCLearner():
             self.setPrint("모델 저장 작업 완료")
 
             self.setPrint("모델 업로드 작업 시작...")
-            self.load_model()
+            self.load_model(self.list_model_path)
             self.setPrint("모델 업로드 작업 완료")
 
             self.generate_graph()
