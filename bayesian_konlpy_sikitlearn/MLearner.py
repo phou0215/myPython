@@ -143,10 +143,11 @@ class VOCLearner():
         # max_col = 2
         # max_row = 3
         x = np.linspace(1, self.n_split, self.n_split)
-        self.figure = plt.figure(figsize=(12, 8))
+        # self.figure = plt.figure(figsize=(12, 8))
+        self.figure = plt.figure()
 
         for idx, (key, values) in enumerate(self.dict_acc.items()):
-            ax = self.figure.add_subplot(max_row, max_col, idx)
+            ax = self.figure.add_subplot(max_row, max_col, idx+1)
             ax.plot(x, values)
             ax.set_xlabel('KFold')
             ax.set_ylabel(key+' ACC Score')
