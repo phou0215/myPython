@@ -78,12 +78,13 @@ class VOCLearner():
         self.label_index = None
 
         # models
-        self.model_nb = None
-        self.model_svm = None
-        self.model_svc = None
-        self.model_linerSVC = None
-        self.model_random = None
-        self.model_xgboost = None
+        # self.model_nb = None
+        # self.model_svm = None
+        # self.model_svc = None
+        # self.model_linerSVC = None
+        # self.model_random = None
+        # self.model_xgboost = None
+        self.dict_model = None
 
         self.pattern = re.compile("([1-9]{1,2}\.)")
         self.konlpy_parser = None
@@ -322,32 +323,32 @@ class VOCLearner():
     def generate_pipeline(self):
 
         # alpha = 1e-2,
-        self.model_nb = Pipeline([
+        model_nb = Pipeline([
             ('vect', self.vectorizer),
             ('clf', MultinomialNB(fit_prior=True, class_prior=None))
         ])
         # alpha = 1e-4,
-        self.model_svm = Pipeline([
+        model_svm = Pipeline([
             ('vect', self.vectorizer),
             ('clf', SGDClassifier(loss='log', penalty='l2', random_state=42, fit_intercept=True, class_weight='balanced'))
         ])
-        self.model_svc = Pipeline([
+        model_svc = Pipeline([
             ('vect', self.vectorizer),
             ('clf', SVC(C=10, kernel='rbf', gamma=0.1, probability=True, class_weight=None, random_state=42))
         ])
-        self.model_linerSVC = Pipeline([
+        model_linerSVC = Pipeline([
             ('vect', self.vectorizer),
             ('clf', LinearSVC(random_state=42))
         ])
         # n_estimators=1500
         # max_feature = auto
         # max_depth = 3
-        self.model_random = Pipeline([
+        model_random = Pipeline([
             ('vect', self.vectorizer),
             ('clf', RandomForestClassifier(n_estimators=1500, max_depth=10, criterion='gini', random_state=42))
         ])
         # google xgboost
-        self.model_xgboost = Pipeline([
+        model_xgboost = Pipeline([
             ('vect', self.vectorizer),
             ('clf', XGBClassifier(random_state=42,
                                   max_depth=10,
@@ -356,6 +357,8 @@ class VOCLearner():
                                   learning_rate=0.1,
                                   ))
         ])
+        self.dict_model = {'Naive Bayesian': model_nb, 'SGDClassifier': model_svm, 'SVC': model_svc,
+         'LinearSVC': model_linerSVC, 'RandomForest': model_random, 'xgboost': model_xgboost}
 
     # Konlpy text parsing
     def subword_text(self, text):
@@ -444,32 +447,32 @@ class VOCLearner():
         # 타입별 모델 저장하기
         if self.l_type == 1:
             self.setPrint('위치 : {}'.format(self.save_path + 'model_nb.pkl'))
-            joblib.dump(self.model_nb, self.save_path + 'model_nb.pkl')
+            joblib.dump(self.dict_model['Naive Bayesian'], self.save_path + 'model_nb.pkl')
             self.list_model_path.append(self.save_path + 'model_nb.pkl')
 
         elif self.l_type == 2:
             self.setPrint('위치 : {}'.format(self.save_path + 'model_svm.pkl'))
-            joblib.dump(self.model_svm, self.save_path + 'model_svm.pkl')
+            joblib.dump(self.dict_model['SGDClassifier'], self.save_path + 'model_svm.pkl')
             self.list_model_path.append(self.save_path + 'model_svm.pkl')
 
         elif self.l_type == 3:
             self.setPrint('위치 : {}'.format(self.save_path + 'model_svc.pkl'))
-            joblib.dump(self.model_svc, self.save_path + 'model_svc.pkl')
+            joblib.dump(self.dict_model['SVC'], self.save_path + 'model_svc.pkl')
             self.list_model_path.append(self.save_path + 'model_svc.pkl')
 
         elif self.l_type == 4:
             self.setPrint('위치 : {}'.format(self.save_path + 'model_linerSVC.pkl'))
-            joblib.dump(self.model_linerSVC, self.save_path + 'model_linerSVC.pkl')
+            joblib.dump(self.dict_model['LinearSVC'], self.save_path + 'model_linerSVC.pkl')
             self.list_model_path.append(self.save_path + 'model_linerSVC')
 
         elif self.l_type == 5:
             self.setPrint('위치 : {}'.format(self.save_path + 'model_random.pkl'))
-            joblib.dump(self.model_random, self.save_path + 'model_random.pkl')
+            joblib.dump(self.dict_model['RandomForest'], self.save_path + 'model_random.pkl')
             self.list_model_path.append(self.save_path + 'model_random.pkl')
 
         elif self.l_type == 6:
             self.setPrint('위치 : {}'.format(self.save_path + 'model_xgboost.pkl'))
-            joblib.dump(self.model_xgboost, self.save_path + 'model_xgboost.pkl')
+            joblib.dump(self.dict_model['xgboost'], self.save_path + 'model_xgboost.pkl')
             self.list_model_path.append(self.save_path + 'model_xgboost.pkl')
 
         else:
@@ -480,12 +483,12 @@ class VOCLearner():
             self.setPrint('위치5 : {}'.format(self.save_path + 'model_random.pkl'))
             self.setPrint('위치6 : {}'.format(self.save_path + 'model_xgboost.pkl'))
 
-            joblib.dump(self.model_nb, self.save_path + 'model_nb.pkl')
-            joblib.dump(self.model_svm, self.save_path + 'model_svm.pkl')
-            joblib.dump(self.model_svc, self.save_path + 'model_svc.pkl')
-            joblib.dump(self.model_linerSVC, self.save_path + 'model_linerSVC.pkl')
-            joblib.dump(self.model_random, self.save_path + 'model_random.pkl')
-            joblib.dump(self.model_xgboost, self.save_path + 'model_xgboost.pkl')
+            joblib.dump(self.dict_model['Naive Bayesian'], self.save_path + 'model_nb.pkl')
+            joblib.dump(self.dict_model['SGDClassifier'], self.save_path + 'model_svm.pkl')
+            joblib.dump(self.dict_model['SVC'], self.save_path + 'model_svc.pkl')
+            joblib.dump(self.dict_model['LinearSVC'], self.save_path + 'model_linerSVC.pkl')
+            joblib.dump(self.dict_model['RandomForest'], self.save_path + 'model_random.pkl')
+            joblib.dump(self.dict_model['xgboost'], self.save_path + 'model_xgboost.pkl')
 
             self.list_model_path.append(self.save_path + 'model_nb.pkl')
             self.list_model_path.append(self.save_path + 'model_svm.pkl')
@@ -516,11 +519,24 @@ class VOCLearner():
             for idx, (key, model) in enumerate(dict_model.items()):
                 self.setPrint("{} 모델 {} 교차 트레이닝 테스트 시작...".format(idx, key))
                 kfold = KFold(n_splits=self.n_split, shuffle=self.flag_shuffle)
-                score = cross_val_score(model, self.list_memo, self.list_label, cv=kfold, scoring="accuracy")
+                result = cross_validate(model,
+                                        self.list_memo,
+                                        self.list_label,
+                                        cv=kfold,
+                                        # scoring="accuracy",
+                                        n_jobs=-1,
+                                        return_estimator=True,
+                                        return_train_score=True)
+                score = result['test_score'].tolist()
+                max_score_index = score.index(max(score))
+                estimator = result['estimator'][max_score_index]
+                self.dict_model[key] = estimator
                 self.setPrint("{} 모델 {} 교차 검증 accuracy : {}".format(idx, key, score))
-                self.setPrint("{} 모델 {} 교차 검증 평균 accuracy : {}".format(idx, key, score.mean()))
+                self.setPrint("{} 모델 {} 교차 검증 평균 accuracy : {}".format(idx, key, np.array(score).mean()))
                 # add acc score for matplot graph
                 self.dict_acc[key] = score
+
+
         except:
             self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
                                                            sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
@@ -564,40 +580,46 @@ class VOCLearner():
 
             if self.l_type == 1:
                 self.setPrint('NB Naive Bayesian classifier 모델 학습 시작...')
-                self.cross_validation({'Naive Bayesian': self.model_nb})
+                self.cross_validation({'Naive Bayesian': self.dict_model['Naive Bayesian']})
                 self.setPrint('NB Naive Bayesian classifier 모델 학습 완료...')
 
             # SVM SGDClassifier 방식으로 모델 생성 처리
             elif self.l_type == 2:
                 self.setPrint('SVM SGDClassifier 모델 학습 시작...')
-                self.cross_validation({'SGDClassifier': self.model_svm})
+                self.cross_validation({'SGDClassifier': self.dict_model['SGDClassifier']})
                 self.setPrint('SVM SGDClassifier 모델 학습 완료...')
 
             elif self.l_type == 3:
                 self.setPrint('SVC classifier 모델 학습 시작...')
-                self.cross_validation({'SVC': self.model_svc})
+                self.cross_validation({'SVC': self.dict_model['SVC']})
                 self.setPrint('SVC classifier 모델 학습 완료...')
 
             elif self.l_type == 4:
                 self.setPrint('LinerSVC classifier 모델 학습 시작...')
-                self.cross_validation({'LinearSVC': self.model_linerSVC})
+                self.cross_validation({'LinearSVC': self.dict_model['LinearSVC']})
                 self.setPrint('LinerSVC classifier 모델 학습 완료...')
             elif self.l_type == 5:
                 self.setPrint('RandomForest classifier 모델 학습 시작...')
-                self.cross_validation({'Random': self.model_random})
+                self.cross_validation({'RandomForest': self.dict_model['RandomForest']})
                 self.setPrint('RandomForest classifier 모델 학습 완료...')
 
             elif self.l_type == 6:
                 self.setPrint('Xgboost classifier 모델 학습 시작...')
-                self.cross_validation({'Xgboost': self.model_xgboost})
+                self.cross_validation({'xgboost': self.dict_model['xgboost']})
                 self.setPrint('Xgboost classifier 모델 학습 완료...')
 
             # 둘다 모델 생성 처리
             else:
                 self.setPrint('6개 모델 학습 시작...')
                 self.cross_validation(
-                    {'Naive Bayesian': self.model_nb, 'SGDClassifier': self.model_svm, 'SVC': self.model_svc,
-                     'LinearSVC': self.model_linerSVC, 'RandomForest': self.model_random, 'xgboost': self.model_xgboost})
+                    {'Naive Bayesian': self.dict_model['Naive Bayesian'],
+                     'SGDClassifier': self.dict_model['SGDClassifier'],
+                     'SVC': self.dict_model['Naive Bayesian'],
+                     'LinearSVC': self.dict_model['SVC'],
+                     'RandomForest': self.dict_model['RandomForest'],
+                     'xgboost': self.dict_model['xgboost']
+                     }
+                )
                 self.setPrint("6개 모델 학습 완료")
 
             self.setPrint("모델 저장 작업 시작...")
@@ -608,8 +630,6 @@ class VOCLearner():
             self.load_model(self.list_model_path)
             self.setPrint("모델 업로드 작업 완료")
 
-            self.generate_graph()
-
             self.setPrint("업로드 모델 시험 시작...")
             # ############################## 로드 모델 시험 ##############################
             sentence = ['카카오톡 이랑 카트라이더 앱 안됨 실행 시 튕기고 강제 종료 됨',
@@ -617,17 +637,18 @@ class VOCLearner():
                         " - 80명 단체문자  - 이미지 동영상 문자메세지만 보낼수 있어요. 라고 나오면서 발신 불가 ."
                         "개별로 보내면 정상  > 제조사 문의 안내 . 연결"]
 
-            sentence, list_label = [self.text_filter(s, None) for s in sentence if s]
+            sentence, list_label = self.text_filter(sentence, None)
             self.setPrint("시험 Sentence {}".format(sentence))
             for idx, (key, value) in self.dict_acc:
-                label = self.list_load_model[idx].predict(sentence)
+                label = self.dict_model[key].predict(sentence)
                 self.setPrint('{} model predict Sentence label: {}'.format(key, label))
 
             self.setPrint("업로드 모델 시험 완료")
             end_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
             self.setPrint("FINISH_TIME : " + end_time)
-            input("\nPress any key to exit")
 
+            self.generate_graph()
+            input("\nPress any key to exit")
         except:
             self.setPrint('학습기 실행 중 에러 발생...')
             self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
