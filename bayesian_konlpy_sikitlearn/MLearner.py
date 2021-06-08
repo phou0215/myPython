@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri May 22 10:12:12 2020
+Created on Tues June 08 10:30:00 2021
 @author: TestEnC hanrim lee
 
 """
@@ -36,13 +36,13 @@ from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score, KFold
+from sklearn.model_selection import cross_val_score, KFold, cross_validate
 
 
 class VOCLearner():
     # l_type은 러닝 방식을 선택하는 것으로 '1'은 naive 방식 '2'는 SGD 방식 '3'은 SVM기본 '4'는 LinearSVC 방식 '5'는 모두다
     # p_type은 문장 분류시 tokenizer 모드 선택으로 '1'은 Okt '2'는 Komoran 방식
-    # t_type은 테스트 시 테스트 파일을 따로 할 것인지 선택하는 것으로 1
+
     def __init__(self):
         super(VOCLearner, self).__init__()
         # 현재 위치
@@ -54,14 +54,18 @@ class VOCLearner():
 
         self.list_corpus = []
         self.list_load_models = []
+        self.list_model_path = []
+        self.dict_acc = {}
         self.l_type = 5
         self.p_type = 1
-        self.t_type = 1
         self.v_type = 1
-        self.test_rate = 0.3
+        self.n_split = 5
         self.flag_shuffle = True
+
         self.custom_vocab = None
         self.vectorizer = None
+
+        self.figure = None
         self.df_data = None
         self.list_memo = None
         self.list_label = None
@@ -95,8 +99,7 @@ class VOCLearner():
             1. VOC 분류 모델 생성 프로그램 입니다.
             2. 현재 프로그램이 위치한 경로에 input excel 파일이 존재해야 합니다.
             3. 현재 프로그램이 위치한 경로에 'sklearn_models' 폴더 이름으로 저장이 됩니다.
-            4. t_type이 1인 경우는 학습 데이터 Set의 일부를 test_rate만큼 때어내어 저장 합니다.
-            5. t_type이 2인 경우는 테스트 전용 데이터 파일을 따로 준비하셔야 합니다.
+            4. v_type이 2인 경우는 vocab 전용 corpus csv 파일을 따로 준비하셔야 합니다.
 
         #####################################################################################################\n\n
         """
@@ -134,6 +137,23 @@ class VOCLearner():
             label_dict[label] = index
         return label_dict
 
+    # grid graph
+    def generate_graph(self, max_col=2,  max_row=3):
+
+        # max_col = 2
+        # max_row = 3
+        x = np.linspace(1, self.n_split, self.n_split)
+        self.figure = plt.figure(figsize=(12, 8))
+
+        for idx, (key, values) in enumerate(self.dict_acc.items()):
+            ax = self.figure.add_subplot(max_row, max_col, idx)
+            ax.plot(x, values)
+            ax.set_xlabel('KFold')
+            ax.set_ylabel(key+' ACC Score')
+            # ax1.legend(['AVG_ACC', 'AVG_RECALL'])
+
+        plt.show()
+
     # Train set 과 Test set 생성하는 함수
     def generate_data(self):
 
@@ -167,145 +187,130 @@ class VOCLearner():
             list_settings = df_config3['설정 값'].tolist()
             list_settings = [str(x) for x in list_settings if x]
 
+            # learning type select
             if list_settings[0] != 'nan':
                 self.l_type = int(list_settings[0])
+            # konlpy 형태소 분리 타입
             if list_settings[1] != 'nan':
                 self.p_type = int(list_settings[1])
                 if self.p_type == 1:
                     self.konlpy_parser = Okt()
                 else:
                     self.konlpy_parser = Komoran()
-
+            # KFold n_split 몇게 데이터호
             if list_settings[2] != 'nan':
-                self.t_type = int(list_settings[2])
+                self.n_split = int(list_settings[2])
+            # custom vocab flag
             if list_settings[3] != 'nan':
-                self.test_rate = float(list_settings[3])
-            if list_settings[4] != 'nan':
-                self.test_path = list_settings[4]
-            if list_settings[5] != 'nan':
                 self.v_type = 2
-                self.vocab_path = list_settings[5]
+                self.vocab_path = list_settings[3]
+
             # train test split data part
             # t_type == 1
-            if self.t_type == 1:
+            # label change to index format
+            self.label_index = self.set_label_index(self.df_data, col_name='메모분류')
+            self.df_data['label'] = self.df_data['메모분류'].replace(self.label_index)
+            self.setPrint('index of labels: \n{}'.format(self.label_index))
 
-                # label change to index format
-                self.label_index = self.set_label_index(self.df_data, col_name='메모분류')
-                self.df_data['label'] = self.df_data['메모분류'].replace(self.label_index)
-                self.setPrint('index of labels: \n{}'.format(self.label_index))
+            # data frame index reset
+            self.df_data.reset_index(drop=True)
+            self.list_label = self.df_data['label'].tolist()
+            self.list_memo, self.list_label = self.text_filter(self.df_data['메모'].tolist(), self.list_label)
 
-                # data frame index reset
-                self.df_data.reset_index(drop=True)
+            # if self.t_type == 1:
+            #
+            #     # label change to index format
+            #     self.label_index = self.set_label_index(self.df_data, col_name='메모분류')
+            #     self.df_data['label'] = self.df_data['메모분류'].replace(self.label_index)
+            #     self.setPrint('index of labels: \n{}'.format(self.label_index))
+            #
+            #     # data frame index reset
+            #     self.df_data.reset_index(drop=True)
+            #     self.list_label = self.df_data['label'].tolist()
+            #     self.list_memo, self.list_label = self.text_filter(self.df_data['메모'].tolist(), self.list_label)
+            #
+            #     self.Train_Data_X, self.Test_Data_X, \
+            #     self.Train_Data_Y, self.Test_Data_Y = train_test_split(self.list_memo, self.list_label,
+            #                                                            test_size=self.test_rate, random_state=42,
+            #                                                            shuffle=self.flag_shuffle,
+            #                                                            stratify=self.list_label)
+            # # t_type == 2
+            # else:
+            #     # Train data label change to index format
+            #     self.label_index = self.set_label_index(self.df_data, col_name='메모분류')
+            #     self.df_data['label'] = self.df_data['메모분류'].replace(self.label_index)
+            #     self.setPrint('index of labels: \n{}'.format(self.label_index))
+            #
+            #     # Train data frame index reset
+            #     self.df_data.reset_index(drop=True)
+            #
+            #     # Train data memo and labels
+            #     self.list_label = self.df_data['label'].tolist()
+            #     self.list_memo, self.list_label = self.text_filter(self.df_data['메모'].tolist(), self.list_label)
+            #
+            #     # extract only training data 99.9%
+            #     self.Train_Data_X, Test_Data_X, \
+            #     self.Train_Data_Y, Test_Data_Y = train_test_split(self.list_memo, self.list_label,
+            #                                                       test_size=0.1, random_state=42,
+            #                                                       shuffle=self.flag_shuffle,
+            #                                                       stratify=self.list_label)
+            #     # Test data pd input
+            #     df_test_data = pd.read_excel(self.test_path, sheet_name=0, index_col=None)
+            #     df_test_data = df_test_data.dropna()
+            #     df_test_data.reset_index(drop=True)
+            #
+            #     # label cleaning and 데이터 분포 확인
+            #     df_test_data['메모분류'] = df_test_data['메모분류'].apply(lambda x: x.strip())
+            #     self.setPrint('테스트 데이터 분포: \n{}'.format(df_test_data['메모분류'].value_counts()))
+            #
+            #     # Test data label change to index format
+            #     test_label_index = self.set_label_index(df_test_data, col_name='메모분류')
+            #     df_test_data['label'] = df_test_data['메모분류'].replace(test_label_index)
+            #     self.setPrint('index of Test Data labels: \n{}'.format(test_label_index))
+            #
+            #     # Test data frame index reset
+            #     df_test_data.reset_index(drop=True)
+            #
+            #     # Train data memo and labels
+            #     test_list_label = df_test_data['label'].tolist()
+            #     test_list_memo, test_list_label = self.text_filter(df_test_data['메모'].tolist(), test_list_label)
+            #
+            #     # extract only test data 99%
+            #     train_Data_X, self.Test_Data_X, \
+            #     train_Data_Y, self.Test_Data_Y = train_test_split(test_list_memo, test_list_label,
+            #                                                       test_size=0.9, random_state=42,
+            #                                                       shuffle=self.flag_shuffle,
+            #                                                       stratify=test_list_label)
 
-                self.list_memo = self.text_filter(self.df_data['메모'].tolist())
-                self.list_label = self.df_data['label'].tolist()
-                self.Train_Data_X, self.Test_Data_X, \
-                self.Train_Data_Y, self.Test_Data_Y = train_test_split(self.list_memo, self.list_label,
-                                                                       test_size=self.test_rate, random_state=42,
-                                                                       shuffle=self.flag_shuffle,
-                                                                       stratify=self.list_label)
-            # t_type == 2
-            else:
-                # Train data label change to index format
-                self.label_index = self.set_label_index(self.df_data, col_name='메모분류')
-                self.df_data['label'] = self.df_data['메모분류'].replace(self.label_index)
-                self.setPrint('index of labels: \n{}'.format(self.label_index))
-
-                # Train data frame index reset
-                self.df_data.reset_index(drop=True)
-
-                # Train data memo and labels
-                self.list_memo = self.text_filter(self.df_data['메모'].tolist())
-                self.list_label = self.df_data['label'].tolist()
-
-                # extract only training data 99.9%
-                self.Train_Data_X, Test_Data_X, \
-                self.Train_Data_Y, Test_Data_Y = train_test_split(self.list_memo, self.list_label,
-                                                                  test_size=0.15, random_state=42,
-                                                                  shuffle=self.flag_shuffle,
-                                                                  stratify=self.list_label)
-                # Test data pd input
-                df_test_data = pd.read_excel(self.test_path, sheet_name=0, index_col=None)
-                df_test_data = df_test_data.dropna()
-                df_test_data.reset_index(drop=True)
-
-                # label cleaning and 데이터 분포 확인
-                df_test_data['메모분류'] = df_test_data['메모분류'].apply(lambda x: x.strip())
-                self.setPrint('테스트 데이터 분포: \n{}'.format(df_test_data['메모분류'].value_counts()))
-
-                # Test data label change to index format
-                test_label_index = self.set_label_index(df_test_data, col_name='메모분류')
-                df_test_data['label'] = df_test_data['메모분류'].replace(test_label_index)
-                self.setPrint('index of Test Data labels: \n{}'.format(test_label_index))
-
-                # Test data frame index reset
-                df_test_data.reset_index(drop=True)
-
-                # Train data memo and labels
-                test_list_memo = self.text_filter(df_test_data['메모'].tolist())
-                test_list_label = df_test_data['label'].tolist()
-
-                # extract only test data 99%
-                train_Data_X, self.Test_Data_X, \
-                train_Data_Y, self.Test_Data_Y = train_test_split(test_list_memo, test_list_label,
-                                                                  test_size=0.99, random_state=42,
-                                                                  shuffle=self.flag_shuffle,
-                                                                  stratify=test_list_label)
-
-            self.setPrint('L_type: {}\nP_type: {}\nT_type: {}\nV_type: {}\nTest_Rate: {}'.format(
-                self.l_type, self.p_type, self.t_type, self.v_type, self.test_rate
+            self.setPrint('L_type: {}\nP_type: {}\nV_type: {}\nn_split: {}'.format(
+                self.l_type, self.p_type, self.v_type, self.n_split
             ))
             # vocab text generate part
             if self.v_type == 2:
                 df_vocab_data = pd.read_csv(self.vocab_path, encoding='CP949')
                 self.list_corpus = df_vocab_data['메모'].tolist()
                 # process text cleaning
-                self.list_corpus = self.text_filter(self.list_corpus)
+                self.list_corpus, list_labels = self.text_filter(self.list_corpus, None)
 
         except:
             self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1],
                                                            sys.exc_info()[2].tb_lineno))
 
-    # TF-IDF Vector vocabulary 생성기
-    def generate_vector(self):
-
+    # vectorizer 생성
+    def generate_vector(self, list_text):
         try:
-            self.setPrint('TF-IDF Vector vocabulary 생성 작업 시작...')
-            self.vectorizer = TfidfVectorizer(sublinear_tf=True,
+            self.vectorizer = TfidfVectorizer(sublinear_tf=False,
+                                              smooth_idf=True,
                                               input="array",
-                                              # max_features=3000,
                                               # tokenizer=self.subword_text,
                                               max_df=0.8,
                                               min_df=2,
                                               norm='l2',
-                                              vocabulary=self.custom_vocab,
-                                              ngram_range=(1, 1),
-                                              smooth_idf=True)
-            # self.vectorizer.fit_transform(list_text)
-            self.setPrint('TF-IDF Vector vocabulary 생성 완료...')
-
-        except:
-            self.setPrint('TF-IDF Vector vocabulary 생성 중 에러 발생...')
-            self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1],
-                                                           sys.exc_info()[2].tb_lineno))
-
-    # make vocabulary
-    def generate_vocab(self, list_text):
-        try:
-            custom_vector = TfidfVectorizer(sublinear_tf=True,
-                                            input="array",
-                                            # tokenizer=self.subword_text,
-                                            max_df=0.8,
-                                            min_df=2,
-                                            norm='l2',
-                                            vocabulary=self.custom_vocab,
-                                            ngram_range=(1, 1),
-                                            smooth_idf=True)
-
-            tf_idf = custom_vector.fit_transform(list_text)
-            self.custom_vocab = custom_vector.vocabulary_
-            self.setPrint('Custom Vocab {} 개 생성'.format(len(custom_vector.get_feature_names())))
-            # self.setPrint('Custom Vocab Features {}'.format(custom_vector.get_feature_names()))
+                                              ngram_range=(1, 1)
+                                              )
+            self.vectorizer.fit_transform(list_text)
+            # self.custom_vocab = custom_vector.vocabulary_
+            self.setPrint('Custom Vocab {} 개 생성'.format(len(self.vectorizer.get_feature_names())))
             # self.setPrint(tf_idf)
         except:
             self.setPrint('Custom Vocab 생성 중 에러 발생...')
@@ -351,36 +356,18 @@ class VOCLearner():
                                   ))
         ])
 
-    # tokenizer 함수
-    # def subword_text(self, text):
-    #
-    #     result = []
-    #     if self.p_type == 1:
-    #         malist = self.konlpy_parser.pos(text, stem=True, norm=True)
-    #         for word in malist:
-    #             if word[1] in ['Noun', 'Adjective', 'Verb', 'Foreign', 'Alpha', 'Unknown'] \
-    #                     and len(word[0]) > 1 and word[0] not in self.stopString:
-    #                 result.append(word[0])
-    #     else:
-    #         malist = self.konlpy_parser.pos(text)
-    #         for word in malist:
-    #             if word[1] in ['NNG', 'NNP', 'NNB', 'VV', 'MAG', 'VA', 'UN', 'MAJ', 'SL', 'NF', 'NA', 'NF'] \
-    #                     and len(word[0]) > 1 and word[0] not in self.stopString:
-    #                 result.append(word[0])
-    #     return result
-
+    # Konlpy text parsing
     def subword_text(self, text):
 
-        malist = None
-        if self.p_type == 1:
-            malist = self.konlpy_parser.morphs(text)
-        else:
-            malist = self.konlpy_parser.morphs(text)
+        try:
+            mal_ist = self.konlpy_parser.morphs(text)
+            return mal_ist
+        except:
+            self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                           sys.exc_info()[1],
+                                                           sys.exc_info()[2].tb_lineno))
 
-        return malist
-
-
-    # 특수문자 제거 함수
+    # remove special char and confusing words united only one expression
     def remove_special(self, text):
 
         # 영문 모두 소문자로 변경
@@ -401,8 +388,7 @@ class VOCLearner():
             'url',
             text_data)
         # 그 외의 특수문자는 모두 삭제
-        text_data = re.sub(r'[-=+,_#/\?^$@*\"※~&%ㆍ!』\‘|\(\)\[\]\<\>\{\}`><\'\.:;■◈▶●★☎]', ' ', text_data)
-
+        text_data = re.sub(r'[-=+,_#/\?^$@*\"※~&%ㆍ!』\‘|\(\)\[\]\<\>\{\}`><\':;■◈▶●★☎]', ' ', text_data)
         # 앞서 list_rmstring 선언된 단어들 모두 제거
         for item in self.list_rmstring:
             text_data = text_data.replace(item, "")
@@ -415,14 +401,12 @@ class VOCLearner():
         return text_data
 
     #  Text cleaning 함수
-    def text_filter(self, list_doc):
+    def text_filter(self, list_doc, list_label):
 
         try:
-            list_return = list_doc
-            for idx, doc in enumerate(list_return):
-                # if doc's length is under 10, skip and exclude list_doc
-                if len(doc) < 10:
-                    continue
+            list_return_docs = []
+            list_return_labels = []
+            for idx, doc in enumerate(list_doc):
                 for item in self.list_special:
                     if item in doc:
                         spec_string = item
@@ -435,39 +419,19 @@ class VOCLearner():
                             doc = doc.replace("/e", "")
                         break
                 doc = self.remove_special(doc)
-                # # doc = "\n".join([s for s in doc.split('\n') if s])
-                list_doc = self.subword_text(doc)
-                doc = " ".join([s.strip() for s in list_doc if s])
-                list_return[idx] = doc
-            return list_return
-
+                if doc == "":
+                    continue
+                split_doc = self.subword_text(doc)
+                doc = " ".join([s.strip() for s in split_doc if s])
+                list_return_docs.append(doc)
+                if list_label:
+                    list_return_labels.append(list_label[idx])
+            return list_return_docs, list_return_labels
         except:
-            self.setPrint('Custom Vocab 생성 중 에러 발생...')
-            self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1],
+            self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                           sys.exc_info()[1],
                                                            sys.exc_info()[2].tb_lineno))
             return None
-
-    # # 메모 데이터 filtering 함수
-    # def text_filter(self, list_doc):
-    #
-    #     list_return = list_doc
-    #     for idx, doc in enumerate(list_return):
-    #         for item in self.list_special:
-    #             if item in doc:
-    #                 specString = item
-    #                 doc = doc+"/e"
-    #                 text = self.find_between(doc, specString, "/e")
-    #                 if self.pattern.search(text):
-    #                     pattern_list = self.pattern.findall(text)
-    #                     doc = self.find_between(doc, specString, pattern_list[0])
-    #                 else:
-    #                     doc = doc.replace("/e", "")
-    #                 break
-    #         doc = self.removeString(doc)
-    #         doc = "\n".join([s for s in doc.split('\n') if s])
-    #         list_return[idx] = doc
-    #
-    #     return list_return
 
     # 모델 저장 함수
     def save_models(self):
@@ -479,46 +443,56 @@ class VOCLearner():
         # 타입별 모델 저장하기
         if self.l_type == 1:
             self.setPrint('위치 : {}'.format(self.save_path + 'model_nb.pkl'))
-            # save_model = pickle.dumps(self.model_nb)
             joblib.dump(self.model_nb, self.save_path + 'model_nb.pkl')
+            self.list_model_path.append(self.save_path + 'model_nb.pkl')
+
         elif self.l_type == 2:
             self.setPrint('위치 : {}'.format(self.save_path + 'model_svm.pkl'))
-            # save_model = pickle.dumps(self.model_svm)
             joblib.dump(self.model_svm, self.save_path + 'model_svm.pkl')
+            self.list_model_path.append(self.save_path + 'model_svm.pkl')
+
         elif self.l_type == 3:
             self.setPrint('위치 : {}'.format(self.save_path + 'model_svc.pkl'))
-            # save_model = pickle.dumps(self.model_svc)
             joblib.dump(self.model_svc, self.save_path + 'model_svc.pkl')
+            self.list_model_path.append(self.save_path + 'model_svc.pkl')
+
         elif self.l_type == 4:
             self.setPrint('위치 : {}'.format(self.save_path + 'model_linerSVC.pkl'))
-            # save_model = pickle.dumps(self.model_linerSVC)
             joblib.dump(self.model_linerSVC, self.save_path + 'model_linerSVC.pkl')
+            self.list_model_path.append(self.save_path + 'model_linerSVC')
+
         elif self.l_type == 5:
-            self.setPrint('위치 : {}'.format(self.save_path+'model_random.pkl'))
-            # save_model = pickle.dumps(self.model_random)
-            joblib.dump(self.model_random, self.save_path+'model_random.pkl')
+            self.setPrint('위치 : {}'.format(self.save_path + 'model_random.pkl'))
+            joblib.dump(self.model_random, self.save_path + 'model_random.pkl')
+            self.list_model_path.append(self.save_path + 'model_random.pkl')
+
         elif self.l_type == 6:
-            self.setPrint('위치 : {}'.format(self.save_path+'model_xgboost.pkl'))
-            # save_model = pickle.dumps(self.model_xgboost)
-            joblib.dump(self.model_xgboost, self.save_path+'model_xgboost.pkl')
+            self.setPrint('위치 : {}'.format(self.save_path + 'model_xgboost.pkl'))
+            joblib.dump(self.model_xgboost, self.save_path + 'model_xgboost.pkl')
+            self.list_model_path.append(self.save_path + 'model_xgboost.pkl')
+
         else:
             self.setPrint('위치1 : {}'.format(self.save_path + 'model_nb.pkl'))
             self.setPrint('위치2 : {}'.format(self.save_path + 'model_svm.pkl'))
             self.setPrint('위치3 : {}'.format(self.save_path + 'model_svc.pkl'))
             self.setPrint('위치4 : {}'.format(self.save_path + 'model_linerSVC.pkl'))
-            self.setPrint('위치5 : {}'.format(self.save_path+'model_random.pkl'))
-            self.setPrint('위치6 : {}'.format(self.save_path+'model_xgboost.pkl'))
+            self.setPrint('위치5 : {}'.format(self.save_path + 'model_random.pkl'))
+            self.setPrint('위치6 : {}'.format(self.save_path + 'model_xgboost.pkl'))
+
             joblib.dump(self.model_nb, self.save_path + 'model_nb.pkl')
             joblib.dump(self.model_svm, self.save_path + 'model_svm.pkl')
             joblib.dump(self.model_svc, self.save_path + 'model_svc.pkl')
             joblib.dump(self.model_linerSVC, self.save_path + 'model_linerSVC.pkl')
-            joblib.dump(self.model_random, self.save_path+'model_random.pkl')
-            joblib.dump(self.model_xgboost, self.save_path+'model_xgboost.pkl')
-            # save_model_1 = pickle.dumps(self.model_nb)
-            # save_model_2 = pickle.dumps(self.model_svm)
-            # save_model_3 = pickle.dumps(self.model_svc)
-            # save_model_4 = pickle.dumps(self.model_linerSVC)
-            # save_model_5 = pickle.dumps(self.model_random)
+            joblib.dump(self.model_random, self.save_path + 'model_random.pkl')
+            joblib.dump(self.model_xgboost, self.save_path + 'model_xgboost.pkl')
+
+            self.list_model_path.append(self.save_path + 'model_nb.pkl')
+            self.list_model_path.append(self.save_path + 'model_svm.pkl')
+            self.list_model_path.append(self.save_path + 'model_svc.pkl')
+            self.list_model_path.append(self.save_path + 'model_linerSVC.pkl')
+            self.list_model_path.append(self.save_path + 'model_random.pkl')
+            self.list_model_path.append(self.save_path + 'model_xgboost.pkl')
+
         joblib.dump(self.vectorizer, self.save_path + 'vectorizer.pkl')
         self.setPrint('모델 저장 작업 완료...')
 
@@ -535,14 +509,20 @@ class VOCLearner():
             self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1],
                                                            sys.exc_info()[2].tb_lineno))
 
-    # 모델 교차검증 함수
+    # 모델 교차 트레이닝 검증 함수
     def cross_validation(self, dict_model):
-
-        for idx, (key, model) in enumerate(dict_model.items()):
-            self.setPrint("{} 모델 {} 교차 검증 시작...".format(idx, key))
-            kfold = KFold(n_splits=10, shuffle=self.flag_shuffle)
-            score = cross_val_score(model, self.Test_Data_X, self.Test_Data_Y, cv=kfold, scoring="accuracy")
-            self.setPrint("{} 모델 {} 교차 검증 평균 accuracy : {}".format(idx, key, score.mean()))
+        try:
+            for idx, (key, model) in enumerate(dict_model.items()):
+                self.setPrint("{} 모델 {} 교차 트레이닝 테스트 시작...".format(idx, key))
+                kfold = KFold(n_splits=self.n_split, shuffle=self.flag_shuffle)
+                score = cross_val_score(model, self.list_memo, self.list_label, cv=kfold, scoring="accuracy")
+                self.setPrint("{} 모델 {} 교차 검증 accuracy : {}".format(idx, key, score))
+                self.setPrint("{} 모델 {} 교차 검증 평균 accuracy : {}".format(idx, key, score.mean()))
+                # add acc score for matplot graph
+                self.dict_acc[key] = score
+        except:
+            self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                           sys.exc_info()[1], sys.exc_info()[2].tb_lineno))
 
     # main 실행함수
     def run(self):
@@ -559,130 +539,90 @@ class VOCLearner():
             start_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
             self.setPrint("START_TIME : " + start_time)
             self.train_path = self.current_path + "\\" + input_filename + ".xlsx"
-            self.setPrint('분석대상 파일 정보 수집 시작...')
+            self.setPrint('Training/Test Data 전처리 시작 ...')
             # 학습데이터와 정확도 테스트를 위한 테스트 set 생성 함수 실행
             self.generate_data()
-            self.setPrint('Train 메모 Data 수: {}'.format(len(self.Train_Data_X)))
-            self.setPrint('Test 메모 Data 수: {}'.format(len(self.Test_Data_X)))
+            self.setPrint('Training/Test Data 전처리 완료')
+
             # 단어장 vector 생성 함수 실행
             if self.v_type == 2:
-                self.generate_vocab(self.list_corpus)
-
-            # vectorizer 생성
-            self.generate_vector()
-
-            # # train and test x_data reformat to tfidf transform
-            # for i in range(50):
-            #     self.setPrint("[{}]Train X Data Parsed:\n{}".format(i, self.Train_Data_X[i]))
-            #     self.setPrint("[{}]Train Y Label : {}".format(i, self.Train_Data_Y[i]))
-            # for i in range(50):
-            #     self.setPrint("[{}]Test X Data Parsed:\n{}".format(i, self.Test_Data_X[i]))
-            #     self.setPrint("[{}]Test Y Label : {}".format(i, self.Test_Data_Y[i]))
+                self.setPrint('TF-IDF Custom Corpus Tokenizer 생성 작업 시작 ...')
+                self.generate_vector(self.list_corpus)
+                self.setPrint('TF-IDF Custom Corpus Tokenizer 생성 작업 완료')
+            else:
+                self.setPrint('TF-IDF 기본 Tokenizer 생성 작업 시작 ...')
+                self.generate_vector(self.list_memo)
+                self.setPrint('TF-IDF 기본 Tokenizer 생성 작업 완료')
 
             # model pipeline 생성
+            self.setPrint('모델 생성 작업 시작 ...')
             self.generate_pipeline()
+            self.setPrint('모델 생성 작업 완료')
 
-            #########################################################################__학습 시작__#########################################################################
-            # Naive Bayesian 방식으로 모델 생성 처리
-            # 테스트 시작
-            # self.setPrint('테스트 시작...')
-            # predicted = self.model_svm.predict(self.Test_Data_X)
-            # accurracy  = np.mean(predicted == self.Test_Data_Y)
-            # self.setPrint('SVM SGDClassifier 정확도: {} %'.format(accurracy*100))
+            # ########################__학습 시작__#############################
 
             if self.l_type == 1:
                 self.setPrint('NB Naive Bayesian classifier 모델 학습 시작...')
-                self.mode_nb = self.model_nb.fit(self.Train_Data_X, self.Train_Data_Y)
-                self.setPrint('NB Naive Bayesian classifier 모델 학습 완료...')
                 self.cross_validation({'Naive Bayesian': self.model_nb})
+                self.setPrint('NB Naive Bayesian classifier 모델 학습 완료...')
 
             # SVM SGDClassifier 방식으로 모델 생성 처리
             elif self.l_type == 2:
                 self.setPrint('SVM SGDClassifier 모델 학습 시작...')
-                self.model_svm = self.model_svm.fit(self.Train_Data_X, self.Train_Data_Y)
-                self.setPrint('SVM SGDClassifier 모델 학습 완료...')
-
                 self.cross_validation({'SGDClassifier': self.model_svm})
+                self.setPrint('SVM SGDClassifier 모델 학습 완료...')
 
             elif self.l_type == 3:
                 self.setPrint('SVC classifier 모델 학습 시작...')
-                self.model_svc = self.model_svc.fit(self.Train_Data_X, self.Train_Data_Y)
-                self.setPrint('SVC classifier 모델 학습 완료...')
-                # 테스트 시작
                 self.cross_validation({'SVC': self.model_svc})
+                self.setPrint('SVC classifier 모델 학습 완료...')
 
             elif self.l_type == 4:
                 self.setPrint('LinerSVC classifier 모델 학습 시작...')
-                self.model_linerSVC = self.model_linerSVC.fit(self.Train_Data_X, self.Train_Data_Y)
-                self.setPrint('LinerSVC classifier 모델 학습 완료...')
-                # 테스트 시작
                 self.cross_validation({'LinearSVC': self.model_linerSVC})
-
+                self.setPrint('LinerSVC classifier 모델 학습 완료...')
             elif self.l_type == 5:
                 self.setPrint('RandomForest classifier 모델 학습 시작...')
-                self.model_random = self.model_random.fit(self.Train_Data_X, self.Train_Data_Y)
+                self.cross_validation({'Random': self.model_random})
                 self.setPrint('RandomForest classifier 모델 학습 완료...')
-                # 테스트 시작
-                self.cross_validation({'Random':self.model_random})
 
             elif self.l_type == 6:
                 self.setPrint('Xgboost classifier 모델 학습 시작...')
-                self.model_xgboost = self.model_xgboost.fit(self.Train_Data_X, self.Train_Data_Y)
+                self.cross_validation({'Xgboost': self.model_xgboost})
                 self.setPrint('Xgboost classifier 모델 학습 완료...')
-                # 테스트 시작
-                self.cross_validation({'Xgboost':self.model_xgboost})
 
             # 둘다 모델 생성 처리
             else:
                 self.setPrint('6개 모델 학습 시작...')
-                self.model_nb = self.model_nb.fit(self.Train_Data_X, self.Train_Data_Y)
-                self.setPrint('Naive Bayesian classifier 모델 학습 완료...')
-                self.model_svm = self.model_svm.fit(self.Train_Data_X, self.Train_Data_Y)
-                self.setPrint('SVM SGDClassifier 모델 학습 완료...')
-                self.model_svc = self.model_svc.fit(self.Train_Data_X, self.Train_Data_Y)
-                self.setPrint('SVC classifier 모델 학습 완료...')
-                self.model_linerSVC = self.model_linerSVC.fit(self.Train_Data_X, self.Train_Data_Y)
-                self.setPrint('LinerSVC classifier 모델 학습 완료...')
-                self.model_random = self.model_random.fit(self.Train_Data_X, self.Train_Data_Y)
-                self.setPrint('RandomForest classifier 모델 학습 완료...')
-                self.model_xgboost = self.model_xgboost.fit(self.Train_Data_X, self.Train_Data_Y)
-                self.setPrint('Xgboost classifier 모델 학습 완료...')
-
-                # 테스트 시작
-                self.setPrint('테스트 시작...')
                 self.cross_validation(
                     {'Naive Bayesian': self.model_nb, 'SGDClassifier': self.model_svm, 'SVC': self.model_svc,
                      'LinearSVC': self.model_linerSVC, 'RandomForest': self.model_random, 'xgboost': self.model_xgboost})
+                self.setPrint("6개 모델 학습 완료")
 
+            self.setPrint("모델 저장 작업 시작...")
+            self.save_models()
+            self.setPrint("모델 저장 작업 완료")
 
-            # self.save_models()
-            self.load_model([self.save_path + 'model_nb.pkl', self.save_path + 'model_svm.pkl',
-                             self.save_path + 'model_svc.pkl', self.save_path + 'model_linerSVC.pkl',
-                             self.save_path + 'model_random.pkl', self.save_path + 'model_xgboost.pkl',
-                             ])
+            self.setPrint("모델 업로드 작업 시작...")
+            self.load_model()
+            self.setPrint("모델 업로드 작업 완료")
 
+            self.generate_graph()
+
+            self.setPrint("업로드 모델 시험 시작...")
+            # ############################## 로드 모델 시험 ##############################
             sentence = ['카카오톡 이랑 카트라이더 앱 안됨 실행 시 튕기고 강제 종료 됨',
                         "핸드폰 자체 소프트웨어 업데이트 이후 문자발송시 글자수 제한되고 있음. 기존 동일한 문자정상 발송 되던것이나, 이용안됨 ."
                         " - 80명 단체문자  - 이미지 동영상 문자메세지만 보낼수 있어요. 라고 나오면서 발신 불가 ."
                         "개별로 보내면 정상  > 제조사 문의 안내 . 연결"]
 
-            sentence = [self.text_filter(s) for s in sentence if s]
-            print(sentence)
+            sentence, list_label = [self.text_filter(s, None) for s in sentence if s]
+            self.setPrint("시험 Sentence {}".format(sentence))
+            for idx, (key, value) in self.dict_acc:
+                label = self.list_load_model[idx].predict(sentence)
+                self.setPrint('{} model predict Sentence label: {}'.format(key, label))
 
-            label_1 = self.list_load_models[0].predict(sentence)
-            label_2 = self.list_load_models[1].predict(sentence)
-            label_3 = self.list_load_models[2].predict(sentence)
-            label_4 = self.list_load_models[3].predict(sentence)
-            label_5 = self.list_load_models[4].predict(sentence)
-            label_6 = self.list_load_models[5].predict(sentence)
-
-            self.setPrint('Sentence Naive Predict Label : {}'.format(label_1))
-            self.setPrint('Sentence SVM Predict Label : {}'.format(label_2))
-            self.setPrint('Sentence SVC Predict Label : {}'.format(label_3))
-            self.setPrint('Sentence LinearSVC Predict Label : {}'.format(label_4))
-            self.setPrint('Sentence Random Predict Label : {}'.format(label_5))
-            self.setPrint('Sentence XGboost Predict Label : {}'.format(label_6))
-
+            self.setPrint("업로드 모델 시험 완료")
             end_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
             self.setPrint("FINISH_TIME : " + end_time)
             input("\nPress any key to exit")
