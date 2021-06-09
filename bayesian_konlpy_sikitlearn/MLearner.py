@@ -4,12 +4,12 @@ Created on Tues June 08 10:30:00 2021
 @author: TestEnC hanrim lee
 
 """
+
 import re
 import os
 import sys
 import pandas as pd
 import numpy as np
-# import nltk
 import pickle
 import joblib
 
@@ -19,15 +19,14 @@ from konlpy.tag import Komoran
 from collections import Counter
 from datetime import datetime
 import matplotlib.pyplot as plt
-# from nltk.tokenize import word_tokenize
 
-# from xgboost import plot_importance
-from xgboost import XGBClassifier
+
 
 # from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
 # from sklearn.feature_extraction.text import TfidfTransformer
 
+from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.model_selection import GridSearchCV
@@ -42,6 +41,8 @@ from sklearn.model_selection import cross_val_score, KFold, cross_validate
 class VOCLearner():
     # l_type은 러닝 방식을 선택하는 것으로 '1'은 naive 방식 '2'는 SGD 방식 '3'은 SVM기본 '4'는 LinearSVC 방식 '5'는 모두다
     # p_type은 문장 분류시 tokenizer 모드 선택으로 '1'은 Okt '2'는 Komoran 방식
+    # {'데이터': 0, '데이터 지연': 1, '통화불량': 2, '분류없음': 3, 'USIM': 4, '음질불량': 5, 'APP': 6, '문자 지연': 7, '문자': 8, '통화권이탈': 9,
+    #  '부가서비스': 10}
 
     def __init__(self):
         super(VOCLearner, self).__init__()
@@ -78,12 +79,6 @@ class VOCLearner():
         self.label_index = None
 
         # models
-        # self.model_nb = None
-        # self.model_svm = None
-        # self.model_svc = None
-        # self.model_linerSVC = None
-        # self.model_random = None
-        # self.model_xgboost = None
         self.dict_model = None
 
         self.pattern = re.compile("([1-9]{1,2}\.)")
@@ -639,7 +634,7 @@ class VOCLearner():
 
             sentence, list_label = self.text_filter(sentence, None)
             self.setPrint("시험 Sentence {}".format(sentence))
-            for idx, (key, value) in self.dict_acc:
+            for idx, (key, value) in enumerate(self.dict_acc):
                 label = self.dict_model[key].predict(sentence)
                 self.setPrint('{} model predict Sentence label: {}'.format(key, label))
 
