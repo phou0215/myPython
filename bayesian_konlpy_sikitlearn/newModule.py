@@ -21,29 +21,31 @@ from operator import itemgetter
 from os.path import expanduser
 import threading
 
-from sklearn.pipeline import Pipeline
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.svm import SVC
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier
+# from sklearn.pipeline import Pipeline
+# from sklearn.naive_bayes import MultinomialNB
+# from sklearn.svm import SVC
+# from sklearn.svm import LinearSVC
+# from sklearn.linear_model import SGDClassifier
 
-#from konlpy.tag import Komoran
 from time import sleep
 from datetime import datetime
 from collections import Counter
 from konlpy.tag import Okt
 from konlpy.tag import Komoran
 from lexrankr import LexRank
-#import pytagcloud
+
 from PyQt5.QtCore import QThread, pyqtSignal
-#selenium library
+
+# selenium library
 from openpyxl.styles import Alignment, Font, NamedStyle, PatternFill
 from openpyxl import formatting, styles, Workbook
 from openpyxl.styles.borders import Border, Side
 from openpyxl.styles.differential import DifferentialStyle
 from openpyxl.formatting.rule import ColorScaleRule, CellIsRule, FormulaRule
 
+
 class avocParser(QThread):
+
     print_flag = pyqtSignal(str)
     end_flag = pyqtSignal()
     fileCheck_flag = pyqtSignal()
@@ -59,8 +61,6 @@ class avocParser(QThread):
         self.opFlag = opFlag
         self.modelFlag = modelFlag
         self.posFlag = posFlag
-        # self.limit_value = limit
-        # self.mini_value = minimum
         self.end_count = "n"
         self.totalRows = 0
         self.subscribe_date = ''
@@ -72,9 +72,11 @@ class avocParser(QThread):
         self.current_path = os.getcwd()
         self.okt = Okt()
         self.komoran = Komoran()
-        self.stopString = ["안내","여부","사항","장비","확인","원클릭","품질","후","문의","이력","진단","부탁드립니다.","증상","종료","문의","양호","정상","고객","철회","파이","특이","간다"\
-        "내부","외부","권유","성향","하심","해당","주심","고함","초기","무관","반려","같다","접수","무관","테스트","연락","바로","처리","모두","있다","없다","하다","드리다","않다","되어다",\
-        "되다","부터","예정","드리다","해드리다", "신내역", "현기", "가신"]
+        self.stopString = ["안내", "여부", "사항", "장비", "확인", "원클릭", "품질", "후", "문의", "이력", "진단", "부탁드립니다.",
+                           "증상", "종료", "문의", "양호", "정상", "고객", "철회", "파이", "특이", "간다", "내부", "외부", "권유",
+                           "성향", "하심", "해당", "주심", "고함", "초기", "무관", "반려", "같다", "접수", " 무관", "테스트", "연락",
+                           "바로", "처리", "모두", "있다", "없다", "하다", "드리다", "않다", "되어다", "되다", "부터", "예정", "드리다",
+                           "해드리다", "신내역", "현기", "가신", 'ㅜ', "ㅠ"]
         self.mapping_models = []
         self.mapping_models2 = []
         self.launch_model = []
@@ -94,7 +96,7 @@ class avocParser(QThread):
         self.username = 'voc'
         self.password = 'testenc@01'
         self.list_file = []
-        self.dict_files = {'naive':'model_nb.pkl', 'sgd':'model_svm.pkl', 'svc':'model_svc.pkl', 'linear':'model_linerSVC.pkl'}
+        self.dict_files = {'naive': 'model_nb.pkl', 'sgd':'model_svm.pkl', 'svc':'model_svc.pkl', 'linear':'model_linerSVC.pkl'}
 
         #connect SSH server
         self.ftp_client = FTP()
@@ -267,50 +269,10 @@ class avocParser(QThread):
 
             return result_part
         except:
-            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2].tb_lineno)+' /e')
+            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                                  sys.exc_info()[1],
+                                                                  sys.exc_info()[2].tb_lineno)+' /e')
             return result_part
-
-    # # 카테고리에 속한 단어 출현 횟수 기록하기
-    # def inc_word(self, word, category):
-    #     if category not in self.word_dict:
-    #         self.word_dict[category] = {}
-    #     if word not in self.word_dict[category]:
-    #         self.word_dict[category][word] = 0
-    #     self.word_dict[category][word] += 1
-    #     self.words.add(word)
-    #
-    # # 카테고리 출현 및 횟수 기록
-    # def inc_category(self, category):
-    #     if category not in self.category_dict:
-    #         self.category_dict[category] = 0
-    #     self.category_dict[category] += 1
-    #
-    # # 매칭 단어 리스트에 점수 계산
-    # def mat_score(self, words, category):
-    #
-    #     self.score = math.log(self.category_prob(category))
-    #     for word in words:
-    #         self.score += math.log(self.word_prob(word, category))
-    #     return self.score
-    #
-    # #카테고리 내부의 단어 출현 횟수 구하기
-    # def get_word_count(self, word, category):
-    #     if word in self.word_dict[category]:
-    #         return self.word_dict[category][word]
-    #     else:
-    #         return 0
-    #
-    # #카테고리 계산
-    # def category_prob(self, category):
-    #     self.sum_categories = sum(self.category_dict.values())
-    #     self.category_v = self.category_dict[category]
-    #     return self.category_v / self.sum_categories
-    #
-    # #카테고리 내부의 단어 춣현 비율 계산
-    # def word_prob(self, word, category):
-    #     self.n = self.get_word_count(word, category) + 1
-    #     self.d = sum(self.word_dict[category].values()) + len(self.words)
-    #     return self.n / self.d
 
     # 예측함수
     def predict(self, text):
@@ -350,8 +312,10 @@ class avocParser(QThread):
             retrunData = [best_category, strings]
             return retrunData
         except:
-            print('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2].tb_lineno)+' /e')
-            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2].tb_lineno)+' /e')
+            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                                  sys.exc_info()[1],
+                                                                  sys.exc_info()[2].tb_lineno)+' /e')
+
     # find software Version return data: String
     def find_version(self, text, model_name):
         self.os_string = str(text).replace(" ","")

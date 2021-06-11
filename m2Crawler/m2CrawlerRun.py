@@ -110,10 +110,10 @@ class ScrapRun():
 
         #General config data parsing
         for i in range(self.df_general.shape[0]):
-            if pd.isnull(self.df_general.at[i,"도메인"]) and not pd.isnull(self.df_general.at[i,"URL"]):
+            if pd.isnull(self.df_general.at[i, "도메인"]) and not pd.isnull(self.df_general.at[i, "URL"]):
                 self.setPrint('도메인 이름을 비워둘 수 없습니다. Config 파일 "General" 시트를 확인해 주세요.')
                 sys.exit(0)
-            elif not pd.isnull(self.df_general.at[i,"도메인"]) and pd.isnull(self.df_general.at[i,"URL"]):
+            elif not pd.isnull(self.df_general.at[i, "도메인"]) and pd.isnull(self.df_general.at[i, "URL"]):
                 self.setPrint('URL은 비워둘 수 없습니다. Config 파일 "General" 시트를 확인해 주세요.')
                 sys.exit(0)
             else:
@@ -128,6 +128,8 @@ class ScrapRun():
                 dict_temp["PRIMARY_KEYS"] = self.setValue(self.df_general.at[i, "PRIMARY_KEYS"])
                 dict_temp["SECONDARY_KEYS"] = self.setValue(self.df_general.at[i, "SECONDARY_KEYS"])
                 dict_temp["EXCLUDE_KEYS"] = self.setValue(self.df_general.at[i, "EXCLUDE_KEYS"])
+                dict_temp["EXECUTES_MODE"] = self.setValue(self.df_general.at[i, "EXECUTES_MODE"])
+                dict_temp["WORK_MODE"] = self.setValue(self.df_general.at[i, "ON/OFF"])
                 self.dict_crawl[key] = dict_temp
 
         #Time config data parsing
@@ -180,7 +182,7 @@ class ScrapRun():
         if type[0] == 'cron':
             if parameters[0] == "Null":
                 self.sched_module.add_job(self.m2Spider.activate_spider, 'cron', hour="0-23", minute="0", id=str(self.job_size),
-                                          misfire_grace_time=360, max_instances=1, replace_existing=False, coalesce=True)
+                                          misfire_grace_time=360, replace_existing=False)
             else:
                 self.job_size = len(parameters[0])
                 for idx, item in enumerate(parameters[0]):
@@ -194,17 +196,16 @@ class ScrapRun():
                         temp_minute = temp_minute[1:]
 
                     self.sched_module.add_job(self.m2Spider.activate_spider, 'cron', hour=temp_hour, minute=temp_minute, id=str(idx),
-                                              misfire_grace_time=360, max_instances=1, replace_existing=False, coalesce=True)
+                                              misfire_grace_time=360, replace_existing=False)
 
         else:
             if parameters[1] == "Null":
                 self.sched_module.add_job(self.m2Spider.activate_spider, 'interval', hours=1, id=str(self.job_size),
-                                          misfire_grace_time=360, max_instances=1, replace_existing=False, coalesce=True)
+                                          misfire_grace_time=360, replace_existing=False)
             else:
                 temp_minute = int(parameters[1][0])
                 self.sched_module.add_job(self.m2Spider.activatey_spider, 'interval', minutes=temp_minute, id=str(self.job_size),
-                                          misfire_grace_time=360, max_instances=1, replace_existing=False, coalesce=True)
-
+                                          misfire_grace_time=360, replace_existing=False)
 
     def start(self):
 
@@ -225,22 +226,22 @@ class ScrapRun():
         """
 
         print(self.introText)
-        #Check File exists
+        # Check File exists
         self.config_flag = os.path.isfile(self.config_path)
 
 
-        #프로그램 진행 Process logic
+        # 프로그램 진행 Process logic
         if self.config_flag:
             self.flag = input("Crawling을 진행 하시겠습니까?(y|n) : ")
             self.flag.lower()
-            #check intro flag
+            # check intro flag
             if self.flag == 'y':
                 pass
             elif self.flag == 'n':
                 self.setPrint("프로그램을 종료합니다.")
                 sys.exit(0)
             else:
-                while self.flag is not "y" and self.flag is not "n":
+                while self.flag != "y" and self.flag != "n":
                     self.flag = input("잘못입력하셨습니다. \"y\" 또는 \"n\"을 입력하여 주세요. : ")
                     self.flag.lower()
                     if self.flag == 'n':
