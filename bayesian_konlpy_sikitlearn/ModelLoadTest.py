@@ -21,10 +21,15 @@ class ModelLoad():
 
     def __init__(self):
         super(ModelLoad, self).__init__()
+        self.p_type = 1
         self.current_path = os.getcwd()
         self.load_path = self.current_path + '\\sklearn_models\\'
         self.train_path = self.current_path + "\\learn_data.xlsx"
-        self.konlpy_parser = Okt()
+        self.konlpy_parser = None
+        if self.p_type == 1:
+            self.konlpy_parser = Okt()
+        else:
+            self.konlpy_parser = Komoran()
         self.test_file_path = self.current_path + '\\데이터분류_50.xlsx'
         self.list_load_models = []
         self.list_text = []
@@ -46,15 +51,6 @@ class ModelLoad():
         current = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
         print("{}:\n{}".format(current, text) + "\n")
 
-    def subword_text(self, text):
-        try:
-            mal_ist = self.konlpy_parser.morphs(text)
-            return mal_ist
-        except:
-            ('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
-                                              sys.exc_info()[1],
-                                              sys.exc_info()[2].tb_lineno))
-
     # 특정 문자 구간 Parsing 함수(앞에서부터)
     def find_between(self, s, first, last):
         try:
@@ -73,27 +69,97 @@ class ModelLoad():
         except ValueError:
             return ""
 
+    # def remove_special(self, text):
+    #
+    #     # 영문 모두 소문자로 변경
+    #     text_data = text.lower()
+    #     # 전화번호 모두 'tel로 치환'
+    #     text_data = re.sub(r'\d{2,3}[-\.\s]*\d{3,4}[-\.\s]*\d{4}(?!\d)', 'tel', text_data)
+    #     # 화폐는 'money'로 치환
+    #     text_data = re.sub(r'\d{1,3}[,\.]\d{1,3}[만\천]?\s?[원]|\d{1,5}[만\천]?\s?[원]', 'money', text_data)
+    #     text_data = re.sub(r'일/이/삼/사/오/육/칠/팔/구/십/백][만\천]\s?[원]', 'money', text_data)
+    #     text_data = re.sub(r'(?!-)\d{2,4}[0]{2,4}(?!년)(?!.)|\d{1,3}[,/.]\d{3}', 'money', text_data)
+    #     text_data = re.sub(r'[1-9]g', ' cellular ', text_data)
+    #     text_data = re.sub(r'(유심|usim|sim|esim)', 'usim', text_data)
+    #     text_data = re.sub(r'(sms|mms|메시지)', 'message', text_data)
+    #     text_data = re.sub(r'통신.?내역', 'list', text_data)
+    #     # web 주소는 'url'로 변경
+    #     text_data = re.sub(
+    #         r'(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})',
+    #         'url',
+    #         text_data)
+    #     # 그 외의 특수문자는 모두 삭제
+    #     text_data = re.sub(r'[-=+,_#/\?^$@*\"※~&%ㆍ!』\‘|\(\)\[\]\<\>\{\}`><\':;■◈▶●★☎]', ' ', text_data)
+    #     # 앞서 list_rmstring 선언된 단어들 모두 제거
+    #     for item in self.list_rmstring:
+    #         text_data = text_data.replace(item, "")
+    #     # 필수 제거 단어 제거
+    #     for item in self.stopString:
+    #         text_data = text_data.replace(item, "")
+    #
+    #     # 앞 뒤 공백 제거
+    #     text_data = text_data.strip()
+    #     return text_data
+
+    # Konlpy text parsing
+    def subword_text(self, text):
+
+        try:
+            result = []
+            if self.p_type == 1:
+                malist = self.konlpy_parser.pos(text)
+                for word in malist:
+                    if word[1] != 'Number':
+                        result.append(word[0])
+            else:
+                malist = self.konlpy_parser.pos(text)
+                for word in malist:
+                    if word[1] != 'SN':
+                        result.append(word[0])
+            # mal_ist = self.konlpy_parser.morphs(text)
+            return result
+        except:
+            self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                           sys.exc_info()[1],
+                                                           sys.exc_info()[2].tb_lineno))
+            return result
+
+    # remove text special char and replace
     def remove_special(self, text):
+
+        # text_data = re.sub(r'(t.?와이.?파이.?존|t.?wifi|티.?와이.?파이)', 'wifi', text_data)
+        # text_data = re.sub(r'(1.?칸|2.?칸|3.?칸|안테나.?감도|한.?칸|두.?칸|세.?칸|감도)', 'antenna', text_data)
+        # text_data = re.sub(r'(모바일.?데이터|(셀|샐|세).?룰러.?데이터|데이터.?(품질|네트.?워크)|(셀|샐|세).?룰러|데이터)', ' cellular ', text_data)
+        # text_data = re.sub(r'((장소|위치).?무관|위치.?(무고|유.?무관))', 'place', text_data)
+        # text_data = re.sub(r'(목소리|(음성|통화).?소리|스피커|통화.?(음성|음질)|음성|음질|소리)', 'sound', text_data)
+        # text_data = re.sub(r'(서비스.?(없음|이용.?불가|이탈|제한)|신호.?(이탈|없음))', 'nonservice', text_data)
+        # text_data = re.sub(r'(속도.?제어|제어.?상태)', 'sctrl', text_data)
+        # text_data = re.sub(r'(오프|끔|끄고|꺼서|꺼짐|꺼지고)', 'off', text_data)
+        # text_data = re.sub(r'(켬|키고|켜고|켜서|켜짐|켜지고)', 'on', text_data)
 
         # 영문 모두 소문자로 변경
         text_data = text.lower()
-        # 전화번호 모두 'tel로 치환'
+        # 전화번호, 화폐, url은 각각 선언된 단어로 치환'
         text_data = re.sub(r'\d{2,3}[-\.\s]*\d{3,4}[-\.\s]*\d{4}(?!\d)', 'tel', text_data)
-        # 화폐는 'money'로 치환
         text_data = re.sub(r'\d{1,3}[,\.]\d{1,3}[만\천]?\s?[원]|\d{1,5}[만\천]?\s?[원]', 'money', text_data)
         text_data = re.sub(r'일/이/삼/사/오/육/칠/팔/구/십/백][만\천]\s?[원]', 'money', text_data)
         text_data = re.sub(r'(?!-)\d{2,4}[0]{2,4}(?!년)(?!.)|\d{1,3}[,/.]\d{3}', 'money', text_data)
-        text_data = re.sub(r'[1-9]g', ' cellular ', text_data)
-        text_data = re.sub(r'(유심|usim|sim|esim)', 'usim', text_data)
-        text_data = re.sub(r'(sms|mms|메시지)', 'message', text_data)
-        text_data = re.sub(r'통신.?내역', 'list', text_data)
-        # web 주소는 'url'로 변경
         text_data = re.sub(
-            r'(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})',
+            r'(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+'
+            r'[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})',
             'url',
             text_data)
+        # custom 치환
+        text_data = re.sub(r'(유.?심|유심.?칩|심.?카드|sim.?카드|esim|sim)', 'usim', text_data)
+        text_data = re.sub(r'(4.?g|4.?지)', 'lte', text_data)
+        text_data = re.sub(r'(5.?g|5.?지)', 'fiveg', text_data)
+        text_data = re.sub(r'(3.?g|3.?지)', 'threeg', text_data)
+        text_data = re.sub(r'((특장|특정).?사이트|(특정|특장).?(어플|app|앱)|카카.?오톡?|(페이스|보이스|카|페|보).?톡|'
+                           r'kakao.?talk|tmap|(티|t).?맵|후후.?어?플?|페이스.?타임)', 'app', text_data)
+        text_data = re.sub(r'(sms|mms|메시지)', 'message', text_data)
         # 그 외의 특수문자는 모두 삭제
         text_data = re.sub(r'[-=+,_#/\?^$@*\"※~&%ㆍ!』\‘|\(\)\[\]\<\>\{\}`><\':;■◈▶●★☎]', ' ', text_data)
+
         # 앞서 list_rmstring 선언된 단어들 모두 제거
         for item in self.list_rmstring:
             text_data = text_data.replace(item, "")
@@ -185,11 +251,9 @@ if __name__ == "__main__":
     current_path = os.getcwd()
     load_path = current_path + '\\sklearn_models\\'
 
-    list_load_path = [load_path + 'model_nb.pkl',
-                      load_path + 'model_svm.pkl',
+    list_load_path = [load_path + 'model_svm.pkl',
                       load_path + 'model_svc.pkl',
                       load_path + 'model_linerSVC.pkl',
-                      load_path + 'model_random.pkl',
                       load_path + 'model_xgboost.pkl',
                       ]
     load.load_model(list_load_path)
