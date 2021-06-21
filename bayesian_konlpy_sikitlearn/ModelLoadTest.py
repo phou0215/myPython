@@ -24,6 +24,7 @@ class ModelLoad():
         self.p_type = 1
         self.current_path = os.getcwd()
         self.load_path = self.current_path + '\\sklearn_models\\'
+        self.vect_path = self.current_path + '\\sklearn_vect\\'
         self.train_path = self.current_path + "\\learn_data.xlsx"
         self.konlpy_parser = None
         if self.p_type == 1:
@@ -35,8 +36,9 @@ class ModelLoad():
         self.list_text = []
         self.list_true_label = []
         self.dict_assemble = None
-        self.dict_labels = {'0': '데이터', '1': '데이터 지연', '2': '통화불량', '3': '분류없음', '4': 'USIM', '5': '음질불량',
-                            '6': 'APP', '7': '문자 지연', '8': '문자', '9': '통화권이탈', '10': '부가서비스'}
+        self.dict_labels = {0: '데이터', 1: '데이터 지연', 2: '통화불량', 3: '분류없음', 4: 'USIM', 5: '음질불량',
+                            6: 'APP', 7: '문자 지연', 8: '문자', 9: '통화권이탈', 10: '부가서비스'}
+
         self.list_special = []
         self.list_rmstring = []
         self.pattern = re.compile("([1-9]{1,2}\.)")
@@ -181,16 +183,16 @@ class ModelLoad():
             df_test = pd.read_excel(self.test_file_path, sheet_name="통품전체VOC", index_col=None)
 
             # N/A 값 drop
-            df_config1 = df_config1.dropna()
-            df_config2 = df_config2.dropna()
+            # df_config1 = df_config1.dropna()
+            # df_config2 = df_config2.dropna()
 
-            df_config1.reset_index(drop=True)
-            df_config2.reset_index(drop=True)
+            # df_config1.reset_index(drop=True)
+            # df_config2.reset_index(drop=True)
 
             # 예약어 설정 값 선택
-            self.list_special = df_config1['Special예약어'].tolist()
+            self.list_special = df_config1['Special예약어'].dropna().tolist()
             # 단어 제거 형식 선택
-            self.list_rmstring = df_config2['일반형식'].tolist()
+            self.list_rmstring = df_config2['일반형식'].dropna().tolist()
             # test 데이터 추출
             self.list_text = df_test['메모'].tolist()
             self.list_true_label = df_test['메모분류'].tolist()
@@ -274,7 +276,7 @@ if __name__ == "__main__":
                            'APP': 0, '문자': 0, '통화권이탈': 0}
         dict_true_accuracy = dict_true_class.copy()
         predict_labels = model.predict(list_text).tolist()
-        labels = [load.dict_labels[str(x)] for x in predict_labels]
+        labels = [load.dict_labels[x] for x in predict_labels]
         total_flag = []
 
         for idx2, item2 in enumerate(labels):

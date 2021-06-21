@@ -48,6 +48,7 @@ class VOCLearner():
         self.test_path = ''
         self.vocab_path = ''
         self.save_path = self.current_path + '\\sklearn_models\\'
+        self.vect_path = self.current_path + '\\sklearn_vect\\'
 
         self.list_corpus = []
         self.list_load_models = []
@@ -62,6 +63,8 @@ class VOCLearner():
         self.custom_vocab = None
         self.vectorizer = None
 
+        self.dict_label = {}
+        self.dict_label_reverse = {}
         self.figure = None
         self.df_data = None
         self.list_memo = None
@@ -116,14 +119,25 @@ class VOCLearner():
         except ValueError:
             return ""
 
-    # label 인덱스 부여하기
-    def set_label_index(self, df_data, col_name='label'):
+    # # label 인덱스 부여하기
+    # def set_label_index(self, df_data, col_name='label'):
+    #
+    #     labels = df_data[col_name].unique()
+    #     label_dict = {}
+    #     for index, label in enumerate(labels):
+    #         label_dict[label] = index
+    #     return label_dict
 
-        labels = df_data[col_name].unique()
-        label_dict = {}
-        for index, label in enumerate(labels):
-            label_dict[label] = index
-        return label_dict
+    # label 인덱스 부여하기
+    def set_label_index(self, list_category, list_label):
+
+        try:
+            for idx, cate in enumerate(list_category):
+                self.dict_label[cate] = int(list_label[idx])
+                self.dict_label_reverse[int(list_label[idx])] = cate
+        except:
+            self.setPrint('Error: {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1],
+                                                           sys.exc_info()[2].tb_lineno))
 
     # grid graph
     def generate_graph(self, max_col=2,  max_row=3):
@@ -155,22 +169,18 @@ class VOCLearner():
 
             # N/A 값 drop
             self.df_data = self.df_data.dropna()
-            df_config1 = df_config1.dropna()
-            df_config2 = df_config2.dropna()
 
             # data frame index 번호 reset
             self.df_data.reset_index(drop=True)
-            df_config1.reset_index(drop=True)
-            df_config2.reset_index(drop=True)
 
             # label cleaning and 데이터 분포 확인
             self.df_data['메모분류'] = self.df_data['메모분류'].apply(lambda x: x.strip())
             self.setPrint('데이터 분포: \n{}'.format(self.df_data['메모분류'].value_counts()))
 
             # 예약어 설정 값 선택
-            self.list_special = df_config1['Special예약어'].tolist()
+            self.list_special = df_config1['Special예약어'].dropna().tolist()
             # 단어 제거 형식 선택
-            self.list_rmstring = df_config2['일반형식'].tolist()
+            self.list_rmstring = df_config2['일반형식'].dropna().tolist()
 
             # config setting values extract
             list_settings = df_config3['설정 값'].tolist()
@@ -197,10 +207,12 @@ class VOCLearner():
             # train test split data part
             # t_type == 1
             # label change to index format
-            self.label_index = self.set_label_index(self.df_data, col_name='메모분류')
-            self.df_data['label'] = self.df_data['메모분류'].replace(self.label_index)
-            self.setPrint('index of labels: \n{}'.format(self.label_index))
-
+            list_category = df_config1['카테고리'].dropna().tolist()
+            list_label = df_config1['LABEL'].dropna().tolist()
+            # self.label_index = self.set_label_index(self.df_data, col_name='메모분류')
+            self.set_label_index(list_category, list_label)
+            self.df_data['label'] = self.df_data['메모분류'].replace(self.dict_label)
+            self.setPrint('index of labels: \n{}'.format(self.dict_label))
             # data frame index reset
             self.df_data.reset_index(drop=True)
             self.list_label = self.df_data['label'].tolist()
@@ -407,7 +419,7 @@ class VOCLearner():
             self.list_model_path.append(self.save_path + 'model_linerSVC.pkl')
             self.list_model_path.append(self.save_path + 'model_xgboost.pkl')
 
-        joblib.dump(self.vectorizer, self.save_path + 'vectorizer.pkl')
+        joblib.dump(self.vectorizer, self.vect_path + 'vectorizer.pkl')
         self.setPrint('모델 저장 작업 완료...')
 
     # 모델 저장 경로에 있는 모델 불러와서 Array 로 리턴
@@ -539,8 +551,11 @@ class VOCLearner():
             sentence, list_label = self.text_filter(sentence, None)
             self.setPrint("시험 Sentence {}".format(sentence))
             for idx, (key, value) in enumerate(self.dict_acc.items()):
-                label = self.dict_model[key].predict(sentence)
-                self.setPrint('{} model predict Sentence label: {}'.format(key, label))
+                labels = self.dict_model[key].predict(sentence)
+                for idx2, label in enumerate(labels):
+                    self.setPrint('{} model predict {} Sentence predict label: {}'.format(key,
+                                                                                          idx2,
+                                                                                          self.dict_label_reverse[label]))
 
             self.setPrint("업로드 모델 시험 완료")
             end_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")

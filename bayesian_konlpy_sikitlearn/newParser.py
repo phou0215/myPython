@@ -179,10 +179,10 @@ class MyWindow(QMainWindow, form_class):
 
         #Parser model select radio button event
         self.radioButton_all.setChecked(True)
-        self.radioButton_naive.clicked.connect(self.radio_option3)
         self.radioButton_sgd.clicked.connect(self.radio_option3)
         self.radioButton_svc.clicked.connect(self.radio_option3)
         self.radioButton_linear.clicked.connect(self.radio_option3)
+        self.radioButton_xgboost.clicked.connect(self.radio_option3)
         self.radioButton_all.clicked.connect(self.radio_option3)
 
         #POS parser select radio button event
@@ -389,14 +389,14 @@ class MyWindow(QMainWindow, form_class):
 
     def radio_option3(self):
 
-        if self.radioButton_naive.isChecked():
-            self.model_flag = "naive"
-        elif self.radioButton_sgd.isChecked():
+        if self.radioButton_sgd.isChecked():
             self.model_flag = "sgd"
         elif self.radioButton_svc.isChecked():
             self.model_flag = "svc"
         elif self.radioButton_linear.isChecked():
             self.model_flag = "linear"
+        elif self.radioButton_xgboost.isChecked():
+            self.model_flag = "xgboost"
         elif self.radioButton_all.isChecked():
             self.model_flag = "all"
 

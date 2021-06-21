@@ -68,15 +68,17 @@ class avocParser(QThread):
         self.words = None
         self.word_dict = None
         self.category_dict = None
+        self.konlpy_parser = None
+        self.lexrank = LexRank()
         self.obj_list = []
         self.current_path = os.getcwd()
-        self.okt = Okt()
-        self.komoran = Komoran()
+        self.pattern = re.compile("([1-9]{1,2}\.)")
         self.stopString = ["안내", "여부", "사항", "장비", "확인", "원클릭", "품질", "후", "문의", "이력", "진단", "부탁드립니다.",
                            "증상", "종료", "문의", "양호", "정상", "고객", "철회", "파이", "특이", "간다", "내부", "외부", "권유",
                            "성향", "하심", "해당", "주심", "고함", "초기", "무관", "반려", "같다", "접수", " 무관", "테스트", "연락",
                            "바로", "처리", "모두", "있다", "없다", "하다", "드리다", "않다", "되어다", "되다", "부터", "예정", "드리다",
                            "해드리다", "신내역", "현기", "가신", 'ㅜ', "ㅠ"]
+        self.special_list = []
         self.mapping_models = []
         self.mapping_models2 = []
         self.launch_model = []
@@ -90,27 +92,25 @@ class avocParser(QThread):
         self.cate_reserved = {}
         # normal filtering
         self.normal_string = []
+        # label dictionary
+        self.dict_label_reverse = {}
         # ftp 관련 변수 및 설정
         self.hostname = '192.168.0.108'
         self.port = 21
         self.username = 'voc'
         self.password = 'testenc@01'
         self.list_file = []
-        self.dict_files = {'naive': 'model_nb.pkl', 'sgd':'model_svm.pkl', 'svc':'model_svc.pkl', 'linear':'model_linerSVC.pkl'}
+        self.dict_files = {'SGDClassifier': 'model_svm.pkl', 'SVC': 'model_svc.pkl',
+                           'LinearSVC': 'model_linerSVC.pkl', 'xgboost': 'model_xgboost.pkl'}
 
-        #connect SSH server
+        # connect SSH server
         self.ftp_client = FTP()
 
     def ftp_check_files(self):
 
         # model flag에 따라 정함
         flag = False
-        if self.modelFlag == 'naive':
-            for item in self.list_file:
-                if 'model_nb.pkl' in item:
-                    flag = True
-                    break
-        elif self.modelFlag == 'sgd':
+        if self.modelFlag == 'sgd':
             for item in self.list_file:
                 if 'model_svm.pkl' in item:
                     flag = True
@@ -125,18 +125,23 @@ class avocParser(QThread):
                 if 'model_linerSVC.pkl' in item:
                     flag = True
                     break
+        elif self.modelFlag == 'xgboost':
+            for item in self.list_file:
+                if 'model_xgboost.pkl' in item:
+                    flag = True
+                    break
         else:
             list_flag = []
             for item in self.list_file:
-                if 'model_nb.pkl' in item:
-                    list_flag.append(True)
                 if 'model_svm.pkl' in item:
                     list_flag.append(True)
                 if 'model_svc.pkl' in item:
                     list_flag.append(True)
                 if 'model_linerSVC.pkl' in item:
                     list_flag.append(True)
-            if list_flag[0] and  list_flag[1] and  list_flag[2] and  list_flag[3]:
+                if 'model_xgboost.pkl' in item:
+                    list_flag.append(True)
+            if list_flag[0] and list_flag[1] and list_flag[2] and list_flag[3]:
                 flag = True
 
         if flag:
@@ -182,7 +187,9 @@ class avocParser(QThread):
             self.setPrintText('/s {} 모델 Load 작업 완료./e'.format(key))
         except:
             self.setPrintText('/s {} 모델 Load 작업 중 Error 발생... /e'.format(key))
-            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2].tb_lineno)+' /e')
+            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                                  sys.exc_info()[1],
+                                                                  sys.exc_info()[2].tb_lineno)+' /e')
             self.end_count = "y"
             self.end_flag.emit()
 
@@ -212,23 +219,92 @@ class avocParser(QThread):
         sleep(0.5)
         self.terminate()
 
-    # 특수 문자 제거 함수
+    # 특수 문자 제거 및 특정 단어 치환 함수
     def removeString(self, text):
 
-        tempText = re.sub('[-=+,#/\?^$@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>\{\}`><]\'', '', text)
-        return tempText
+        # 영문 모두 소문자로 변경
+        text_data = text.lower()
+        # 전화번호, 화폐, url은 각각 선언된 단어로 치환'
+        text_data = re.sub(r'\d{2,3}[-\.\s]*\d{3,4}[-\.\s]*\d{4}(?!\d)', 'tel', text_data)
+        text_data = re.sub(r'\d{1,3}[,\.]\d{1,3}[만\천]?\s?[원]|\d{1,5}[만\천]?\s?[원]', 'money', text_data)
+        text_data = re.sub(r'일/이/삼/사/오/육/칠/팔/구/십/백][만\천]\s?[원]', 'money', text_data)
+        text_data = re.sub(r'(?!-)\d{2,4}[0]{2,4}(?!년)(?!.)|\d{1,3}[,/.]\d{3}', 'money', text_data)
+        text_data = re.sub(
+            r'(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+'
+            r'[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})',
+            'url',
+            text_data)
+        # custom 치환
+        text_data = re.sub(r'(유.?심|유심.?칩|심.?카드|sim.?카드|esim|sim)', 'usim', text_data)
+        text_data = re.sub(r'(4.?g|4.?지)', 'lte', text_data)
+        text_data = re.sub(r'(5.?g|5.?지)', 'fiveg', text_data)
+        text_data = re.sub(r'(3.?g|3.?지)', 'threeg', text_data)
+        text_data = re.sub(r'((특장|특정).?사이트|(특정|특장).?(어플|app|앱)|카카.?오톡?|(페이스|보이스|카|페|보).?톡|'
+                           r'kakao.?talk|tmap|(티|t).?맵|후후.?어?플?|페이스.?타임)', 'app', text_data)
+        text_data = re.sub(r'(sms|mms|메시지)', 'message', text_data)
+        # 그 외의 특수문자는 모두 삭제
+        text_data = re.sub(r'[-=+,_#/\?^$@*\"※~&%ㆍ!』\‘|\(\)\[\]\<\>\{\}`><\':;■◈▶●★☎]', ' ', text_data)
+
+        # 앞서 list_rmstring 선언된 단어들 모두 제거
+        for item in self.normal_string:
+            text_data = text_data.replace(item, "")
+        # 필수 제거 단어 제거
+        for item in self.stopString:
+            text_data = text_data.replace(item, "")
+
+        # 앞 뒤 공백 제거
+        text_data = text_data.strip()
+        return text_data
+
+    # text 형태소 분리 및 명사에서 '조사 어미 관용어 제외 후 리스트 리턴'
+    def splitNouns(self, text):
+
+        try:
+            result = []
+            if self.posFlag == 'okt':
+                malist = self.konlpy_parser.pos(text)
+                for word in malist:
+                    if word[1] != 'Number':
+                        result.append(word[0])
+            else:
+                malist = self.konlpy_parser.pos(text)
+                for word in malist:
+                    if word[1] != 'SN':
+                        result.append(word[0])
+            return result
+        except:
+            self.setPrintText('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                           sys.exc_info()[1],
+                                                           sys.exc_info()[2].tb_lineno))
+            return result
 
     # 문자열 Filtering 함수
     def setFilter(self, text):
 
-        resubText = text.lower()
-        resubText = self.removeString(resubText)
+        try:
+            doc = text
+            doc = self.removeString(doc)
+            split_doc = self.splitNouns(doc)
+            doc = " ".join([s.strip() for s in split_doc if s])
+            return doc
+        except:
+            self.setPrintText('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                           sys.exc_info()[1],
+                                                           sys.exc_info()[2].tb_lineno))
+            return None
 
-        # special characters regexp filter handler
-        for item in self.normal_string:
-            resubText = resubText.replace(item, "")
-        resubText = resubText.strip()
-        return resubText
+    # label 인덱스 부여하기
+    def set_label_index(self, list_category, list_label):
+
+        try:
+            for idx, cate in enumerate(list_category):
+                if cate == "중계기":
+                    continue
+                self.dict_label_reverse[int(list_label[idx])] = cate
+            self.setPrintText('/s카테고리 분류 코드 {}/e'.format(self.dict_label_reverse))
+        except:
+            self.setPrintText('/sError: {}. {}, line: {}'.format(sys.exc_info()[0], sys.exc_info()[1],
+                                                           sys.exc_info()[2].tb_lineno) + '/e')
 
     # 문장 앞 부터 조건에 맞는 문자열 substring
     def find_between(self, s, first, last):
@@ -252,28 +328,6 @@ class avocParser(QThread):
         except ValueError:
             return self.returnData
 
-    # text 형태소 분리 및 명사에서 '조사 어미 관용어 제외 후 리스트 리턴'
-    def splitNouns(self, text):
-        try:
-            result_part = []
-            if self.posFlag == 'okt':
-                malist = self.okt.pos(text)
-                for word in malist:
-                    if word[1] in ['Noun','Adjective','Verb', 'Unknown'] and not word[0] in self.stopString and len(word[0]) > 1:
-                        result_part.append(word[0])
-            else:
-                malist = self.komoran.pos(text)
-                for word in malist:
-                    if word[1] in ['NNG', 'NNP', 'NNB', 'VV', 'MAG', 'VA', 'VXV', 'UN', 'MAJ', 'SL', 'NA', 'NF'] and not word[0] in self.stopString and len(word[0]) > 1:
-                        result_part.append(word[0])
-
-            return result_part
-        except:
-            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],
-                                                                  sys.exc_info()[1],
-                                                                  sys.exc_info()[2].tb_lineno)+' /e')
-            return result_part
-
     # 예측함수
     def predict(self, text):
 
@@ -282,23 +336,24 @@ class avocParser(QThread):
             dict_labels = {}
             best_category = ''
             benchmark_category = ''
-            ex_word = self.splitNouns(text)
+            ex_word = text.split()
             strings = ",".join(ex_word)
 
             if self.modelFlag != 'all':
-                list_predict = self.dict_load_models[self.modelFlag].predict([text])
+                list_predict = self.dict_load_models[self.modelFlag].predict([text]).tolist()
                 best_category = list_predict[0]
             else:
                 # 각 모델에서 predict vote 실행
                 for (key, value) in self.dict_load_models.items():
-                    if key == 'linear':
-                        benchmark_category = value.predict([text])[0]
+                    if key == 'xgboost':
+                        benchmark_category = value.predict([text]).tolist()[0]
                         list_labels.append(benchmark_category)
                     else:
-                        list_labels.append(value.predict([text])[0])
+                        selected_category = value.predict([text]).tolist()[0]
+                        list_labels.append(selected_category)
                 # 각 카테고리 예측 리스트에 담고 순위별로 정리
                 dict_labels = Counter(list_labels)
-                dict_labels = sorted(dict_labels.items(), key=lambda x:x[1], reverse=True)
+                dict_labels = sorted(dict_labels.items(), key=lambda x: x[1], reverse=True)
                 if len(dict_labels) > 1:
                     # 1순위와 2순위가 같으면
                     if dict_labels[0][1] == dict_labels[1][1]:
@@ -335,7 +390,7 @@ class avocParser(QThread):
                             self.os_string = re.sub(self.name+r".?.?.?.?.?.?"+"_", self.name+"_", self.os_string, 1)
                             self.returnData = self.find_between(self.os_string, self.name+"_", "/e")
                         elif "Device_Type" in self.os_string:
-                            self.os_string = re.sub(self.name+r".?.?.?.?.?.?"+"/",self.name+"/",self.os_string,1)
+                            self.os_string = re.sub(self.name+r".?.?.?.?.?.?"+"/", self.name+"/",self.os_string,1)
                             self.returnData = self.find_between(self.os_string, self.name+"/", "Device_Type")
                         else:
                             self.os_string = re.sub(self.name+r".?.?.?.?.?.?"+"/", self.name+"/", self.os_string,1)
@@ -349,32 +404,26 @@ class avocParser(QThread):
                 self.returnData = "정보없음"
                 return self.returnData
         except:
-            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2].tb_lineno)+' /e')
+            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                                  sys.exc_info()[1],
+                                                                  sys.exc_info()[2].tb_lineno)+' /e')
             self.returnData = "정보없음"
             return self.returnData
+
     # 업데이트 예약어 포함 여부 확인
     def check_update(self, memo, update_list):
         self.update_flag = "N"
         self.textMemo_short = memo.lower().replace(" ","")
         for item in update_list:
-            if item.lower().replace(" ","") in self.textMemo_short:
+            if item.lower().replace(" ", "") in self.textMemo_short:
                 self.update_flag = "Y"
                 break
         return self.update_flag
-    # 로밍 예약어 포함 여부 확인
-    # def check_roaming(self, memo, roaming_list):
-    #     self.roaming_flag = "N"
-    #     self.textMemo_short = memo.lower().replace(" ","")
-    #     for item in roaming_list:
-    #         if item.lower().replace(" ","") in self.textMemo_short:
-    #             self.roaming_flag = "Y"
-    #             break
-    #     return self.roaming_flag
-    # 키워드 분류 및 업데이트 로밍 소프트웨어 버전 검사 함수
+
+    # 분석 실행 함수
     def analysis_data(self, dataframe, update_list, special_list, repeater_list, repeater_col4_list, local1_list):
         try:
-            # 변수 선언
-            lexrank = LexRank()
+
             self.df_target = dataframe
             self.update = update_list
             self.special = special_list
@@ -382,18 +431,18 @@ class avocParser(QThread):
             self.repeater_col4 = repeater_col4_list
             self.local_1 = local1_list
             self.part_total_rows = self.df_target.shape[0]
-            self.p = re.compile("[1-9]{1}[.]{1}")
+
             #############################__analysis of dataFrame__#############################
             for i in range(self.part_total_rows):
                 self.disText = ""
                 self.disText = "/s Index_"+str(i+1)+" DATA: \n"
                 self.memoString = self.df_target.at[i, "메모"]
-                self.memoString = self.setFilter(self.memoString)
+                # self.memoString = self.setFilter(self.memoString)
                 ####################__1 작업 메모요약 작업__####################
                 try:
                     if(len(self.memoString) >= 40):
-                        lexrank.summarize(self.memoString)
-                        self.summ = lexrank.probe(2)
+                        self.lexrank.summarize(self.memoString)
+                        self.summ = self.lexrank.probe(2)
                         self.summ_text = ""
                         for j in range(len(self.summ)):
                             self.temp_str = self.summ[j].replace("-", "")
@@ -494,11 +543,11 @@ class avocParser(QThread):
                         self.memoString = self.memoString+"/e"
                         # 특수문인 경우 특수문과 기준점 사이에 문자를 Parsing 함
                         self.temp_text = self.find_between(self.memoString, self.specString, "/e")
-                        if self.p.search(self.temp_text):
-                            self.pattern_list = self.p.findall(self.temp_text)
+                        if self.pattern.search(self.temp_text):
+                            self.pattern_list = self.pattern.findall(self.temp_text)
                             self.memoString = self.find_between(self.memoString, self.specString, self.pattern_list[0])
                         else:
-                            self.memoString = self.temp_text
+                            self.memoString = self.temp_text.replace("/e", "")
 
                         # manul pattern 분석 self.cate_reserved에 속하는지 검사
                         if len(self.cate_reserved) > 0:
@@ -525,15 +574,18 @@ class avocParser(QThread):
                             else:
                                 self.df_target.at[i, "소프트웨어"] = "정보없음"
                             self.select_category = key_pre_selected
+                            self.memoString = self.removeString(self.memoString)
                             words = self.splitNouns(self.memoString)
                             strings = ",".join(words)
                             self.df_target.at[i, "추출단어"] = strings
 
                         else:
-                            # 문자열을 가지고 Bayesian 함수 실행
+                            # 문자열을 text_filtering 거치고  머신러닝 predict 실행
+                            self.memoString = self.setFilter(self.memoString)
                             self.result_data = self.predict(self.memoString)
-                            self.df_target.at[i, "메모분류"] = self.result_data[0]
-                            self.select_category = self.result_data[0]
+
+                            self.df_target.at[i, "메모분류"] = self.dict_label_reverse[self.result_data[0]]
+                            self.select_category = self.dict_label_reverse[self.result_data[0]]
                             self.flag1 = self.check_update(self.memoString, self.update)
                             self.df_target.at[i, "업데이트 유무"] = self.flag1
 
@@ -547,7 +599,6 @@ class avocParser(QThread):
 
                     ########################__해당 없는 정상 경우__########################
                     else:
-
                         flag_pre_selected = False
                         key_pre_selected = ""
                         #메모내용 길이 조정
@@ -582,14 +633,17 @@ class avocParser(QThread):
                             else:
                                 self.df_target.at[i, "소프트웨어"] = "정보없음"
                             self.select_category = key_pre_selected
+                            self.memoString = self.removeString(self.memoString)
                             words = self.splitNouns(self.memoString)
                             strings = ",".join(words)
                             self.df_target.at[i, "추출단어"] = strings
                         else:
                             # 문자열을 가지고 Bayesian 함수 실행
+                            self.memoString = self.setFilter(self.memoString)
                             self.result_data = self.predict(self.memoString)
-                            self.df_target.at[i, "메모분류"] = self.result_data[0]
-                            self.select_category = self.result_data[0]
+
+                            self.df_target.at[i, "메모분류"] = self.dict_label_reverse[self.result_data[0]]
+                            self.select_category = self.dict_label_reverse[self.result_data[0]]
                             self.flag1 = self.check_update(self.memoString, self.update)
                             self.df_target.at[i, "업데이트 유무"] = self.flag1
 
@@ -612,22 +666,26 @@ class avocParser(QThread):
             self.setPrintText("/s VOC 전체 메모정보 요약 및 카테고리 작업 완료 /e")
             return self.df_target
         except:
-            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2].tb_lineno)+' /e')
+            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                                  sys.exc_info()[1],
+                                                                  sys.exc_info()[2].tb_lineno)+' /e')
 
     # main method
     def run(self):
 
         try:
-            ###########################__print Text Thread delay 1.5 second__######################
+            # ##########################__print Text Thread delay 1.5 second__######################
             self.ftp_client.connect(host=self.hostname, port=self.port)
             self.ftp_client.login(user=self.username, passwd=self.password)
-            # self.ftp_client.cwd("Learning")
-            self.ftp_client.cwd("sklearn_models")
+            # STG model server
+            self.ftp_client.cwd("sklearn_stg_models")
+            # # PRD model server
+            # self.ftp_client.cwd("sklearn_models")
             self.ftp_client.retrlines("LIST", self.list_file.append)
 
-            #ftp server check files
+            # ftp server check files
             self.ftp_check_files()
-            #ftp server file download
+            # ftp server file download
             self.ftp_download_file()
             # ftp server quit connector
             self.ftp_stop()
@@ -637,25 +695,29 @@ class avocParser(QThread):
             self.thread_count.daemon = True
             # self.thread_print.start()
             self.thread_count.start()
-
             self.home = expanduser("~")
             self.nowTime = datetime.today().strftime("%Y-%m-%d")
 
             #################################################################_SETTING INPUT_###########################################################################
             # Input and save user select each mode
             self.input_file = self.filePath
-            self.file_name = self.find_between_r(self.input_file,"/",".")
+            self.file_name = self.find_between_r(self.input_file, "/", ".")
             if os.path.isdir(self.home+"\\Desktop\\VOC\\"):
                 self.output_file = self.home+"\\Desktop\\VOC\\result_"+self.file_name+"("+self.nowTime+").xlsx"
             else:
                 os.mkdir(self.home+"\\Desktop\\VOC\\")
                 self.output_file = self.home+"\\Desktop\\VOC\\result_"+self.file_name+"("+self.nowTime+").xlsx"
 
+            if self.posFlag == 'okt':
+                self.konlpy_parser = Okt()
+            else:
+                self.konlpy_parser = Komoran()
+
             #################################################################_SETTING INPUT_###########################################################################
 
-            #Core Code
+            # Core Code
             self.start_time = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-            #Excel input Data read
+            #E xcel input Data read
             self.setPrintText("/s START_TIME: "+self.start_time+" /e")
             self.setPrintText("/s Start to read the Excel File Data /e")
             self.df_subscriber = pd.read_excel(self.input_file, sheet_name="가입자정보", index_col=None)
@@ -680,10 +742,16 @@ class avocParser(QThread):
             self.repeater_list = [x for x in self.repeater_list if str(x) != 'nan']
             self.repeater_col4_list = self.df_reserved["상담사조치4예약어(중계기)"].tolist()
             self.repeater_col4_list = [x for x in self.repeater_col4_list if str(x) != 'nan']
-            self.local1_list = self.df_reserved["지역1예약어(중계기)"].tolist()
-            self.local1_list = [x for x in self.local1_list if str(x) != 'nan']
+            # generate category label dictionary
             self.cate_list = self.df_reserved['선택카테고리'].tolist()
             self.cate_list = [x for x in self.cate_list if str(x) != 'nan']
+            list_label = self.df_reserved['LABEL'].tolist()
+            list_label = [x for x in list_label if str(x) != 'nan']
+            self.set_label_index(self.cate_list, list_label)
+            # 중계기 예약어
+            self.local1_list = self.df_reserved["지역1예약어(중계기)"].tolist()
+            self.local1_list = [x for x in self.local1_list if str(x) != 'nan']
+
             self.normal_string = self.df_stop['일반형식'].tolist()
             self.normal_string = [x for x in self.normal_string if str(x) != 'nan']
 
@@ -708,6 +776,7 @@ class avocParser(QThread):
 
             self.setPrintText("/s 예약어 리스트 정보 DataFrame으로 변환 완료 /e")
 
+
             # self.df_column = pd.read_excel(self.input_file, sheet_name="상담사조치분류", index_col=None)
             # self.col_index_text = self.df_column.columns.tolist()
             # self.col_text = self.col_index_text[0]
@@ -716,33 +785,36 @@ class avocParser(QThread):
             # self.counsel_list = [x for x in self.counsel_list if str(x) != 'nan']
             #
             # self.setPrintText("/s 상담사조치분류 리스트 정보 DataFrame으로 변환 완료 /e")
-            #############################################__progress 10%__#############################################
+            # ############################################__progress 10%__#############################################
             self.progress_flag.emit()
 
-            #Device Dictionary Generate
+            # Device Dictionary Generate
             self.setPrintText("/s Start to create device dictionary /e")
-            #VOC 단말리스트 dictionary
+            # VOC 단말리스트 dictionary
             self.df_swing_dic = pd.Series(self.df_device["Swing_Change"].values, index=self.df_device["Swing_Origin"]).to_dict()
             self.setPrintText("/s VOC 단말 Dict 생성 완료 /e")
-            #가입자정보 단말리스트 dictionary
+            # 가입자정보 단말리스트 dictionary
             self.df_sub_dic = pd.Series(self.df_device["Sub_Change"].values, index=self.df_device["Sub_Origin"]).to_dict()
             self.setPrintText("/s 가입자정보 단말 Dict 생성 완료 /e")
 
-            #가입자정보 B2B/B2C구분 "전체"만 선택
+            # 가입자정보 B2B/B2C구분 "전체"만 선택
             self.df_subscriber = self.df_subscriber.loc[self.df_subscriber["B2B/B2C구분"] == "0. 전체", :]
             self.setPrintText("/s Start to match model /e")
             #############################################__progress 20%__#############################################
             self.progress_flag.emit()
-            #sort column name VOC info and 가입자정보 info
-            self.swing_column_list = ["네트워크본부","운용팀","운용사","서비스관리번호","접수일","접수시간","상담유형1","상담유형2","상담유형3","상담유형4",\
-                                      "상담사조치1","상담사조치2","상담사조치3","상담사조치4","단말기제조사","단말기모델명","단말기코드","단말기출시일","HDVoice단말여부",\
-                                      "NETWORK방식2","발생시기1","발생시기2","지역1","지역2","지역3","시/도","구/군명","요금제코드명",\
-                                      "사용자AGENT","단말기애칭", "최근로밍여부", "T전화가입여부", "USIM카드명","댁내중계기여부","VOC접수번호","서비스변경일자","메모"]
+            # sort column name VOC info and 가입자정보 info
+            self.swing_column_list = ["네트워크본부", "운용팀", "운용사", "서비스관리번호", "접수일", "접수시간", "상담유형1",
+                                      "상담유형2", "상담유형3", "상담유형4", "상담사조치1", "상담사조치2", "상담사조치3",
+                                      "상담사조치4", "단말기제조사", "단말기모델명", "단말기코드", "단말기출시일", "HDVoice단말여부",
+                                      "NETWORK방식2", "발생시기1", "발생시기2", "지역1", "지역2", "지역3", "시/도", "구/군명",
+                                      "요금제코드명", "사용자AGENT", "단말기애칭", "최근로밍여부", "T전화가입여부", "USIM카드명",
+                                      "댁내중계기여부", "VOC접수번호", "서비스변경일자", "메모"]
 
-            self.sub_column_list = ["일자","단말기명","전체가입자","HD-V가입자","LTE(전체(a+b))","LTE(무선모뎀제외)(a)",\
-                                    "LTE무선모뎀(b)", "WCDMA전체(a+b+c+d)","WCDMA일반(a+b))","WCDMA일반(SBSM)(a)","WCDMA일반(DBDM)(b)","WCDMA무선모뎀(c+d))",\
-                                    "WCDMA무선모뎀(SBSM)(c)","WCDMA무선모뎀(DBDM)(d)","CDMA전체(a+b+c+d)","2G(a)","1X합계(b+c+d)","1X(b)","EV-DO(c)",\
-                                    "Video Phone(d)","와이브로","5G"]
+            self.sub_column_list = ["일자","단말기명", "전체가입자", "HD-V가입자", "LTE(전체(a+b))", "LTE(무선모뎀제외)(a)",
+                                    "LTE무선모뎀(b)", "WCDMA전체(a+b+c+d)", "WCDMA일반(a+b))", "WCDMA일반(SBSM)(a)",
+                                    "WCDMA일반(DBDM)(b)", "WCDMA무선모뎀(c+d))", "WCDMA무선모뎀(SBSM)(c)", "WCDMA무선모뎀(DBDM)(d)",
+                                    "CDMA전체(a+b+c+d)", "2G(a)", "1X합계(b+c+d)", "1X(b)", "EV-DO(c)", "Video Phone(d)",
+                                    "와이브로", "5G"]
 
 
             ########################################################################Start to generate VOC and Subscriber DateFrame########################################################################
@@ -862,7 +934,7 @@ class avocParser(QThread):
                 self.df_subscriber.at[i, "고유번호"] = self.uniqueId
 
             self.setPrintText("/s VOC 및 가입자정보 DataFrame 단말명 Matching 작업 완료 /e")
-            ########################################################################Start to generate 불만성유형  DateFrame########################################################################
+            ####################################Start to generate 불만성유형  DateFrame###################################
             self.setPrintText("/s Start to create the \"불만성유형\" DataFrame /e")
             #############################################__progress 40%__#############################################
             self.progress_flag.emit()
@@ -887,9 +959,14 @@ class avocParser(QThread):
             self.progress_flag.emit()
             #Select 단말설정 기타안내 in 상담유형3
             # self.df_keyword_temp1 = self.df_swing.loc[self.df_swing["상담유형2"] == "단말-설정" ,:]
-            self.df_keyword = self.df_swing.loc[(self.df_swing["상담유형2"] == "HD Voice품질")|(self.df_swing["상담유형2"] == "단말-설정")|(self.df_swing["상담유형2"] == "WiFi품질")|\
-            (self.df_swing["상담유형2"] == "데이터품질")|(self.df_swing["상담유형2"] == "부가서비스")|(self.df_swing["상담유형2"] == "영상품질")|(self.df_swing["상담유형2"] == "음성품질")|\
-            (self.df_swing["상담유형2"] == "제도/프로세스"), :]
+            self.df_keyword = self.df_swing.loc[(self.df_swing["상담유형2"] == "HD Voice품질")|
+                                                (self.df_swing["상담유형2"] == "단말-설정")|
+                                                (self.df_swing["상담유형2"] == "WiFi품질")|
+                                                (self.df_swing["상담유형2"] == "데이터품질")|
+                                                (self.df_swing["상담유형2"] == "부가서비스")|
+                                                (self.df_swing["상담유형2"] == "영상품질")|
+                                                (self.df_swing["상담유형2"] == "음성품질")|
+                                                (self.df_swing["상담유형2"] == "제도/프로세스"), :]
 
 
             # self.df_keyword = pd.concat([self.df_keyword_temp1, self.df_keyword_temp2])
@@ -897,20 +974,30 @@ class avocParser(QThread):
 
             #Light and Heavy analysis flag
             self.tot_count = self.df_swing.shape[0]
-            self.df_swing = self.df_swing[["네트워크본부", "운용팀", "운용사", "서비스관리번호", "접수일", "접수시간", "상담유형1", "상담유형2", "상담유형3", "상담유형4", "상담사조치1",\
-                                           "상담사조치2", "상담사조치3", "상담사조치4", "단말기제조사", "단말기모델명", "단말기모델명2", "단말기코드", "단말기출시일", "HDVoice단말여부", "NETWORK방식2",\
-                                           "발생시기1", "발생시기2", "지역1", "지역2", "지역3", "시/도", "구/군명", "요금제코드명", "사용자AGENT", "단말기애칭", "최근로밍여부", "T전화가입여부",\
-                                           "USIM카드명", "댁내중계기여부", "VOC접수번호", "서비스변경일자", "메모", "메모요약", "메모분류", "업데이트 유무", "소프트웨어", "추출단어", "이슈번호"]]
+            self.df_swing = self.df_swing[
+                ["네트워크본부", "운용팀", "운용사", "서비스관리번호", "접수일", "접수시간", "상담유형1", "상담유형2", "상담유형3",
+                 "상담유형4", "상담사조치1", "상담사조치2", "상담사조치3", "상담사조치4", "단말기제조사", "단말기모델명", "단말기모델명2",
+                 "단말기코드", "단말기출시일", "HDVoice단말여부", "NETWORK방식2", "발생시기1", "발생시기2", "지역1", "지역2", "지역3",
+                 "시/도", "구/군명", "요금제코드명", "사용자AGENT", "단말기애칭", "최근로밍여부", "T전화가입여부", "USIM카드명",
+                 "댁내중계기여부", "VOC접수번호", "서비스변경일자", "메모", "메모요약", "메모분류", "업데이트 유무", "소프트웨어",
+                 "추출단어", "이슈번호"]
+            ]
 
-            self.df_keyword = self.df_keyword[["네트워크본부", "운용팀", "운용사", "서비스관리번호", "접수일", "접수시간", "상담유형1", "상담유형2", "상담유형3", "상담유형4", "상담사조치1",\
-                                           "상담사조치2", "상담사조치3", "상담사조치4", "단말기제조사", "단말기모델명", "단말기모델명2", "단말기코드", "단말기출시일", "HDVoice단말여부", "NETWORK방식2",\
-                                           "발생시기1", "발생시기2", "지역1", "지역2", "지역3", "시/도", "구/군명", "요금제코드명", "사용자AGENT", "단말기애칭", "최근로밍여부", "T전화가입여부",\
-                                           "USIM카드명", "댁내중계기여부", "VOC접수번호", "서비스변경일자", "메모", "메모요약", "메모분류", "업데이트 유무", "소프트웨어", "추출단어", "이슈번호"]]
+            self.df_keyword = self.df_keyword[
+                ["네트워크본부", "운용팀", "운용사", "서비스관리번호", "접수일", "접수시간", "상담유형1", "상담유형2", "상담유형3",
+                 "상담유형4", "상담사조치1", "상담사조치2", "상담사조치3", "상담사조치4", "단말기제조사", "단말기모델명", "단말기모델명2",
+                 "단말기코드", "단말기출시일", "HDVoice단말여부", "NETWORK방식2", "발생시기1", "발생시기2", "지역1", "지역2", "지역3",
+                 "시/도", "구/군명", "요금제코드명", "사용자AGENT", "단말기애칭", "최근로밍여부", "T전화가입여부", "USIM카드명",
+                 "댁내중계기여부", "VOC접수번호", "서비스변경일자", "메모", "메모요약", "메모분류", "업데이트 유무", "소프트웨어",
+                 "추출단어", "이슈번호"]
+            ]
 
-            self.df_subscriber = self.df_subscriber[["일자", "단말기명", "단말기모델명2", "전체가입자", "HD-V가입자", "LTE(전체(a+b))", "LTE(무선모뎀제외)(a)",\
-                                                     "LTE무선모뎀(b)", "WCDMA전체(a+b+c+d)", "WCDMA일반(a+b))", "WCDMA일반(SBSM)(a)", "WCDMA일반(DBDM)(b)", "WCDMA무선모뎀(c+d))",\
-                                                     "WCDMA무선모뎀(SBSM)(c)", "WCDMA무선모뎀(DBDM)(d)", "CDMA전체(a+b+c+d)", "2G(a)", "1X합계(b+c+d)", "1X(b)","EV-DO(c)",\
-                                                     "Video Phone(d)", "와이브로", "5G", "고유번호"]]
+            self.df_subscriber = self.df_subscriber[
+                ["일자", "단말기명", "단말기모델명2", "전체가입자", "HD-V가입자", "LTE(전체(a+b))", "LTE(무선모뎀제외)(a)",
+                 "LTE무선모뎀(b)", "WCDMA전체(a+b+c+d)", "WCDMA일반(a+b))", "WCDMA일반(SBSM)(a)", "WCDMA일반(DBDM)(b)",
+                 "WCDMA무선모뎀(c+d))", "WCDMA무선모뎀(SBSM)(c)", "WCDMA무선모뎀(DBDM)(d)", "CDMA전체(a+b+c+d)", "2G(a)",
+                 "1X합계(b+c+d)", "1X(b)","EV-DO(c)", "Video Phone(d)", "와이브로", "5G", "고유번호"]
+            ]
 
             self.setPrintText("/s 불만성유형 DataFrame 상담유형 및 상담사조치 분류 작업 완료 /e")
             #############################################__progress 60%__#############################################
@@ -992,7 +1079,7 @@ class avocParser(QThread):
                 # #####################################################################################################################################
                 # Select Manufacture device put in list
                 for item in self.select_list:
-                    self.df_temp = self.df_swing.loc[self.df_swing["단말기모델명"] == item ,["단말기제조사"]]
+                    self.df_temp = self.df_swing.loc[self.df_swing["단말기모델명"] == item, ["단말기제조사"]]
                     self.df_temp.reset_index(drop=True, inplace=True)
                     if not self.df_temp.empty:
                         self.manuString = self.df_temp.at[0,"단말기제조사"]
@@ -1000,10 +1087,9 @@ class avocParser(QThread):
                     else:
                         self.select_manu_list.append("VOC 정보 없음")
 
-
-            self.data = {"단말리스트": self.select_list,\
-                         "단말기제조사": self.select_manu_list,\
-                         "통품전체": self.select_point_total,\
+            self.data = {"단말리스트": self.select_list,
+                         "단말기제조사": self.select_manu_list,
+                         "통품전체": self.select_point_total,
                          "불만성유형": self.select_point_keyword}
 
             self.df_count = pd.DataFrame(self.data)
@@ -1019,36 +1105,38 @@ class avocParser(QThread):
             if self.mappingFlag == "y":
 
                 for item in self.select_list:
-                    self.df_temp_sub = self.df_subscriber_recent.loc[self.df_subscriber_recent["단말기모델명2"] == item , ["전체가입자","HD-V가입자","LTE(전체(a+b))"]]
+                    self.df_temp_sub = self.df_subscriber_recent.loc[self.df_subscriber_recent["단말기모델명2"] == item,
+                                                                     ["전체가입자", "HD-V가입자", "LTE(전체(a+b))"]]
                     self.temp_list = self.df_temp_sub["전체가입자"].tolist()
                     self.temp_sum = sum(self.temp_list, 0)
                     self.select_sum_sub.append(self.temp_sum)
             else:
 
                 for item in self.select_list:
-                    self.df_temp_sub = self.df_subscriber_recent.loc[self.df_subscriber_recent["단말기명"] == item , ["전체가입자","HD-V가입자","LTE(전체(a+b))"]]
+                    self.df_temp_sub = self.df_subscriber_recent.loc[self.df_subscriber_recent["단말기명"] == item,
+                                                                     ["전체가입자", "HD-V가입자", "LTE(전체(a+b))"]]
                     self.temp_list = self.df_temp_sub["전체가입자"].tolist()
                     self.temp_sum = sum(self.temp_list, 0)
                     self.select_sum_sub.append(self.temp_sum)
 
             for i in range(len(self.select_sum_sub)):
-                self.df_count.at[i,"전체가입자"] = self.select_sum_sub[i]
+                self.df_count.at[i, "전체가입자"] = self.select_sum_sub[i]
             # self.df_count["전체가입자"] = self.select_sum_sub
 
             #calurating count rate per 1000 subscriber
             for i in range(len(self.select_sum_sub)):
-                if self.select_sum_sub[i] > 0.0 and float(self.df_count.at[i,"통품전체"]) > 0.0:
-                    self.temp_rate = (float(self.df_count.at[i,"통품전체"]) / float(self.select_sum_sub[i]))*1000
-                    self.df_count.at[i,"통품 1000명당 건수"] = round(self.temp_rate, 3)
+                if self.select_sum_sub[i] > 0.0 and float(self.df_count.at[i, "통품전체"]) > 0.0:
+                    self.temp_rate = (float(self.df_count.at[i, "통품전체"]) / float(self.select_sum_sub[i]))*1000
+                    self.df_count.at[i, "통품 1000명당 건수"] = round(self.temp_rate, 3)
                 else:
-                    self.df_count.at[i,"통품 1000명당 건수"] = 0.0
+                    self.df_count.at[i, "통품 1000명당 건수"] = 0.0
 
             for i in range(len(self.select_sum_sub)):
-                if self.select_sum_sub[i] > 0.0 and float(self.df_count.at[i,"불만성유형"]) > 0.0:
-                    self.temp_rate = (float(self.df_count.at[i,"불만성유형"]) / float(self.select_sum_sub[i]))*1000
-                    self.df_count.at[i,"불만성 1000명당 건수"] = round(self.temp_rate, 3)
+                if self.select_sum_sub[i] > 0.0 and float(self.df_count.at[i, "불만성유형"]) > 0.0:
+                    self.temp_rate = (float(self.df_count.at[i, "불만성유형"]) / float(self.select_sum_sub[i]))*1000
+                    self.df_count.at[i, "불만성 1000명당 건수"] = round(self.temp_rate, 3)
                 else:
-                    self.df_count.at[i,"불만성 1000명당 건수"] = 0.0
+                    self.df_count.at[i, "불만성 1000명당 건수"] = 0.0
 
             self.setPrintText("/s Select Device 통계 계산 작업 완료 /e")
             #Light and Heavy analysis flag
@@ -1064,12 +1152,12 @@ class avocParser(QThread):
             self.dev_memo_list = []
             if self.mappingFlag == "y":
                 for item in self.dev_model_list:
-                    self.df_temp = self.df_swing.loc[self.df_swing["단말기모델명2"] == item , ["추출단어"]]
+                    self.df_temp = self.df_swing.loc[self.df_swing["단말기모델명2"] == item, ["추출단어"]]
                     self.temp_list = self.df_temp["추출단어"].tolist()
                     self.dev_memo_list.append(self.temp_list)
             else:
                 for item in self.dev_model_list:
-                    self.df_temp = self.df_swing.loc[self.df_swing["단말기모델명"] == item , ["추출단어"]]
+                    self.df_temp = self.df_swing.loc[self.df_swing["단말기모델명"] == item, ["추출단어"]]
                     self.temp_list = self.df_temp["추출단어"].tolist()
                     self.dev_memo_list.append(self.temp_list)
 
@@ -1093,7 +1181,7 @@ class avocParser(QThread):
                     self.text_value = ""
                     for item in self.dict_keyList:
                         self.text_value = self.text_value+" "+str(item[0])+":"+str(item[1])+"\n"
-                    self.df_count.at[i,"키워드 TOP20(통품전체)"] = self.text_value
+                    self.df_count.at[i, "키워드 TOP20(통품전체)"] = self.text_value
                 else:
                     continue
 
@@ -1101,12 +1189,12 @@ class avocParser(QThread):
             self.dev_memo_list = []
             if self.mappingFlag == "y":
                 for item in self.dev_model_list:
-                    self.df_temp = self.df_keyword.loc[self.df_keyword["단말기모델명2"] == item , ["추출단어"]]
+                    self.df_temp = self.df_keyword.loc[self.df_keyword["단말기모델명2"] == item, ["추출단어"]]
                     self.temp_list = self.df_temp["추출단어"].tolist()
                     self.dev_memo_list.append(self.temp_list)
             else:
                 for item in self.dev_model_list:
-                    self.df_temp = self.df_keyword.loc[self.df_keyword["단말기모델명"] == item , ["추출단어"]]
+                    self.df_temp = self.df_keyword.loc[self.df_keyword["단말기모델명"] == item, ["추출단어"]]
                     self.temp_list = self.df_temp["추출단어"].tolist()
                     self.dev_memo_list.append(self.temp_list)
 
@@ -1130,7 +1218,7 @@ class avocParser(QThread):
                     self.text_value = ""
                     for item in self.dict_keyList:
                         self.text_value = self.text_value+" "+str(item[0])+":"+str(item[1])+"\n"
-                    self.df_count.at[i,"키워드 TOP20(불만성유형)"] = self.text_value
+                    self.df_count.at[i, "키워드 TOP20(불만성유형)"] = self.text_value
                 else:
                     continue
 
@@ -1142,11 +1230,15 @@ class avocParser(QThread):
                     self.df_temp = None
                     self.df_temp2 = None
                     if self.mappingFlag == "y":
-                        self.df_temp = self.df_swing.loc[(self.df_swing["단말기모델명2"] == self.df_count.at[i, "단말리스트"]) & (self.df_swing["메모분류"] == item2), ["단말기모델명2", "메모분류"]]
-                        self.df_temp2 = self.df_keyword.loc[(self.df_keyword["단말기모델명2"] == self.df_count.at[i,"단말리스트"]) & (self.df_keyword["메모분류"] == item2), ["단말기모델명2", "메모분류"]]
+                        self.df_temp = self.df_swing.loc[(self.df_swing["단말기모델명2"] == self.df_count.at[i, "단말리스트"])
+                                                         & (self.df_swing["메모분류"] == item2), ["단말기모델명2", "메모분류"]]
+                        self.df_temp2 = self.df_keyword.loc[(self.df_keyword["단말기모델명2"] == self.df_count.at[i,"단말리스트"])
+                                                            & (self.df_keyword["메모분류"] == item2), ["단말기모델명2", "메모분류"]]
                     else:
-                        self.df_temp = self.df_swing.loc[(self.df_swing["단말기모델명"] == self.df_count.at[i, "단말리스트"]) & (self.df_swing["메모분류"] == item2), ["단말기모델명", "메모분류"]]
-                        self.df_temp2 = self.df_keyword.loc[(self.df_keyword["단말기모델명"] == self.df_count.at[i, "단말리스트"]) & (self.df_keyword["메모분류"] == item2), ["단말기모델명", "메모분류"]]
+                        self.df_temp = self.df_swing.loc[(self.df_swing["단말기모델명"] == self.df_count.at[i, "단말리스트"])
+                                                         & (self.df_swing["메모분류"] == item2), ["단말기모델명", "메모분류"]]
+                        self.df_temp2 = self.df_keyword.loc[(self.df_keyword["단말기모델명"] == self.df_count.at[i, "단말리스트"])
+                                                            & (self.df_keyword["메모분류"] == item2), ["단말기모델명", "메모분류"]]
 
                     if not self.df_temp.empty:
                         self.countKeys1[item2] = self.df_temp.shape[0]
@@ -1182,23 +1274,26 @@ class avocParser(QThread):
                 self.tuple_item2 = sorted(self.tuple_item2, key=itemgetter(1), reverse=True)
                 self.j = 0
                 for (x,y) in self.tuple_item2:
-                    if not self.j == self.count_item2-1 and self.df_count.at[i,"카테고리분류(불만성유형)"] == "":
+                    if not self.j == self.count_item2-1 and self.df_count.at[i, "카테고리분류(불만성유형)"] == "":
                         if y is not 0:
-                            self.per = round((y / int(self.df_count.at[i,"불만성유형"])) * 100, 2)
-                            self.df_count.at[i,"카테고리분류(불만성유형)"] = str(x)+": "+str(y)+"\n"
+                            self.per = round((y / int(self.df_count.at[i, "불만성유형"])) * 100, 2)
+                            self.df_count.at[i, "카테고리분류(불만성유형)"] = str(x) + ": " + str(y) + "\n"
                         else:
-                            self.df_count.at[i,"카테고리분류(불만성유형)"] = str(x)+": "+str(y)+"\n"
+                            self.df_count.at[i, "카테고리분류(불만성유형)"] = str(x) + ": " + str(y) + "\n"
 
                     else:
                         if y is not 0:
                             self.per = round((y / int(self.df_count.at[i,"불만성유형"])) * 100, 2)
-                            self.df_count.at[i,"카테고리분류(불만성유형)"] = self.df_count.at[i,"카테고리분류(불만성유형)"]+str(x)+": "+str(y)+"\n"
+                            self.df_count.at[i,"카테고리분류(불만성유형)"] = self.df_count.at[i, "카테고리분류(불만성유형)"] \
+                                                                  + str(x)+": "+ str(y) + "\n"
                         else:
-                            self.df_count.at[i,"카테고리분류(불만성유형)"] = self.df_count.at[i,"카테고리분류(불만성유형)"]+str(x)+": "+str(y)+"\n"
+                            self.df_count.at[i,"카테고리분류(불만성유형)"] = self.df_count.at[i, "카테고리분류(불만성유형)"] \
+                                                                  + str(x)+": "+ str(y) + "\n"
                     self.j = self.j+1
 
-            self.df_count = self.df_count[["일자", "단말리스트", "단말기제조사", "통품전체", "불만성유형", "전체가입자", "통품 1000명당 건수", "불만성 1000명당 건수", "키워드 TOP20(통품전체)",\
-                                        "키워드 TOP20(불만성유형)","카테고리분류(통품전체)", "카테고리분류(불만성유형)"]]
+            self.df_count = self.df_count[["일자", "단말리스트", "단말기제조사", "통품전체", "불만성유형", "전체가입자",
+                                           "통품 1000명당 건수", "불만성 1000명당 건수", "키워드 TOP20(통품전체)",
+                                           "키워드 TOP20(불만성유형)","카테고리분류(통품전체)", "카테고리분류(불만성유형)"]]
             self.setPrintText("/s Select Device 메모 카테고리 및 키워드 통계 계산 작업 완료 /e")
 
             #############################################__progress 70%__#############################################
@@ -1264,14 +1359,16 @@ class avocParser(QThread):
                 if len(item) > 0:
                     self.temp_list = item.split("\n")
                     self.temp_list = self.temp_list[:len(self.temp_list)-1]
+
                     for item2 in self.temp_list:
                         self.item_list = item2.split(":")
-                        self.item_list[0] = self.item_list[0].replace(" ","")
-                        self.item_list[1] = self.item_list[1].replace(" ","")
+                        self.item_list[0] = self.item_list[0].replace(" ", "")
+                        self.item_list[1] = self.item_list[1].replace(" ", "")
                         if not self.item_list[0] in self.rank_dict1:
                             self.rank_dict1[self.item_list[0]] = int(self.item_list[1])
                         elif self.item_list[0] in self.rank_dict1:
-                            self.rank_dict1[self.item_list[0]] = int(self.rank_dict1[self.item_list[0]]) + int(self.item_list[1])
+                            self.rank_dict1[self.item_list[0]] = int(self.rank_dict1[self.item_list[0]]) \
+                                                                 + int(self.item_list[1])
                         else:
                             continue
                 else:
@@ -1282,6 +1379,7 @@ class avocParser(QThread):
                 if len(item) > 0:
                     self.temp_list = item.split("\n")
                     self.temp_list = self.temp_list[:len(self.temp_list)-1]
+
                     for item2 in self.temp_list:
                         self.item_list = item2.split(":")
                         self.item_list[0] = self.item_list[0].replace(" ","")
@@ -1289,7 +1387,8 @@ class avocParser(QThread):
                         if not self.item_list[0] in self.rank_dict2:
                             self.rank_dict2[self.item_list[0]] = int(self.item_list[1])
                         elif self.item_list[0] in self.rank_dict2:
-                            self.rank_dict2[self.item_list[0]] = int(self.rank_dict2[self.item_list[0]]) + int(self.item_list[1])
+                            self.rank_dict2[self.item_list[0]] = int(self.rank_dict2[self.item_list[0]])\
+                                                                 + int(self.item_list[1])
                         else:
                             continue
                 else:
@@ -1308,7 +1407,6 @@ class avocParser(QThread):
 
             for item in self.rank_items2:
                 self.keyword_tot2 = self.keyword_tot2+" "+str(item[0])+":"+str(item[1])+"\n"
-
 
             self.df_summary["키워드 Top 20(통품전체)"] = [self.keyword_tot1]
             self.df_summary["키워드 Top 20(불만성유형)"] = [self.keyword_tot2]
@@ -1365,70 +1463,77 @@ class avocParser(QThread):
             self.j = 0
             self.count_item = len(self.list_tot_count)
             for (x,y) in self.list_tot_count:
-                if not self.j == self.count_item-1 and self.df_summary.at[0,"카테고리분류(통품전체)"] == "":
+                if not self.j == self.count_item-1 and self.df_summary.at[0, "카테고리분류(통품전체)"] == "":
                     if y is not 0:
-                        self.per = round((y / int(self.df_summary.at[0,"전체단말 VOC건수(통품전체)"]))*100,2)
-                        self.df_summary.at[0,"카테고리분류(통품전체)"] = str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
+                        self.per = round((y / int(self.df_summary.at[0, "전체단말 VOC건수(통품전체)"]))*100,2)
+                        self.df_summary.at[0, "카테고리분류(통품전체)"] = str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
                     else:
-                        self.df_summary.at[0,"카테고리분류(통품전체)"] = str(x)+": "+str(y)+" (0.0%)\n"
+                        self.df_summary.at[0, "카테고리분류(통품전체)"] = str(x)+": "+str(y)+" (0.0%)\n"
                 else:
                     if y is not 0:
                         self.per = round((y / int(self.df_summary.at[0,"전체단말 VOC건수(통품전체)"])) * 100, 2)
-                        self.df_summary.at[0,"카테고리분류(통품전체)"] = self.df_summary.at[0,"카테고리분류(통품전체)"]+str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
+                        self.df_summary.at[0, "카테고리분류(통품전체)"] = self.df_summary.at[0, "카테고리분류(통품전체)"]\
+                                                                +str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
                     else:
-                        self.df_summary.at[0,"카테고리분류(통품전체)"] = self.df_summary.at[0,"카테고리분류(통품전체)"]+str(x)+": "+str(y)+" (0.0%)\n"
+                        self.df_summary.at[0, "카테고리분류(통품전체)"] = self.df_summary.at[0, "카테고리분류(통품전체)"]\
+                                                                +str(x)+": "+str(y)+" (0.0%)\n"
                 self.j = self.j+1
 
             self.j = 0
             self.count_item = len(self.list_dev_count)
             for (x,y) in self.list_dev_count:
-                if not self.j == self.count_item-1 and self.df_summary.at[0,"카테고리분류(불만성유형)"] == "":
+                if not self.j == self.count_item-1 and self.df_summary.at[0, "카테고리분류(불만성유형)"] == "":
                     if y is not 0:
-                        self.per = round((y / int(self.df_summary.at[0,"전체단말 VOC건수(불만성유형)"]))*100,2)
-                        self.df_summary.at[0,"카테고리분류(불만성유형)"] = str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
+                        self.per = round((y / int(self.df_summary.at[0, "전체단말 VOC건수(불만성유형)"]))*100, 2)
+                        self.df_summary.at[0, "카테고리분류(불만성유형)"] = str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
                     else:
-                        self.df_summary.at[0,"카테고리분류(불만성유형)"] = str(x)+": "+str(y)+" (0.0%)\n"
+                        self.df_summary.at[0, "카테고리분류(불만성유형)"] = str(x)+": "+str(y)+" (0.0%)\n"
                 else:
                     if y is not 0:
-                        self.per = round((y / int(self.df_summary.at[0,"전체단말 VOC건수(불만성유형)"])) * 100, 2)
-                        self.df_summary.at[0,"카테고리분류(불만성유형)"] = self.df_summary.at[0,"카테고리분류(불만성유형)"]+str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
+                        self.per = round((y / int(self.df_summary.at[0, "전체단말 VOC건수(불만성유형)"])) * 100, 2)
+                        self.df_summary.at[0, "카테고리분류(불만성유형)"] = self.df_summary.at[0, "카테고리분류(불만성유형)"]\
+                                                                 +str(x)+": "+str(y) +" ("+str(self.per)+"%)\n"
                     else:
-                        self.df_summary.at[0,"카테고리분류(불만성유형)"] = self.df_summary.at[0,"카테고리분류(불만성유형)"]+str(x)+": "+str(y)+" (0.0%)\n"
+                        self.df_summary.at[0, "카테고리분류(불만성유형)"] = self.df_summary.at[0, "카테고리분류(불만성유형)"]\
+                                                                 +str(x)+": "+str(y) +" (0.0%)\n"
                 self.j = self.j+1
 
             self.j = 0
             self.count_item = len(self.list_tot_select)
             for (x,y) in self.list_tot_select:
-                if not self.j == self.count_item-1 and self.df_summary.at[0,"자사단말 카테고리분류(통품전체)"] == "":
+                if not self.j == self.count_item-1 and self.df_summary.at[0, "자사단말 카테고리분류(통품전체)"] == "":
                     if y is not 0:
-                        self.per = round((y / int(self.df_summary.at[0,"자사단말 VOC건수(통품전체)"]))*100,2)
-                        self.df_summary.at[0,"자사단말 카테고리분류(통품전체)"] = str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
+                        self.per = round((y / int(self.df_summary.at[0, "자사단말 VOC건수(통품전체)"]))*100, 2)
+                        self.df_summary.at[0, "자사단말 카테고리분류(통품전체)"] = str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
                     else:
-                        self.df_summary.at[0,"자사단말 카테고리분류(통품전체)"] = str(x)+": "+str(y)+" (0.0%)\n"
+                        self.df_summary.at[0, "자사단말 카테고리분류(통품전체)"] = str(x)+": "+str(y)+" (0.0%)\n"
                 else:
                     if y is not 0:
                         self.per = round((y / int(self.df_summary.at[0,"자사단말 VOC건수(통품전체)"])) * 100, 2)
-                        self.df_summary.at[0,"자사단말 카테고리분류(통품전체)"] = self.df_summary.at[0,"자사단말 카테고리분류(통품전체)"]+str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
+                        self.df_summary.at[0, "자사단말 카테고리분류(통품전체)"] = \
+                            self.df_summary.at[0, "자사단말 카테고리분류(통품전체)"]+str(x)+ ": " +str(y)+" ("+str(self.per)+"%)\n"
                     else:
-                        self.df_summary.at[0,"자사단말 카테고리분류(통품전체)"] = self.df_summary.at[0,"자사단말 카테고리분류(통품전체)"]+str(x)+": "+str(y)+" (0.0%)\n"
+                        self.df_summary.at[0, "자사단말 카테고리분류(통품전체)"] = \
+                            self.df_summary.at[0, "자사단말 카테고리분류(통품전체)"]+str(x)+ ": " +str(y)+" (0.0%)\n"
                 self.j = self.j+1
-
 
             self.j = 0
             self.count_item = len(self.list_dev_select)
             for (x,y) in self.list_dev_select:
-                if not self.j == self.count_item-1 and self.df_summary.at[0,"자사단말 카테고리분류(불만성유형)"] == "":
+                if not self.j == self.count_item-1 and self.df_summary.at[0, "자사단말 카테고리분류(불만성유형)"] == "":
                     if y is not 0:
-                        self.per = round((y / int(self.df_summary.at[0,"자사단말 VOC건수(불만성유형)"]))*100,2)
-                        self.df_summary.at[0,"자사단말 카테고리분류(불만성유형)"] = str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
+                        self.per = round((y / int(self.df_summary.at[0, "자사단말 VOC건수(불만성유형)"]))*100,2)
+                        self.df_summary.at[0, "자사단말 카테고리분류(불만성유형)"] = str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
                     else:
-                        self.df_summary.at[0,"자사단말 카테고리분류(불만성유형)"] = str(x)+": "+str(y)+" (0.0%)\n"
+                        self.df_summary.at[0, "자사단말 카테고리분류(불만성유형)"] = str(x)+": "+str(y)+" (0.0%)\n"
                 else:
                     if y is not 0:
                         self.per = round((y / int(self.df_summary.at[0,"자사단말 VOC건수(불만성유형)"])) * 100, 2)
-                        self.df_summary.at[0,"자사단말 카테고리분류(불만성유형)"] = self.df_summary.at[0,"자사단말 카테고리분류(불만성유형)"]+str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
+                        self.df_summary.at[0, "자사단말 카테고리분류(불만성유형)"] = \
+                            self.df_summary.at[0, "자사단말 카테고리분류(불만성유형)"]+str(x)+": "+str(y)+" ("+str(self.per)+"%)\n"
                     else:
-                        self.df_summary.at[0,"자사단말 카테고리분류(불만성유형)"] = self.df_summary.at[0,"자사단말 카테고리분류(불만성유형)"]+str(x)+": "+str(y)+" (0.0%)\n"
+                        self.df_summary.at[0, "자사단말 카테고리분류(불만성유형)"] = \
+                            self.df_summary.at[0, "자사단말 카테고리분류(불만성유형)"]+str(x)+": "+str(y)+" (0.0%)\n"
                 self.j = self.j+1
 
             # 전체 모델에 대한 통계
@@ -1439,12 +1544,13 @@ class avocParser(QThread):
             # self.df_summary["자사단말 카테고리분류(불만성유형)"] = [self.text_dev_select]
             self.setPrintText("/s Summary 메모 카테고리 및 키워드 통계 계산 작업 완료 /e")
 
-
             #sorting columns
-            self.df_summary = self.df_summary[["총 가입자", "전체단말 VOC건수(통품전체)", "전체단말 VOC건수(불만성유형)", "자사단말 VOC건수(통품전체)", "자사단말 VOC건수(불만성유형)", "전체 VOC_Rate(통품전체)", "전체 VOC_Rate(불만성유형)",\
-                                               "자사단말 VOC_Rate(통품전체)", "자사단말 VOC_Rate(불만성유형)", "키워드 Top 20(통품전체)", "키워드 Top 20(불만성유형)", "카테고리분류(통품전체)", "카테고리분류(불만성유형)",\
-                                               "자사단말 카테고리분류(통품전체)", "자사단말 카테고리분류(불만성유형)"]]
-
+            self.df_summary = self.df_summary[["총 가입자", "전체단말 VOC건수(통품전체)", "전체단말 VOC건수(불만성유형)",
+                                               "자사단말 VOC건수(통품전체)", "자사단말 VOC건수(불만성유형)",
+                                               "전체 VOC_Rate(통품전체)", "전체 VOC_Rate(불만성유형)", "자사단말 VOC_Rate(통품전체)",
+                                               "자사단말 VOC_Rate(불만성유형)", "키워드 Top 20(통품전체)", "키워드 Top 20(불만성유형)",
+                                               "카테고리분류(통품전체)", "카테고리분류(불만성유형)", "자사단말 카테고리분류(통품전체)",
+                                               "자사단말 카테고리분류(불만성유형)"]]
 
             #sorting rows
             self.df_summary.sort_index(axis=1, ascending=False)
@@ -1460,11 +1566,12 @@ class avocParser(QThread):
                 self.df_count['단말리스트'] = self.df_count['단말리스트'].str.upper()
 
             # mapping models generate dataframe
-            self.df_mapping = pd.DataFrame({"단말기모델명":self.mapping_models, "출시일":self.launch_model, "네트워크방식":self.network_model, "단말기제조사":self.manufact_model})
-            self.df_mapping2 = pd.DataFrame({"단말기모델명2":self.mapping_models2, "출시일":self.launch_model2, "네트워크방식":self.network_model2, "단말기제조사":self.manufact_model2})
+            self.df_mapping = pd.DataFrame({"단말기모델명":self.mapping_models, "출시일":self.launch_model,
+                                            "네트워크방식":self.network_model, "단말기제조사":self.manufact_model})
+            self.df_mapping2 = pd.DataFrame({"단말기모델명2":self.mapping_models2, "출시일":self.launch_model2,
+                                             "네트워크방식":self.network_model2, "단말기제조사":self.manufact_model2})
 
-            ########################################################################Start to generate device matching DateFrame########################################################################
-
+            # #######################################################################Start to generate device matching DateFrame########################################################################
 
             self.setPrintText("/s Summary 선택 필드 통계 계산 작업 완료 /e")
             self.setPrintText("/s Finish to create the \"전체종합결과\" DataFrame /e")
@@ -1717,13 +1824,48 @@ class avocParser(QThread):
 
 
 if __name__ == '__main__':
-    moduler = avocParser('C:\\Users\\TestEnC\\Desktop\\VOC\\input_sample.xlsx', 'n', 'n', 'all', 'okt')
-    moduler.ftp_client.connect(host=moduler.hostname, port=moduler.port)
-    moduler.ftp_client.login(user=moduler.username, passwd=moduler.password)
-    moduler.ftp_client.cwd("sklearn_models")
-    moduler.ftp_client.retrlines("LIST", moduler.list_file.append)
-    moduler.ftp_check_files()
-    moduler.ftp_download_file()
-    moduler.ftp_stop()
-    returns = moduler.predict('며칠전에 떨어진거 액정깨진후  스피커폰 일반통화 중간느낌이라고하심  통화중 울림증상  -단말기버전 :TCB_TC5  -HDV설정여부: (사용중) -발생시기: 며칠전부터')
-    print(returns)
+    pass
+
+    # 특수 문자 제거 함수
+    # def removeString(self, text):
+    #
+    #     tempText = re.sub('[-=+,#/\?^$@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>\{\}`><]\'', '', text)
+    #     return tempText
+
+    # # text 형태소 분리 및 명사에서 '조사 어미 관용어 제외 후 리스트 리턴'
+    # def splitNouns(self, text):
+    #     try:
+    #         result_part = []
+    #         if self.posFlag == 'okt':
+    #             malist = self.okt.pos(text)
+    #             for word in malist:
+    #                 if word[1] in ['Noun','Adjective','Verb', 'Unknown'] and not word[0] in self.stopString and len(word[0]) > 1:
+    #                     result_part.append(word[0])
+    #         else:
+    #             malist = self.komoran.pos(text)
+    #             for word in malist:
+    #                 if word[1] in ['NNG', 'NNP', 'NNB', 'VV', 'MAG', 'VA', 'VXV', 'UN', 'MAJ', 'SL', 'NA', 'NF'] and not word[0] in self.stopString and len(word[0]) > 1:
+    #                     result_part.append(word[0])
+    #
+    #         return result_part
+    #     except:
+    #         self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+    #                                                               sys.exc_info()[1],
+    #                                                               sys.exc_info()[2].tb_lineno)+' /e')
+    #         return result_part
+
+    # Konlpy text parsing
+
+
+    # 로밍 예약어 포함 여부 확인
+    # def check_roaming(self, memo, roaming_list):
+    #     self.roaming_flag = "N"
+    #     self.textMemo_short = memo.lower().replace(" ","")
+    #     for item in roaming_list:
+    #         if item.lower().replace(" ","") in self.textMemo_short:
+    #             self.roaming_flag = "Y"
+    #             break
+    #     return self.roaming_flag
+    # 키워드 분류 및 업데이트 로밍 소프트웨어 버전 검사 함수
+
+
