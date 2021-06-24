@@ -1,5 +1,9 @@
 # -*- mode: python -*-
+
 # hiddenimports=['cython', 'sklearn', 'sklearn.neighbors.typedefs', 'sklearn.neighbors.quad_tree', 'sklearn.tree._utils', 'openpyxl', 'lexrankr', 'pymysql', 'PyQt5','joblib', 'pickle'],
+import sys
+sys.setrecursionlimit(5000)
+
 block_cipher = None
 
 def get_pandas_path():
@@ -8,13 +12,13 @@ def get_pandas_path():
     return pandas_path
 
 a = Analysis(['newParser.py'],
-             pathex=['C:\\Users\\HANRIM\\PycharmProjects\\bayesian_sikitlearn\\'],
+             pathex=['C:\\Users\\HANRIM\\PycharmProjects\\bayesian_konlpy_sikitlearn\\'],
              binaries=[],
              datas=[('C:\\Users\\HANRIM\\Anaconda3\\Lib\\site-packages\\konlpy\\', '.\\konlpy'),('C:\\Users\\HANRIM\\Anaconda3\\Lib\\site-packages\\konlpy\\java\\','.\\konlpy\\java'),
-                    ('C:\\Users\\HANRIM\\Anaconda3\\Lib\\site-packages\\konlpy\\data\\tagset\\*', '.\\konlpy\\data\\tagset'),
-                    ('C:\\Users\\HANRIM\\Anaconda3\\Lib\\site-packages\\lexrankr\\','.\\lexrankr')],
+                    ('C:\\Users\\HANRIM\\Anaconda3\\Lib\\site-
+                    packages\\lexrankr\\','.\\lexrankr')],
              hiddenimports=['cython', 'sklearn', 'sklearn.tree', 'sklearn.ensemble', 'sklearn.pipeline', 'sklearn.feature_extraction', 'sklearn.neighbors.typedefs', 'sklearn.neighbors.quad_tree',
-             'sklearn.tree._utils', 'sklearn.utils._cython_blas', 'openpyxl', 'lexrankr', 'pymysql', 'PyQt5','joblib', 'pickle'],
+             'sklearn.tree._utils', 'sklearn.utils._cython_blas', 'openpyxl', 'lexrankr', 'pymysql', 'PyQt5','joblib', 'pickle', 'xgboost'],
              hookspath=[],
              runtime_hooks=[],
              excludes=['torch', 'tensorflow', 'keras', 'selenium'],
@@ -22,9 +26,9 @@ a = Analysis(['newParser.py'],
              win_private_assemblies=False,
              cipher=block_cipher)
 
-ui_file =  [('main_window5.ui', 'C:\\Users\\HANRIM\\PycharmProjects\\bayesian_sikitlearn\\main_window5.ui', 'DATA')]
-icon_file = [('main_icon.ico', 'C:\\Users\\HANRIM\\PycharmProjects\\bayesian_sikitlearn\\main_icon.ico', 'DATA')]
-icon_file_2 = [('icon.png', 'C:\\Users\\HANRIM\\PycharmProjects\\bayesian_sikitlearn\\icon.png', 'DATA')]
+ui_file =  [('main_window5.ui', 'C:\\Users\\HANRIM\\PycharmProjects\\bayesian_konlpy_sikitlearn\\main_window5.ui', 'DATA')]
+icon_file = [('main_icon.ico', 'C:\\Users\\HANRIM\\PycharmProjects\\bayesian_konlpy_sikitlearn\\main_icon.ico', 'DATA')]
+icon_file_2 = [('icon.png', 'C:\\Users\\HANRIM\\PycharmProjects\\bayesian_konlpy_sikitlearn\\icon.png', 'DATA')]
 
 
 dict_tree = Tree(get_pandas_path(), prefix='pandas', excludes=["*.pyc"])
@@ -38,12 +42,12 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='VOCParser_v4.3',
+          name='VOCParser_v4.5',
           debug=False,
           strip=False,
           upx=True,
           runtime_tmpdir=None,
-          console=False , icon='C:\\Users\\HANRIM\\PycharmProjects\\bayesian_sikitlearn\\main_icon.ico')
+          console=False , icon='C:\\Users\\HANRIM\\PycharmProjects\\bayesian_konlpy_sikitlearn\\main_icon.ico')
 
 coll = COLLECT(exe,
                a.binaries,
@@ -55,4 +59,4 @@ coll = COLLECT(exe,
                # a.datas + sample,
                strip=None,
                upx=True,
-               name='VOCParser_v4.3')
+               name='VOCParser_v4.5')

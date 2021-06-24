@@ -1349,9 +1349,9 @@ class Method(QThread):
             self.ele_values = parameters[4].split("&")
             if self.type == "none":
                 if len(self.ele_values) != 1:
-                    return ['NOK','ele_values parameter size must be 1']
+                    return ['NOK', 'ele_values parameter size must be 1']
                 self.driver.execute_script('mobile:shell', {'command':self.ele_values[0]})
-                return ["OK","OK"]
+                return ["OK", "OK"]
 
             elif self.type == "exists":
                 if len(self.ele_values) != 2:
@@ -1359,7 +1359,7 @@ class Method(QThread):
                 self.res = self.driver.execute_script('mobile:shell', {'command':self.ele_values[0]})
                 if str(self.ele_values[1]) not in self.res:
                     return ['NOK', str(self.ele_values[1])+" is not in adb response. Actucally response '"+self.res+"'"]
-                return ["OK","OK"]
+                return ["OK", "OK"]
 
             else:
                 if len(self.ele_values) != 2:
@@ -1367,9 +1367,9 @@ class Method(QThread):
                 self.res = self.driver.execute_script('mobile:shell', {'command':self.ele_values[0]})
                 if str(self.ele_values[1]) in self.res:
                     return ['NOK', str(self.ele_values[1])+" is in adb response. Actucally response '"+self.res+"'"]
-                return ["OK","OK"]
+                return ["OK", "OK"]
         except:
-            return ['NOK','Error: {}. {}, line: {}'.format(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2].tb_lineno)]
+            return ['NOK', 'Error: {}. {}, line: {}'.format(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2].tb_lineno)]
 
     def assert_image_compare(self, parameters):
 

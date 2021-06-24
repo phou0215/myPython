@@ -259,7 +259,12 @@ class VOCLearner():
         # alpha = 1e-4,
         model_svm = Pipeline([
             ('vect', self.vectorizer),
-            ('clf', SGDClassifier(loss='log', penalty='l2', random_state=42, fit_intercept=True, class_weight='balanced'))
+            ('clf', SGDClassifier(loss='log',
+                                  penalty='l2',
+                                  random_state=42,
+                                  max_iter=1000,
+                                  fit_intercept=True,
+                                  class_weight='balanced'))
         ])
         model_svc = Pipeline([
             ('vect', self.vectorizer),
@@ -274,7 +279,9 @@ class VOCLearner():
             ('vect', self.vectorizer),
             ('clf', XGBClassifier(random_state=42,
                                   max_depth=10,
-                                  objective='multi:softmax ',
+                                  # objective='multi:softmax ',
+                                  metric='multiclass',
+                                  eval_metric='mlogloss',
                                   n_estimators=1500,
                                   learning_rate=0.1,
                                   ))

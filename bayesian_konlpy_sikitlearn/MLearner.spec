@@ -1,5 +1,6 @@
 # -*- mode: python -*-
-
+import sys
+sys.setrecursionlimit(5000)
 block_cipher = None
 
 def get_pandas_path():
@@ -8,10 +9,10 @@ def get_pandas_path():
     return pandas_path
 
 a = Analysis(['MLearner.py'],
-             pathex=['D:\\workspace\\scikitlearn'],
+             pathex=['C:\\Users\\HANRIM\\PycharmProjects\\bayesian_konlpy_sikitlearn\\'],
              binaries=[],
-             datas=[('C:\\Users\\TestEnC\\Anaconda3\\Lib\\site-packages\\konlpy\\', '.\\konlpy'),('C:\\Users\\TestEnC\\Anaconda3\\Lib\\site-packages\\konlpy\\java\\','.\\konlpy\\java'),
-                    ('C:\\Users\\TestEnC\\Anaconda3\\Lib\\site-packages\\konlpy\\data\\tagset\\*', '.\\konlpy\\data\\tagset')],
+             datas=[('C:\\Users\\HANRIM\\Anaconda3\\Lib\\site-packages\\konlpy\\', '.\\konlpy'),('C:\\Users\\HANRIM\\Anaconda3\\Lib\\site-packages\\konlpy\\java\\','.\\konlpy\\java'),
+                    ('C:\\Users\\HANRIM\\Anaconda3\\Lib\\site-packages\\konlpy\\data\\tagset\\*', '.\\konlpy\\data\\tagset')],
              hiddenimports=['cython', 'sklearn', 'sklearn.tree', 'sklearn.ensemble', 'sklearn.pipeline', 'sklearn.feature_extraction', 'sklearn.neighbors.typedefs', 'sklearn.neighbors.quad_tree', 'sklearn.tree._utils', 'sklearn.utils._cython_blas', 'pickle', 'joblib'],
              hookspath=[],
              runtime_hooks=[],
@@ -30,7 +31,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='Learner_v1.1',
+          name='Learner_v2.0',
           debug=False,
           strip=False,
           upx=True,
