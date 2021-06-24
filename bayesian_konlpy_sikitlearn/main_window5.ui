@@ -377,13 +377,6 @@ background-color: rgb(60, 121, 182);</string>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_13">
                   <item>
-                   <widget class="QRadioButton" name="radioButton_naive">
-                    <property name="text">
-                     <string>Naive</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
                    <widget class="QRadioButton" name="radioButton_sgd">
                     <property name="text">
                      <string>SGD</string>
@@ -401,6 +394,13 @@ background-color: rgb(60, 121, 182);</string>
                    <widget class="QRadioButton" name="radioButton_linear">
                     <property name="text">
                      <string>LinearSVC</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QRadioButton" name="radioButton_xgboost">
+                    <property name="text">
+                     <string>XGBoost</string>
                     </property>
                    </widget>
                   </item>
