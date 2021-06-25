@@ -149,6 +149,8 @@ class avocParser(QThread):
             self.setPrintText('/s FTP Server has all files.../e')
         else:
             self.setPrintText('/s FTP Server Does Not Have model pickle file.. please run learner first and try again /e')
+            self.end_count = "y"
+            self.end_flag.emit()
 
     def ftp_download_file(self):
 
@@ -175,7 +177,9 @@ class avocParser(QThread):
 
                     self.load_models(key, self.current_path+"\\sklearn_models\\"+value)
         except:
-            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2].tb_lineno)+' /e')
+            self.setPrintText('/s Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                                  sys.exc_info()[1],
+                                                                  sys.exc_info()[2].tb_lineno)+' /e')
             self.end_count = "y"
             self.end_flag.emit()
 
@@ -678,9 +682,9 @@ class avocParser(QThread):
             self.ftp_client.connect(host=self.hostname, port=self.port)
             self.ftp_client.login(user=self.username, passwd=self.password)
             # STG model server
-            self.ftp_client.cwd("sklearn_stg_models")
+            # self.ftp_client.cwd("sklearn_stg_models")
             # # PRD model server
-            # self.ftp_client.cwd("sklearn_models")
+            self.ftp_client.cwd("sklearn_models")
             self.ftp_client.retrlines("LIST", self.list_file.append)
 
             # ftp server check files
