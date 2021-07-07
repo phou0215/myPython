@@ -84,3 +84,139 @@
 83 -->  "KEYCODE_NOTIFICATION"
 84 -->  "KEYCODE_SEARCH"
 85 -->  "TAG_LAST_KEYCODE"
+
+
+public void setCmd(String num) throws Exception{
+
+		cpuTem = "adb -s "+num+" shell cat /sys/devices/virtual/thermal/thermal_zone0/temp";
+		cpuFre = "adb -s "+num+" shell cat /sys/devices/system/cpu/cpu";
+		cpuCount = "adb -s "+num+" shell ls /sys/devices/system/cpu/cpu";
+		batTem = "adb -s "+num+" shell cat /sys/class/power_supply/battery/temp";
+		cupNum = "adb -s "+num+" shell cat /sys/devices/system/cpu/present";
+		cupAwake = "adb -s "+num+" shell cat /sys/devices/system/cpu/online";
+		cupSleep = "adb -s "+num+" shell cat /sys/devices/system/cpu/offline";
+		cpuNum = "adb -s "+num+" shell cat /sys/devices/system/cpu/present"; //cpu 개수 ==> 0-5면 6개***
+		thermalCount = "adb -s "+num+" shell ls /sys/devices/virtual/thermal";
+		thermalComm = "adb -s "+num+" shell cat /sys/devices/virtual/thermal";
+		batUsb = "adb -s "+num+" shell \"dumpsys battery | grep USB\"";
+		batAc = "adb -s "+num+" shell \"dumpsys battery | grep AC\"";
+		batLevel = "adb -s "+num+" shell \"dumpsys battery | grep level\"";
+		batStaus = "adb -s "+num+" shell \"dumpsys battery | grep status\""; // status--> 1: 알 수 없음 , 2: 충전중, 3: 방전중, 4: 충전완료 후 충전 중지 , 5: 충전 완료
+		batHealth = "adb -s "+num+" shell \"dumpsys battery | grep health\"";// health--> 1: 알 수 없음 , 2: 좋음, 3: 과열, 4: 불량, 5: 과전압, 6: 불특정 실패, 7:저온
+		batType = "adb -s "+num+" shell \"dumpsys battery | grep technology\"";
+		wifiPort = "adb -s "+num+" tcpip ";
+//		wifiAddress = "adb -s "+num+" shell ifconfig wlan0";
+		wifiAddress = "adb -s "+num+" shell ip route";
+		wifiConn = "adb -s "+num+" connect ";
+		wifiDisconn = "adb -s "+num+" usb";
+		cpuTop = "adb -s "+num+" shell top -m 10 -s cpu";
+		totalMem = "adb -s "+num+" shell cat /proc/meminfo";
+		memInf = "adb -s "+num+" shell dumpsys meminfo";
+		unPlug = "adb -s "+num+" shell dumpsys battery unplug";
+		onPlug = "adb -s "+num+" shell dumpsys battery reset";
+		cpuLoad = "adb -s "+num+" shell cat /proc/loadavg";
+
+		deviceCsCheck = "adb -s "+num+" shell \"getprop | grep -e ro.board.platform\"";
+		deviceModelS = "adb -s "+num+" shell \"getprop | grep -e ro.product.model\"";
+		deviceManuS = "adb -s "+num+" shell \"getprop | grep -e ro.product.manufacturer\"";
+		deviceHardS = "adb -s "+num+" shell \"getprop | grep -e ro.boot.hardware\"";
+		deviceOsS = "adb -s "+num+" shell \"getprop | grep -e ro.build.version.release\"";
+		deviceVerS = "adb -s "+num+" shell \"getprop | grep -e ro.bootloader\"";
+		deviceApiS = "adb -s "+num+" shell \"getprop | grep -e ro.vendor.build.version.sdk\"";
+
+		deviceModelL = "adb -s "+num+" shell \"getprop | grep -e ro.product.model\"";
+		deviceManuL = "adb -s "+num+" shell \"getprop | grep -e ro.product.manufacturer\"";
+		deviceHardL = "adb -s "+num+" shell \"getprop | grep -e ro.product.board\"";
+		deviceOsL = "adb -s "+num+" shell \"getprop | grep -e ro.build.version.release\"";
+		deviceVerL = "adb -s "+num+" shell \"getprop | grep -e ro.lge.swversion_short\"";
+		deviceApiL = "adb -s "+num+" shell \"getprop | grep -e ro.product.build.version.sdk\"";
+
+
+		plugReset = "adb -s "+num+" shell dumpsys battery reset";
+		getSoundStatus = "adb -s "+num+" shell \"dumpsys audio | grep pack:\"";
+		getPid = "adb -s "+num+" shell \"ps | grep skplanet.musicmate\"";
+		back = "adb -s "+num+" shell input keyevent 4";
+		menu = "adb -s "+num+" shell input keyevent 82";
+		home = "adb -s "+num+" shell input keyevent 3";
+		power = "adb -s "+num+" shell input keyevent 26";
+		killApp = "adb -s "+num+" shell am force-stop ";
+		appSwitch = "adb -s "+num+" shell input keyevent 187";
+		langSwitch = "adb -s "+num+" shell input keyevent 204";
+		deviceSleep = "adb -s "+num+" shell input keyevent 223";
+		deviceWakeup = "adb -s "+num+" shell input keyevent 224";
+		tap = "adb -s "+num+" shell input touchscreen tap ";
+		swipe = "adb -s "+num+" shell input touchscreen swipe ";
+		reboot = "adb -s "+num+" reboot-bootloader";
+		rebootSafe = "adb -s "+num+" reboot recovery";
+		touchScreen = "adb -s "+num+" shell input tap ";
+		getWinSize = "adb -s "+num+" shell wm size";
+		connInet = "adb -s "+num+" shell am start -a android.intent.action.VIEW -d \"http://www.nate.com\" --ez create_new_tab false";
+		screenShot = "adb -s "+num+" shell screencap -p /sdcard/"; // Only png is available;
+		pull = "adb -s "+num+" pull /sdcard/";
+		melonExe = "adb -s "+num+" shell monkey -p skplanet.musicmate -c android.intent.category.LAUNCHER 1";
+		mediaPlay = "adb -s "+num+" shell input keyevent 126";
+		mediaPause = "adb -s "+num+" shell input keyevent 127";
+		mkdir = "adb -s "+num+" shell mkdir /sdcard/autoCall/";
+
+		//Doze mode
+		unplug = "adb -s "+num+" shell dumpsys battery unplug";
+		deviceIdle = "adb -s "+num+" shell dumpsys deviceidle step";
+		deviceStatus = "adb -s "+num+" shell \"dumpsys deviceidle | grep mState\"";
+		plugReset = "adb -s "+num+" shell dumpsys battery reset";
+
+		//Check Status
+		checkDisplayOnOff = "adb -s "+num+" shell \"dumpsys window | grep mScreenOn\"";
+		checkAppProcess = "adb -s "+num+" shell pidof com.google.android.youtube"; // If app package on process returned pid number and unless app package on process returned null
+		checkAppWindow = "adb -s "+num+" shell \"dumpsys window windows | grep 'Window #{num}'\""; // check assigned package from Window num
+		checkAppOntop = "adb -s "+num+" shell \"dumpsys activity | grep top-activity\""; // check On top App Activity name ==> returned "Proc # 0: fore  F/A/T  trm: 0 3074:com.android.launcher/u0a8 (top-activity)"
+		checkCallState = "adb -s "+num+" shell \"dumpsys telephony.registry | grep mCallState\"";
+		checkScreenOnOff = "adb -s "+num+" shell \"dumpsys power | grep mHolding\"";
+		topCpu = "adb -s "+num+" shell top -m 2 -s cpu";
+		pingCheck = "adb -s "+num+" shell ping -c 5 www.google.com";
+
+		//CALL Function
+		callDial = "adb -s "+num+" shell am start -a android.intent.action.DIAL tel:";
+		callMake = "adb -s "+num+" shell am start -a android.intent.action.CALL tel:";
+		receiveCall = "adb -s "+num+" shell input keyevent 5";
+		callEnd = "adb -s "+num+" shell input keyevent 6";
+		checkCall = "adb -s "+num+" shell \"dumpsys telephony.registry | grep mCallStat\""; //==>0 indicates idle, 1 = ringing and, 2 = active call
+		videoCall = "adb -s "+num+" shell am start -a android.intent.action.CALL -d tel:"; // --ei android.telecom.extra.START_CALL_WITH_VIDEO_STATE 3";
+	}
+
+}
+
+
+adb shell su -c "pm uninstall com.android.chrome"
+
+
+
+
+//adb shell getprop | grep -e 'model' -e 'version.sdk' -e 'manufacturer' -e 'hardware' -e 'platform' -e 'revision' -e 'serialNumberno' -e 'product.name' -e 'brand'
+
+/*
+[gsm.version.baseband]: [G900VVRU2BOE1]
+[gsm.version.ril-impl]: [Samsung RIL v3.0]
+[net.knoxscep.version]: [2.0.1]
+[net.knoxsso.version]: [2.1.1]
+[net.knoxvpn.version]: [2.2.0]
+[persist.service.bdroid.version]: [4.1]
+[ro.board.platform]: [msm8974]
+[ro.boot.hardware]: [qcom]
+[ro.boot.serialNumberno]: [xxxxxx]
+[ro.build.version.all_codenames]: [REL]
+[ro.build.version.codename]: [REL]
+[ro.build.version.incremental]: [G900VVRU2BOE1]
+[ro.build.version.release]: [5.0]
+[ro.build.version.sdk]: [21]
+[ro.build.version.sdl]: [2101]
+[ro.com.google.gmsversion]: [5.0_r2]
+[ro.config.timaversion]: [3.0]
+[ro.hardware]: [qcom]
+[ro.opengles.version]: [196108]
+[ro.product.brand]: [Verizon]
+[ro.product.manufacturer]: [samsung]
+[ro.product.model]: [SM-G900V]
+[ro.product.name]: [kltevzw]
+[ro.revision]: [14]
+[ro.serialno]: [e5ce97c7]
+ */
