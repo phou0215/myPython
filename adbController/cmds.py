@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import xml.etree.cElementTree as et
 import re
 import time
 from time import sleep
@@ -15,15 +16,19 @@ class CMDS():
 
         super().__init__()
 
+        # self.adbkeyboard_name = 'com.android.adbkeyboard/.AdbIME'
         self.serial_num = uuid
         self.wm_divide_count = divide_window
-        # self.adbkeyboard_name = 'com.android.adbkeyboard/.AdbIME'
+
         self.width = 0
         self.height = 0
         self.divided_width = 0
         self.divided_height = 0
         self.usedAdbKeyboard = False
+        self.pattern = re.compile(r"\d+")
         self.current_path = os.getcwd()
+        self.xml_device_path = '/sdcard/tmp_uiauto.xml'
+        self.xml_local_path = self.current_path + '\\xmlDump\\tmp_uiauto.xml'
 
         # ##########################__Device Control__##########################
         self.deviceSleep = "adb -s "+self.serial_num+" shell input keyevent 223"
@@ -57,10 +62,13 @@ class CMDS():
         self.windowSize = "adb -s "+self.serial_num+" shell wm size"
         self.currentActi = "adb -s "+self.serial_num+" shell dumpsys activity recents | find \"Recent #0\""
         self.memInfo = "adb -s "+self.serial_num+" shell dumpsys meminfo {}"
-        self.getXmlDump = "adb -s "+self.serial_num+" shell uiautomator dump /sdcard/tmp_uiauto.xml"
+        # get elements Xpath node tree with xml data
+        self.getXmlDump = "adb -s "+self.serial_num+" shell uiautomator dump {}"
         # check default keyboard
         self.getDefaultKeyboard = "adb -s "+self.serial_num+" shell settings get secure default_input_method"
         self.getPackageList = "adb -s "+self.serial_num+" shell pm list packages"
+        # mCallState=0 indicates idle, mCallState=1 = ringing, mCallState=2 = active call
+        self.getCallState = "adb -s "+self.serial_num+" shell \"dumpsys telephony.registry | grep mCallStat\""
 
         # #########################__Action control__##########################
         self.back = "adb -s "+self.serial_num+" shell input keyevent 4"
@@ -73,6 +81,12 @@ class CMDS():
         self.swipe = "adb -s "+self.serial_num+" shell input touchscreen swipe {} {} {} {} {}"
         self.normalInput = "adb -s "+self.serial_num+" shell input text '{}'"
         self.adbKeyInput = "adb -s "+self.serial_num+" shell am broadcast -a ADB_INPUT_TEXT --es msg '{}'"
+        self.makeCall = "adb -s "+self.serial_num+" shell am start -a android.intent.action.CALL tel:{}"
+        self.dialCall = "adb -s "+self.serial_num+" shell am start -a android.intent.action.DIAL tel:{}"
+        self.makeVideoCall = "adb -s "+self.serial_num+" shell am start -a android.intent.action.CALL -d tel:{} " \
+                                                       "--ei android.telecom.extra.START_CALL_WITH_VIDEO_STATE 3"
+        self.endCall = "adb -s "+self.serial_num+" shell input keyevent 6"
+        self.receiveCall = "adb -s "+self.serial_num+" shell input keyevent 5"
 
         # #########################__Executes accessories control__##########################
         self.cameraExe = "adb -s "+self.serial_num+" shell am start -a android.media.action.IMAGE_CAPTURE"
@@ -87,6 +101,7 @@ class CMDS():
         try:
             keyboard_flag = False
             default_flag = False
+            installed_status = 'Ok'
 
             # adbkeyboard installed check
             # adbkeyboard package name 'com.android.adbkeyboard'
@@ -112,9 +127,10 @@ class CMDS():
                     # check ignore_flag
                     if ignore_flag == 'y':
                         self.set_print("AdbKeyboard 설치 과정을 skip 처리합니다. text 입력에서 영문 이외에는 입력하실 수 없습니다.")
+                        installed_status = "Skip"
                         pass
                     elif ignore_flag == 'n':
-                        self.setPrint("수동으로 AdbKeyboard apk를 설치 후에 프로그램 재실행을 부탁드립니다. 프로그램을 종료합니다.")
+                        self.set_print("수동으로 AdbKeyboard apk를 설치 후에 프로그램 재실행을 부탁드립니다. 프로그램을 종료합니다.")
                         sys.exit(0)
                     else:
                         while ignore_flag != "y" and ignore_flag != "n":
@@ -170,10 +186,15 @@ class CMDS():
                 # 기본 키보드가 AdbKeyboard인 경우
                 else:
                     pass
-            self.set_print('ADBKeyboard: 설치완료(OK)\r\n기본키보드: AdbKeyboard(OK)')
+            self.set_print('ADBKeyboard: 설치완료({})\r\n기본키보드: AdbKeyboard({})'.format(installed_status, installed_status))
             self.usedAdbKeyboard = True
             # check device size
             self.get_window_size()
+            # check xml dump file directory
+            dir_flag = os.path.isdir(self.current_path+'\\xmlDump')
+            if not dir_flag:
+                os.makedirs(self.current_path+'\\xmlDump')
+
         except:
             self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
                                                             sys.exc_info()[1],
@@ -294,6 +315,45 @@ class CMDS():
                                                             sys.exc_info()[1],
                                                             sys.exc_info()[2].tb_lineno))
 
+    # get activity elements xpath node format xml file
+    def save_dump_xml(self):
+
+        try:
+            # save dump
+            returns = self.execute_cmd(self.getXmlDump.format(self.xml_device_path))
+            if 'dumped to' not in returns[1]:
+                raise Exception('Failed to get xml dump file cause by {}'.format(returns[1]))
+            sleep(1)
+            returns = self.execute_cmd(self.pullFile.format(self.xml_device_path, self.xml_local_path))
+            if 'pulled' not in returns[1]:
+                raise Exception('Failed to pull xml dump file casue by {}'.format(returns[1]))
+            self.set_print('Extract and Save Activity xml dump file')
+        except Exception as e:
+            self.set_print('Error occured : {}'.format(e))
+
+    # get list X and Y positions selected elements
+    def get_pos_elements(self, attr='', name=''):
+        # attr type = (text, class, resource-id, content-desc)
+        try:
+            # get xml dump file
+            self.save_dump_xml()
+            list_pos = []
+            tree = et.ElementTree(file=self.xml_local_path)
+            list_elements = tree.iter(tag="node")
+            for elem in list_elements:
+                if elem.attrib[attr] == name:
+                    bounds = elem.attrib["bounds"]
+                    coord = self.pattern.findall(bounds)
+                    x = (int(coord[2]) - int(coord[0])) / 2.0 + int(coord[0])
+                    y = (int(coord[3]) - int(coord[1])) / 2.0 + int(coord[1])
+                    list_pos.append((x, y))
+            return list_pos
+        except:
+            self.set_print('Failed to get position selected elements attr:{}, name:{}'.format(attr, name))
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
     # ####################################__function of device control__######################################
 
     # 현재 화면에 노출되고 있는 currnetActivity 확인
@@ -333,7 +393,7 @@ class CMDS():
             function_name = self.cmd_return_getPid.__name__
             returns = self.execute_cmd(self.memInfo.format(name))
             if returns[0]:
-                if 'No process found' not in  returns[1]:
+                if 'No process found' not in returns[1]:
                     pid = find_between(returns[1], "pid", "[")
                     self.set_print("Activate \"{}\" and get pid {}".format(function_name, pid))
                 else:
@@ -342,6 +402,33 @@ class CMDS():
                 self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
 
             return pid.strip()
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+    # package name에 해당하는 process id 반환
+    def cmd_return_getCallState(self):
+
+        try:
+            mCallState = ''
+            dict_state = {"0": "idle", "1": "ringing", "2": "activate call"}
+            function_name = self.cmd_return_getCallState.__name__
+            returns = self.execute_cmd(self.getCallState)
+
+            if returns[0]:
+                if 'mCallState' in returns[1]:
+                    mCallState = find_between(returns[1]+"/e", "mCallState=", "/e").strip()
+                    self.set_print("Activate \"{}\" and get mCallState: {}({})".format(function_name,
+                                                                                       mCallState,
+                                                                                       dict_state[mCallState]))
+                else:
+                    self.set_print("Activate \"{}\" but no call state returns".format(function_name))
+            else:
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+
+            return mCallState
         except:
             self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
                                                             sys.exc_info()[1],
@@ -517,7 +604,6 @@ class CMDS():
             status = 1
             returns = None
             function_name = self.cmd_status_backward.__name__
-            # check keyboard whether used adbkeyboard or not
             for i in range(iter_count):
                 returns = self.execute_cmd(self.back.format(message))
                 sleep(delay)
@@ -535,15 +621,14 @@ class CMDS():
                                                             sys.exc_info()[2].tb_lineno))
             return None
 
-    #  deivece power button press event
-    def cmd_powerButton(self):
+    #  device power button press event
+    def cmd_status_powerButton(self):
 
         # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
         try:
             status = 1
-            function_name = self.cmd_powerButton.__name__
-            # check keyboard whether used adbkeyboard or not
-            returns = self.execute_cmd(self.power)
+            function_name = self.cmd_status_powerButton.__name__
+            returns = self.execute_cmd(self.menu)
             # cmd 정상 실행 case
             if returns[0]:
                 self.set_print("Activate \"{}\" and send text: {}".format(function_name, message))
@@ -586,27 +671,114 @@ class CMDS():
                                                             sys.exc_info()[2].tb_lineno))
             return None
 
-    def cmd_sendCall(self):
-        pass
+    # make a phone call event
+    def cmd_status_sendCall(self, phone_num=''):
 
-    def cmd_endCall(self):
-        pass
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' 전화 발신 실패 => '2'
+        try:
+            status = 1
+            function_name = self.cmd_status_sendCall.__name__
+            returns = self.execute_cmd(self.makeCall.format(phone_num))
+            # cmd 정상 실행 case
+            if returns[0]:
+                if 'act=android.intent.action.call' in returns[1].lower():
+                    self.set_print("Activate \"{}\" and make phone call number ={}".format(function_name, phone_num))
+                else:
+                    status = 2
+                    self.set_print("Activate \"{}\" and try to make phone call But failed!({})".format(function_name,
+                                                                                                       returns[1]))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+            return status
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
 
-    def cmd_menu(self):
-        pass
+    # make a video phone call event
+    def cmd_status_sendVideoCall(self, phone_num=''):
 
-    def cmd_power(self):
-        pass
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' 전화 발신 실패 => '2'
+        try:
+            status = 1
+            function_name = self.cmd_status_sendVideoCall.__name__
+            returns = self.execute_cmd(self.makeVideoCall.format(phone_num))
+            # cmd 정상 실행 case
+            if returns[0]:
+                if 'act=android.intent.action.call' in returns[1].lower():
+                    self.set_print("Activate \"{}\" and make video phone call number ={}".format(function_name,
+                                                                                                 phone_num))
+                else:
+                    status = 2
+                    self.set_print("Activate \"{}\" and try to make video phone call But failed!({})".format(function_name,
+                                                                                                             returns[1]))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+            return status
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
 
-    def run_script(self):
-        pass
+    # end of phone call event
+    def cmd_status_endCall(self):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
+        try:
+            status = 1
+            function_name = self.cmd_status_endCall.__name__
+            returns = self.execute_cmd(self.endCall)
+            # cmd 정상 실행 case
+            if returns[0]:
+                self.set_print("Activate \"{}\" and end of phone call".format(function_name))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+            return status
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+    # menu button press event
+    def cmd_status_menuButton(self):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
+        try:
+            status = 1
+            function_name = self.cmd_status_menuButton.__name__
+            returns = self.execute_cmd(self.menu)
+            # cmd 정상 실행 case
+            if returns[0]:
+                self.set_print("Activate \"{}\" and send text: {}".format(function_name, message))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+            return status
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
 
 
 if __name__ == "__main__":
-    cmd = CMDS('R39KA0CN92', 20)
+
+    cmd = CMDS('RF9N604ZM0N', 20)
+    # 필수 setup method 반드시 호출
     cmd.setup_test()
     status = cmd.cmd_status_click(10, 16, pos_type='rate')
     cmd.set_print("Status Click: {}".format(status))
     sleep(5)
     status = cmd.cmd_status_swipe(7, 5, 5, 5, 300, pos_type="rate")
     cmd.set_print("Status Swipe: {}".format(status))
+    # list_pos = cmd.get_pos_elements(attr='content-desc', name='공유하기 버튼')
+    # cmd.set_print(list_pos)
