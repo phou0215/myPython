@@ -24,6 +24,7 @@ class CMDS():
         self.height = 0
         self.divided_width = 0
         self.divided_height = 0
+        self.manufacturer = ''
         self.usedAdbKeyboard = False
         self.pattern = re.compile(r"\d+")
         self.current_path = os.getcwd()
@@ -59,6 +60,7 @@ class CMDS():
 
         # #########################__Get adb data__##########################
         self.getDeives = "adb devices"
+        self.getManuInfo = "adb -s "+self.serial_num+" shell \"getprop | grep -e ro.product.manufacturer\""
         self.windowSize = "adb -s "+self.serial_num+" shell wm size"
         self.currentActi = "adb -s "+self.serial_num+" shell dumpsys activity recents | find \"Recent #0\""
         self.memInfo = "adb -s "+self.serial_num+" shell dumpsys meminfo {}"
@@ -87,9 +89,11 @@ class CMDS():
                                                        "--ei android.telecom.extra.START_CALL_WITH_VIDEO_STATE 3"
         self.endCall = "adb -s "+self.serial_num+" shell input keyevent 6"
         self.receiveCall = "adb -s "+self.serial_num+" shell input keyevent 5"
+        self.makeSMS = "adb shell -s "+self.serial_num+" am start -a android.intent.action.SENDTO -d sms:'{}' " \
+                                                       "--es sms_body '{}' --ez exit_on_sent true"
 
         # #########################__Executes accessories control__##########################
-        self.cameraExe = "adb -s "+self.serial_num+" shell am start -a android.media.action.IMAGE_CAPTURE"
+        self.cameraExe = "adb -s "+self.serial_num+" shell am start -a android.media.action.STILL_IMAGE_CAMERA"
         self.googleExe = "adb -s "+self.serial_num+" shell am start -a android.intent.action.VIEW http://www.google.com"
         self.callExe = "adb -s "+self.serial_num+" shell input keyevent 5"
 
@@ -98,10 +102,15 @@ class CMDS():
 
     # 테스트 시작 전에 반드시 호출되어야 하는 Setup method
     def setup_test(self):
+
         try:
             keyboard_flag = False
             default_flag = False
             installed_status = 'Ok'
+            # check device serial number
+            self.check_device_serial()
+            # check manufacturer device(Only support LGE or SAMSUNG)
+            self.check_device_manuInfo()
 
             # adbkeyboard installed check
             # adbkeyboard package name 'com.android.adbkeyboard'
@@ -202,6 +211,34 @@ class CMDS():
             self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
                                                             sys.exc_info()[1],
                                                             sys.exc_info()[2].tb_lineno))
+            sys.exit(-1)
+
+    #check device_serial number
+    def check_device_serial(self):
+
+        # check device manufacture
+        devices_info = self.execute_cmd(self.getDeives)
+
+        if self.serial_num+"\tdevice" in devices_info[1]:
+            self.set_print('Device Serial Number({}) is connected'.format(self.serial_num))
+        else:
+            self.set_print('Device Serial Number({}) is not in connected device list'.format(self.serial_num))
+            sys.exit(-1)
+
+    #check device manufacturer
+    def check_device_manuInfo(self):
+
+        # check device manufacture
+        manu_info = self.execute_cmd(self.getManuInfo)
+
+        if 'lg' in manu_info[1].lower():
+            self.manufacturer = 'LGE'
+            self.set_print('Device Manufacturer : {}'.format(self.manufacturer))
+        elif 'samsung' in manu_info[1].lower():
+            self.manufacturer = 'SAMSUNG'
+            self.set_print('Device Manufacturer : {}'.format(self.manufacturer))
+        else:
+            self.set_print('ADB Controller 프로그램은 삼성 또는 LG 디바이스만 지원합니다.')
             sys.exit(-1)
 
     # Function of console print
@@ -636,11 +673,13 @@ class CMDS():
             returns = None
             function_name = self.cmd_status_backButton.__name__
             for i in range(iter_count):
-                returns = self.execute_cmd(self.back.format(message))
+                returns = self.execute_cmd(self.back)
                 sleep(delay)
             # cmd 정상 실행 case
             if returns[0]:
-                self.set_print("Activate \"{}\" and send text: {}".format(function_name, message))
+                self.set_print("Activate \"{}\" and executes back button : {} delay: {}".format(function_name,
+                                                                                                iter_count,
+                                                                                                delay))
             # cmd 비정상 실행 case
             else:
                 status = 0
@@ -729,6 +768,36 @@ class CMDS():
                                                             sys.exc_info()[2].tb_lineno))
             return None
 
+    # send sms message event
+    def cmd_status_sendSMS(self, phone_num='', message=''):
+
+        # type 'abs' => 절대 좌표 값 'rate' => self.wm_winodw_count에 의해서 분리된 좌표의 중간 표지션
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
+        try:
+            function_name = self.cmd_status_sendSMS.__name__
+            # input sms text
+            self.execute_cmd(self.makeSMS.format(phone_num, message))
+            # get location(X/Y)
+            location = self.get_pos_elements(attr='content-desc', name='전송')
+            sleep(1)
+            status = self.cmd_status_click(width=location[0][0], height=location[0][1], pos_type='abs')
+
+            # cmd 정상 실행 case
+            if status == 1:
+                self.set_print("Activate \"{}\" and SMS text: {}".format(function_name, message))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and Failed to click send button".format(function_name))
+            return status
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+
+
     # end of phone call event
     def cmd_status_endCall(self):
 
@@ -773,16 +842,56 @@ class CMDS():
                                                             sys.exc_info()[2].tb_lineno))
 
 
-
 if __name__ == "__main__":
 
-    cmd = CMDS('RF9N604ZM0N', 20)
+    serial_num = 'LMQ730N0a97de1c'
+    cmd = CMDS(serial_num, 20)
     # 필수 setup method 반드시 호출
     cmd.setup_test()
-    status = cmd.cmd_status_click(10, 16, pos_type='rate')
-    cmd.set_print("Status Click: {}".format(status))
-    sleep(5)
-    status = cmd.cmd_status_swipe(7, 5, 5, 5, 300, pos_type="rate")
-    cmd.set_print("Status Swipe: {}".format(status))
+    # status = cmd.cmd_status_click(10, 16, pos_type='rate')
+    # cmd.set_print("Status Click: {}".format(status))
+    # sleep(5)
+    # status = cmd.cmd_status_swipe(7, 5, 5, 5, 300, pos_type="rate")
+    # cmd.set_print("Status Swipe: {}".format(status))
     # list_pos = cmd.get_pos_elements(attr='content-desc', name='공유하기 버튼')
     # cmd.set_print(list_pos)
+
+
+    # cmd.execute_cmd(cmd.cameraExe)
+    # sleep(2)
+    # cmd.execute_cmd('adb -s '+serial_num+' shell input keyevent 27')
+    # # 카메라 전환
+    # pos = cmd.get_pos_elements(attr='content-desc', name='전면 카메라로 전환')
+    # cmd.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+    # sleep(2)
+    # cmd.execute_cmd('adb -s '+serial_num+' shell input keyevent 27')
+    # sleep(2)
+    # # 동영상 전환
+    # pos = cmd.get_pos_elements(attr='text', name='동영상')
+    # cmd.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+    # sleep(1)
+    # # 녹화 시작
+    # pos = cmd.get_pos_elements(attr='content-desc', name='녹화 시작')
+    # cmd.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+    # sleep(2)
+    # # 녹화 정지
+    # pos = cmd.get_pos_elements(attr='content-desc', name='일시정지')
+    # cmd.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+    # sleep(1)
+    # # 계속 촬영
+    # pos = cmd.get_pos_elements(attr='content-desc', name='계속')
+    # cmd.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+    # sleep(2)
+    # # 녹화 중지
+    # pos = cmd.get_pos_elements(attr='content-desc', name='녹화 중지')
+    # cmd.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+    # sleep(2)
+    # # 뒤로 가기
+    # cmd.cmd_status_backButton(iter_count=2)
+    # cmd.save_dump_xml()
+    # # switch app 지우기
+    # cmd.execute_cmd(cmd.appSwitch)
+    # pos = cmd.get_pos_elements(attr='text', name='모두 닫기')
+    # cmd.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+    # cmd.set_print('Sample Test 종료!')
+    cmd.save_dump_xml()

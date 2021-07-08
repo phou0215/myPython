@@ -1,0 +1,283 @@
+0 -->  "KEYCODE_UNKNOWN"
+1 -->  "KEYCODE_MENU"
+2 -->  "KEYCODE_SOFT_RIGHT"
+3 -->  "KEYCODE_HOME"
+4 -->  "KEYCODE_BACK"
+5 -->  "KEYCODE_CALL"
+6 -->  "KEYCODE_ENDCALL"
+7 -->  "KEYCODE_0"
+8 -->  "KEYCODE_1"
+9 -->  "KEYCODE_2"
+10 -->  "KEYCODE_3"
+11 -->  "KEYCODE_4"
+12 -->  "KEYCODE_5"
+13 -->  "KEYCODE_6"
+14 -->  "KEYCODE_7"`
+15 -->  "KEYCODE_8"
+16 -->  "KEYCODE_9"
+17 -->  "KEYCODE_STAR"
+18 -->  "KEYCODE_POUND"
+19 -->  "KEYCODE_DPAD_UP"
+20 -->  "KEYCODE_DPAD_DOWN"
+21 -->  "KEYCODE_DPAD_LEFT"
+22 -->  "KEYCODE_DPAD_RIGHT"
+23 -->  "KEYCODE_DPAD_CENTER"
+24 -->  "KEYCODE_VOLUME_UP"
+25 -->  "KEYCODE_VOLUME_DOWN"
+26 -->  "KEYCODE_POWER"
+27 -->  "KEYCODE_CAMERA"
+28 -->  "KEYCODE_CLEAR"
+29 -->  "KEYCODE_A"
+30 -->  "KEYCODE_B"
+31 -->  "KEYCODE_C"
+32 -->  "KEYCODE_D"
+33 -->  "KEYCODE_E"
+34 -->  "KEYCODE_F"
+35 -->  "KEYCODE_G"
+36 -->  "KEYCODE_H"
+37 -->  "KEYCODE_I"
+38 -->  "KEYCODE_J"
+39 -->  "KEYCODE_K"
+40 -->  "KEYCODE_L"
+41 -->  "KEYCODE_M"
+42 -->  "KEYCODE_N"
+43 -->  "KEYCODE_O"
+44 -->  "KEYCODE_P"
+45 -->  "KEYCODE_Q"
+46 -->  "KEYCODE_R"
+47 -->  "KEYCODE_S"
+48 -->  "KEYCODE_T"
+49 -->  "KEYCODE_U"
+50 -->  "KEYCODE_V"
+51 -->  "KEYCODE_W"
+52 -->  "KEYCODE_X"
+53 -->  "KEYCODE_Y"
+54 -->  "KEYCODE_Z"
+55 -->  "KEYCODE_COMMA"
+56 -->  "KEYCODE_PERIOD"
+57 -->  "KEYCODE_ALT_LEFT"
+58 -->  "KEYCODE_ALT_RIGHT"
+59 -->  "KEYCODE_SHIFT_LEFT"
+60 -->  "KEYCODE_SHIFT_RIGHT"
+61 -->  "KEYCODE_TAB"
+62 -->  "KEYCODE_SPACE"
+63 -->  "KEYCODE_SYM"
+64 -->  "KEYCODE_EXPLORER"
+65 -->  "KEYCODE_ENVELOPE"
+66 -->  "KEYCODE_ENTER"
+67 -->  "KEYCODE_DEL"
+68 -->  "KEYCODE_GRAVE"
+69 -->  "KEYCODE_MINUS"
+70 -->  "KEYCODE_EQUALS"
+71 -->  "KEYCODE_LEFT_BRACKET"
+72 -->  "KEYCODE_RIGHT_BRACKET"
+73 -->  "KEYCODE_BACKSLASH"
+74 -->  "KEYCODE_SEMICOLON"
+75 -->  "KEYCODE_APOSTROPHE"
+76 -->  "KEYCODE_SLASH"
+77 -->  "KEYCODE_AT"
+78 -->  "KEYCODE_NUM"
+79 -->  "KEYCODE_HEADSETHOOK"
+80 -->  "KEYCODE_FOCUS"
+81 -->  "KEYCODE_PLUS"
+82 -->  "KEYCODE_MENU"
+83 -->  "KEYCODE_NOTIFICATION"
+84 -->  "KEYCODE_SEARCH"
+85 -->  "TAG_LAST_KEYCODE"
+
+
+public void setCmd(String num) throws Exception{
+
+		cpuTem = "adb -s "+num+" shell cat /sys/devices/virtual/thermal/thermal_zone0/temp";
+		cpuFre = "adb -s "+num+" shell cat /sys/devices/system/cpu/cpu";
+		cpuCount = "adb -s "+num+" shell ls /sys/devices/system/cpu/cpu";
+		batTem = "adb -s "+num+" shell cat /sys/class/power_supply/battery/temp";
+		cupNum = "adb -s "+num+" shell cat /sys/devices/system/cpu/present";
+		cupAwake = "adb -s "+num+" shell cat /sys/devices/system/cpu/online";
+		cupSleep = "adb -s "+num+" shell cat /sys/devices/system/cpu/offline";
+		cpuNum = "adb -s "+num+" shell cat /sys/devices/system/cpu/present"; //cpu 개수 ==> 0-5면 6개***
+		thermalCount = "adb -s "+num+" shell ls /sys/devices/virtual/thermal";
+		thermalComm = "adb -s "+num+" shell cat /sys/devices/virtual/thermal";
+		batUsb = "adb -s "+num+" shell \"dumpsys battery | grep USB\"";
+		batAc = "adb -s "+num+" shell \"dumpsys battery | grep AC\"";
+		batLevel = "adb -s "+num+" shell \"dumpsys battery | grep level\"";
+		batStaus = "adb -s "+num+" shell \"dumpsys battery | grep status\""; // status--> 1: 알 수 없음 , 2: 충전중, 3: 방전중, 4: 충전완료 후 충전 중지 , 5: 충전 완료
+		batHealth = "adb -s "+num+" shell \"dumpsys battery | grep health\"";// health--> 1: 알 수 없음 , 2: 좋음, 3: 과열, 4: 불량, 5: 과전압, 6: 불특정 실패, 7:저온
+		batType = "adb -s "+num+" shell \"dumpsys battery | grep technology\"";
+		wifiPort = "adb -s "+num+" tcpip ";
+//		wifiAddress = "adb -s "+num+" shell ifconfig wlan0";
+		wifiAddress = "adb -s "+num+" shell ip route";
+		wifiConn = "adb -s "+num+" connect ";
+		wifiDisconn = "adb -s "+num+" usb";
+		cpuTop = "adb -s "+num+" shell top -m 10 -s cpu";
+		totalMem = "adb -s "+num+" shell cat /proc/meminfo";
+		memInf = "adb -s "+num+" shell dumpsys meminfo";
+		unPlug = "adb -s "+num+" shell dumpsys battery unplug";
+		onPlug = "adb -s "+num+" shell dumpsys battery reset";
+		cpuLoad = "adb -s "+num+" shell cat /proc/loadavg";
+
+		deviceCsCheck = "adb -s "+num+" shell \"getprop | grep -e ro.board.platform\"";
+		deviceModelS = "adb -s "+num+" shell \"getprop | grep -e ro.product.model\"";
+		deviceManuS = "adb -s "+num+" shell \"getprop | grep -e ro.product.manufacturer\"";
+		deviceHardS = "adb -s "+num+" shell \"getprop | grep -e ro.boot.hardware\"";
+		deviceOsS = "adb -s "+num+" shell \"getprop | grep -e ro.build.version.release\"";
+		deviceVerS = "adb -s "+num+" shell \"getprop | grep -e ro.bootloader\"";
+		deviceApiS = "adb -s "+num+" shell \"getprop | grep -e ro.vendor.build.version.sdk\"";
+
+		deviceModelL = "adb -s "+num+" shell \"getprop | grep -e ro.product.model\"";
+		deviceManuL = "adb -s "+num+" shell \"getprop | grep -e ro.product.manufacturer\"";
+		deviceHardL = "adb -s "+num+" shell \"getprop | grep -e ro.product.board\"";
+		deviceOsL = "adb -s "+num+" shell \"getprop | grep -e ro.build.version.release\"";
+		deviceVerL = "adb -s "+num+" shell \"getprop | grep -e ro.lge.swversion_short\"";
+		deviceApiL = "adb -s "+num+" shell \"getprop | grep -e ro.product.build.version.sdk\"";
+
+
+		plugReset = "adb -s "+num+" shell dumpsys battery reset";
+		getSoundStatus = "adb -s "+num+" shell \"dumpsys audio | grep pack:\"";
+		getPid = "adb -s "+num+" shell \"ps | grep skplanet.musicmate\"";
+		back = "adb -s "+num+" shell input keyevent 4";
+		menu = "adb -s "+num+" shell input keyevent 82";
+		home = "adb -s "+num+" shell input keyevent 3";
+		power = "adb -s "+num+" shell input keyevent 26";
+		killApp = "adb -s "+num+" shell am force-stop ";
+		appSwitch = "adb -s "+num+" shell input keyevent 187";
+		langSwitch = "adb -s "+num+" shell input keyevent 204";
+		deviceSleep = "adb -s "+num+" shell input keyevent 223";
+		deviceWakeup = "adb -s "+num+" shell input keyevent 224";
+		tap = "adb -s "+num+" shell input touchscreen tap ";
+		swipe = "adb -s "+num+" shell input touchscreen swipe ";
+		reboot = "adb -s "+num+" reboot-bootloader";
+		rebootSafe = "adb -s "+num+" reboot recovery";
+		touchScreen = "adb -s "+num+" shell input tap ";
+		getWinSize = "adb -s "+num+" shell wm size";
+		connInet = "adb -s "+num+" shell am start -a android.intent.action.VIEW -d \"http://www.nate.com\" --ez create_new_tab false";
+		screenShot = "adb -s "+num+" shell screencap -p /sdcard/"; // Only png is available;
+		pull = "adb -s "+num+" pull /sdcard/";
+		melonExe = "adb -s "+num+" shell monkey -p skplanet.musicmate -c android.intent.category.LAUNCHER 1";
+		mediaPlay = "adb -s "+num+" shell input keyevent 126";
+		mediaPause = "adb -s "+num+" shell input keyevent 127";
+		mkdir = "adb -s "+num+" shell mkdir /sdcard/autoCall/";
+
+		//Doze mode
+		unplug = "adb -s "+num+" shell dumpsys battery unplug";
+		deviceIdle = "adb -s "+num+" shell dumpsys deviceidle step";
+		deviceStatus = "adb -s "+num+" shell \"dumpsys deviceidle | grep mState\"";
+		plugReset = "adb -s "+num+" shell dumpsys battery reset";
+
+		//Check Status
+		checkDisplayOnOff = "adb -s "+num+" shell \"dumpsys window | grep mScreenOn\"";
+		checkAppProcess = "adb -s "+num+" shell pidof com.google.android.youtube"; // If app package on process returned pid number and unless app package on process returned null
+		checkAppWindow = "adb -s "+num+" shell \"dumpsys window windows | grep 'Window #{num}'\""; // check assigned package from Window num
+		checkAppOntop = "adb -s "+num+" shell \"dumpsys activity | grep top-activity\""; // check On top App Activity name ==> returned "Proc # 0: fore  F/A/T  trm: 0 3074:com.android.launcher/u0a8 (top-activity)"
+		checkCallState = "adb -s "+num+" shell \"dumpsys telephony.registry | grep mCallState\"";
+		checkScreenOnOff = "adb -s "+num+" shell \"dumpsys power | grep mHolding\"";
+		topCpu = "adb -s "+num+" shell top -m 2 -s cpu";
+		pingCheck = "adb -s "+num+" shell ping -c 5 www.google.com";
+
+		//CALL Function
+		callDial = "adb -s "+num+" shell am start -a android.intent.action.DIAL tel:";
+		callMake = "adb -s "+num+" shell am start -a android.intent.action.CALL tel:";
+		receiveCall = "adb -s "+num+" shell input keyevent 5";
+		callEnd = "adb -s "+num+" shell input keyevent 6";
+		checkCall = "adb -s "+num+" shell \"dumpsys telephony.registry | grep mCallStat\""; //==>0 indicates idle, 1 = ringing and, 2 = active call
+		videoCall = "adb -s "+num+" shell am start -a android.intent.action.CALL -d tel:"; // --ei android.telecom.extra.START_CALL_WITH_VIDEO_STATE 3";
+	}
+
+}
+
+//adb shell getprop | grep -e 'model' -e 'version.sdk' -e 'manufacturer' -e 'hardware' -e 'platform' -e 'revision' -e 'serialNumberno' -e 'product.name' -e 'brand'
+
+/*
+[gsm.version.baseband]: [G900VVRU2BOE1]
+[gsm.version.ril-impl]: [Samsung RIL v3.0]
+[net.knoxscep.version]: [2.0.1]
+[net.knoxsso.version]: [2.1.1]
+[net.knoxvpn.version]: [2.2.0]
+[persist.service.bdroid.version]: [4.1]
+[ro.board.platform]: [msm8974]
+[ro.boot.hardware]: [qcom]
+[ro.boot.serialNumberno]: [xxxxxx]
+[ro.build.version.all_codenames]: [REL]
+[ro.build.version.codename]: [REL]
+[ro.build.version.incremental]: [G900VVRU2BOE1]
+[ro.build.version.release]: [5.0]
+[ro.build.version.sdk]: [21]
+[ro.build.version.sdl]: [2101]
+[ro.com.google.gmsversion]: [5.0_r2]
+[ro.config.timaversion]: [3.0]
+[ro.hardware]: [qcom]
+[ro.opengles.version]: [196108]
+[ro.product.brand]: [Verizon]
+[ro.product.manufacturer]: [samsung]
+[ro.product.model]: [SM-G900V]
+[ro.product.name]: [kltevzw]
+[ro.revision]: [14]
+[ro.serialno]: [e5ce97c7]
+ */
+
+*****samsung 기본 키보드 및 추가 키보드 설정*****
+
+카메라 실행
+adb shell am start -a android.media.action.STILL_IMAGE_CAMERA
+
+사진찍기
+keyevent 27
+
+전면 카메라 전환
+content-desc=전면 카메라로 전환
+
+동영상 전환
+text=동영상
+
+동영상 촬영
+content-desc=녹화 시작
+content-desc=일시정지 => 지속촬영 content-desc=계속
+content-desc=녹화 중지
+
+switch app
+text=모두 닫기
+
+SMS Text Input
+adb shell am start -a android.intent.action.SENDTO -d sms:'010XXXXXXXX' --es sms_body 'test message!!' --ez exit_on_sent true
+Starting: Intent { act=android.intent.action.SENDTO dat=sms:010XXXXXXXX (has extras) }
+
+SMS 보내기 버튼
+content-desc="전송"
+
+제조사 확인
+C:\Users\HANRIM>adb shell "getprop | grep -e ro.product.manufacturer"
+[ro.product.manufacturer]: [samsung]
+
+
+*****LG 기본 키보드 및 추가 키보드 설정*****
+
+카메라 실행
+adb shell am start -a android.media.action.STILL_IMAGE_CAMERA
+
+사진찍기
+keyevent 27
+
+전면 카메라 전환
+content-desc=전면 카메라로 전환
+
+동영상 전환
+content-desc=동영상
+
+동영상 촬영
+content-desc=동영상 촬영
+content-desc=일시 정지 => 지속촬영 content-desc=동영상 촬영
+content-desc=종료
+
+switch app
+text=모두 지우기
+
+SMS Text Input
+adb shell am start -a android.intent.action.SENDTO -d sms:'010XXXXXXXX' --es sms_body 'test message!!' --ez exit_on_sent true
+Starting: Intent { act=android.intent.action.SENDTO dat=sms:010XXXXXXXX (has extras) }
+
+SMS 보내기 버튼
+content-desc="전송"
+
+제조사 확인
+C:\Users\HANRIM>adb shell "getprop | grep -e ro.product.manufacturer"
+[ro.product.manufacturer]: [LGE]
