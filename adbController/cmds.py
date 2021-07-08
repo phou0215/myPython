@@ -796,8 +796,6 @@ class CMDS():
                                                             sys.exc_info()[2].tb_lineno))
             return None
 
-
-
     # end of phone call event
     def cmd_status_endCall(self):
 
@@ -840,6 +838,7 @@ class CMDS():
             self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
                                                             sys.exc_info()[1],
                                                             sys.exc_info()[2].tb_lineno))
+
 
 
 if __name__ == "__main__":
