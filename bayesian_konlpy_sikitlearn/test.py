@@ -10,26 +10,19 @@ import joblib
 from konlpy.tag import Okt
 from konlpy.tag import Komoran
 
-from collections import Counter
-from datetime import datetime
-import matplotlib.pyplot as plt
-# from nltk.tokenize import word_tokenize
+#
+# # twitter = Komoran()
+# list_sample_text = '특정 사이트에서 멈춤이 발생 카카오 톡 할 때 정상적으로 채팅이 안됨'
+#
+# text_data = re.sub(r'((특장|특정).?사이트|(특정|특장).?(어플|app|앱)|카카.?오.?톡?|(페이스|보이스|카|페|보).?톡|'
+#                    r'kakao.?talk|tmap|(티|t).?맵|후후.?어?플?|페이스.?타임)', 'app', list_sample_text)
+#
+# # for idx, item in enumerate(list_sample_text):
+# #     print('{} 테스트 입니다.'.format(list_sample_text[i]))
+# print(text_data)
+# #
+# # print(twitter.pos(list_sample_text))
 
-# from xgboost import plot_importance
-# from xgboost import XGBClassifier
-
-# from sklearn.preprocessing import StandardScaler
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.model_selection import GridSearchCV
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.svm import SVC
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier
-# from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score, KFold
-
-model_file_path
+test = 0.0
+convert = int(test)
+print(convert)

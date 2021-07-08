@@ -377,7 +377,7 @@ class avocParser(QThread):
 
     # find software Version return data: String
     def find_version(self, text, model_name):
-        self.os_string = str(text).replace(" ","")
+        self.os_string = str(text).replace(" ", "")
         self.name = model_name.upper()
         self.returnData = "N/A"
         try:
@@ -824,7 +824,7 @@ class avocParser(QThread):
             ########################################################################Start to generate VOC and Subscriber DateFrame########################################################################
             #put up and generate the VOC DataFrame what 상담유형1 is 통화품질, 통품외상담
             self.df_swing = self.df_swing.loc[:, self.swing_column_list]
-            self.df_swing = self.df_swing.loc[(self.df_swing["상담유형1"] == "통화품질") | (self.df_swing["상담유형1"] == "통품외상담"), :]
+            self.df_swing = self.df_swing.loc[(self.df_swing["상담유형1"] == "통화품질") | (self.df_swing["상담유형1"] == "통품외상담"), : ]
             # 단말기모델명이 삭제 상태이면 해당 row 삭제(공통)
             self.df_swing = self.df_swing[self.df_swing['단말기모델명'].notnull()]
             #DataFrame VOC reindex(통품전체)

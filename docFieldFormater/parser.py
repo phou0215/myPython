@@ -227,6 +227,8 @@ class DocFormatter():
             self.layer_3 = self.total_layer[2]
             self.layer_4 = self.total_layer[3]
             self.layer_5 = self.total_layer[4]
+
+
             self.list_combination = self.total_layer[5]
 
         except:

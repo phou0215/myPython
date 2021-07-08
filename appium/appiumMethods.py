@@ -1473,7 +1473,9 @@ class Method(QThread):
             return ["OK","OK"]
         except:
 
-            return ['NOK','Error: {}. {}, line: {}'.format(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2].tb_lineno)]
+            return ['NOK','Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                           sys.exc_info()[1],
+                                                           sys.exc_info()[2].tb_lineno)]
 
     def hasNotObject(self, parameters):
 
@@ -1485,7 +1487,7 @@ class Method(QThread):
             # value size check(wait time and class child_nth)
             if len(self.ele_values) == 3:
                 self.child_nth = int(self.ele_values[2])
-            #check ele type and fix method of ele existed each type
+            # check ele type and fix method of ele existed each type
             if self.ele_type == 'id':
                 self.object = self.driver.find_element_by_id(self.ele_values[0])
             elif self.ele_type == 'Xpath':

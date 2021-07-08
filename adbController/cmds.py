@@ -158,6 +158,7 @@ class CMDS():
                         check_returns = self.execute_cmd(self.getDefaultKeyboard)
                         if "com.android.adbkeyboard/.AdbIME" in check_returns[1]:
                             default_flag = True
+                            self.usedAdbKeyboard = True
                             self.set_print("AdbKeyboard가 정상적으로 기본 키보드로 설정되었습니다.")
                         else:
                             input("아직 기본 키보드로 설정되지 않았습니다. 키보드 설정에서 AdbKeyboard를 "
@@ -178,6 +179,7 @@ class CMDS():
                         check_returns = self.execute_cmd(self.getDefaultKeyboard)
                         if "com.android.adbkeyboard/.AdbIME" in check_returns[1]:
                             default_flag = True
+                            self.usedAdbKeyboard = True
                             self.set_print("AdbKeyboard가 정상적으로 기본 키보드로 설정되었습니다.")
                         else:
                             input("아직 기본 키보드로 설정되지 않았습니다. 키보드 설정에서 AdbKeyboard를 "
@@ -185,9 +187,10 @@ class CMDS():
 
                 # 기본 키보드가 AdbKeyboard인 경우
                 else:
+                    self.usedAdbKeyboard = True
                     pass
+
             self.set_print('ADBKeyboard: 설치완료({})\r\n기본키보드: AdbKeyboard({})'.format(installed_status, installed_status))
-            self.usedAdbKeyboard = True
             # check device size
             self.get_window_size()
             # check xml dump file directory
@@ -595,15 +598,43 @@ class CMDS():
                                                             sys.exc_info()[2].tb_lineno))
             return None
 
+    # uninstall apk with package name
+    def cmd_status_uninstall(self, name=''):
+
+        # name=> 삭제 대상 package name parameter
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0', 삭제 실패 => '2'
+        try:
+            status = 1
+            function_name = self.cmd_status_uninstall.__name__
+            returns = self.execute_cmd(self.uninstallApk.format(name))
+            # cmd 정상 실행 case
+            if returns[0]:
+                if 'success' in returns[1].lower():
+                    self.set_print("Activate \"{}\" and delete package name {}".format(function_name, path))
+                else:
+                    status = 2
+                    self.set_print("Activate \"{}\" and try to delete app But failed!({})".format(function_name,
+                                                                                                  returns[1]))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+            return status
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
     # device back button press event
-    def cmd_status_backward(self, iter_count=1, delay=0):
+    def cmd_status_backButton(self, iter_count=1, delay=0):
 
         # iter_count 는 뒤로 가기 버튼 반복 실행 수 delay는 다음 back button 실행 delay 시간
         # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
         try:
             status = 1
             returns = None
-            function_name = self.cmd_status_backward.__name__
+            function_name = self.cmd_status_backButton.__name__
             for i in range(iter_count):
                 returns = self.execute_cmd(self.back.format(message))
                 sleep(delay)
@@ -632,34 +663,6 @@ class CMDS():
             # cmd 정상 실행 case
             if returns[0]:
                 self.set_print("Activate \"{}\" and send text: {}".format(function_name, message))
-            # cmd 비정상 실행 case
-            else:
-                status = 0
-                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
-            return status
-        except:
-            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
-                                                            sys.exc_info()[1],
-                                                            sys.exc_info()[2].tb_lineno))
-            return None
-
-    # uninstall apk with package name
-    def cmd_status_uninstall(self, name=''):
-
-        # name=> 삭제 대상 package name parameter
-        # status 정상동작 조건일치 => '1' 비정상 동작 => '0', 삭제 실패 => '2'
-        try:
-            status = 1
-            function_name = self.cmd_status_uninstall.__name__
-            returns = self.execute_cmd(self.uninstallApk.format(name))
-            # cmd 정상 실행 case
-            if returns[0]:
-                if 'success' in returns[1].lower():
-                    self.set_print("Activate \"{}\" and delete package name {}".format(function_name, path))
-                else:
-                    status = 2
-                    self.set_print("Activate \"{}\" and try to delete app But failed!({})".format(function_name,
-                                                                                                  returns[1]))
             # cmd 비정상 실행 case
             else:
                 status = 0
@@ -768,6 +771,7 @@ class CMDS():
             self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
                                                             sys.exc_info()[1],
                                                             sys.exc_info()[2].tb_lineno))
+
 
 
 if __name__ == "__main__":

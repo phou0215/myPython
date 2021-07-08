@@ -69,8 +69,8 @@ class CmdText ():
         self.checkScreenOnOff = "adb "+uuid+" shell \"dumpsys power | grep mHolding\""
         self.topCpu = "adb "+uuid+" shell top -m 2 -s cpu"
         self.getWinSize = "adb "+uuid+" shell wm size"
-        self.getSoundStatus = "adb -s "+num+" shell \"dumpsys audio | grep pack:\"";
-		self.getPid = "adb -s "+num+" shell \"ps | grep skplanet.musicmate\"";
+        self.getSoundStatus = "adb -s "+num+" shell \"dumpsys audio | grep pack:\""
+        self.getPid = "adb -s "+num+" shell \"ps | grep skplanet.musicmate\""
 
 
         # WIFI/Bluetooth/GPS/screen rotation
