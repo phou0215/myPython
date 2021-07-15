@@ -10,6 +10,7 @@ from datetime import datetime
 # 각 void 함수의 경우 status code => 'adb cmd 정상동작 조건일치' => '1',
 #                         'adb cmd 정상동작 조건 불일치' => '2',
 #                         'adb cmd 비정상 동작' => '0'
+
 class CMDS():
 
     def __init__(self, uuid=None, divide_window=10):
@@ -66,10 +67,12 @@ class CMDS():
         self.wifiOff = "adb -s "+self.serial_num+" shell svc wifi disable"
         self.cellOn = "adb -s "+self.serial_num+" shell svc data enable"
         self.cellOff = "adb -s "+self.serial_num+" shell svc data disable"
-        self.gpsOn = "adb "+self.serial_num+" shell settings put secure location_providers_allowed +gps"
-        self.gpsOff = "adb "+self.serial_num+" shell settings put secure location_providers_allowed -gps"
-        self.gpsNetOn = "adb "+self.serial_num+" shell settings put secure location_providers_allowed +network"
-        self.gpsNetOff = "adb "+self.serial_num+" shell settings put  secure location_providers_allowed -network"
+        self.gpsOn = "adb -s "+self.serial_num+" shell settings put secure location_providers_allowed +gps"
+        self.gpsOff = "adb -s "+self.serial_num+" shell settings put secure location_providers_allowed -gps"
+        self.gpsNetOn = "adb -s "+self.serial_num+" shell settings put secure location_providers_allowed +network"
+        self.gpsNetOff = "adb -s "+self.serial_num+" shell settings put  secure location_providers_allowed -network"
+        self.autoRotateOff = "adb -s "+self.serial_num+" shell settings put system accelerometer_rotation 0"
+        self.autoRotateOn = "adb -s "+self.serial_num+" shell settings put system accelerometer_rotation 1"
 
         # #########################__Get adb data__##########################
         self.getDeives = "adb devices"
@@ -98,6 +101,15 @@ class CMDS():
         # 만약 켜진 경우 'mAirplaneModeOn true'
         # 만약 꺼진 경우 'mAirplaneModeOn false'
         self.getAirplaneStatus = "adb -s "+self.serial_num+" shell \"dumpsys wifi | grep mAirplaneModeOn\""
+        # get window auto rotate mode status
+        # on의 경우 1 off의 경우 0으로 출력
+        self.getRotateStatus = "adb -s "+self.serial_num+" shell settings get system accelerometer_rotation"
+        # get bluetooth status
+        # on의 경우 1 off의 경우 0으로 출력
+        self.getBlueToothStatus = "adb -s "+self.serial_num+" shell settings get global bluetooth_on"
+        # get display status
+
+
         # #########################__Action control__##########################
         self.back = "adb -s "+self.serial_num+" shell input keyevent 4"
         self.menu = "adb -s "+self.serial_num+" shell input keyeve 82"
@@ -123,6 +135,7 @@ class CMDS():
         self.googleExe = "adb -s "+self.serial_num+" shell am start -a android.intent.action.VIEW http://www.google.com"
         self.callExe = "adb -s "+self.serial_num+" shell input keyevent 5"
         self.callAirplaneMode = "adb -s "+self.serial_num+" shell am start -a android.settings.AIRPLANE_MODE_SETTINGS"
+        self.callBlueToothMode = "adb -s "+self.serial_num+" shell am start -a android.settings.BLUETOOTH_SETTINGS"
 
     # #######################################__function of utility__##########################################
 
@@ -834,6 +847,28 @@ class CMDS():
                                                             sys.exc_info()[2].tb_lineno))
             return None
 
+    # receive of phone call event
+    def cmd_status_receiveCall(self):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
+        try:
+            status = 1
+            function_name = self.cmd_status_receiveCall.__name__
+            returns = self.execute_cmd(self.receiveCall)
+            # cmd 정상 실행 case
+            if returns[0]:
+                self.set_print("Activate \"{}\" : receive of phone call".format(function_name))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+            return status
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
     # send sms message event
     def cmd_status_sendSMS(self, phone_num='', message=''):
 
@@ -1174,19 +1209,19 @@ class CMDS():
                         function_name))
                     status = 0
                     return status
-                # check gps status
+                # check airplane mode status
                 sleep(delay)
                 returns = self.execute_cmd(self.getAirplaneStatus)
-                # turn on gps case
+                # turn on airplane mode case
                 if exe_type == 1:
                     if returns[0] and 'mAirplaneModeOn true' in returns[1]:
                         self.set_print("Current airplane mode is \"Enabled\"")
                     else:
                         status = 2
                         self.set_print("Current airplane mode is not yet \"Enabled\"\nreturned message :\n{}".format(returns[1]))
-                # turn off gps case
+                # turn off airplane mode case
                 else:
-                    if returns[0] and 'mAirplaneModeOn false' not in returns[1]:
+                    if returns[0] and 'mAirplaneModeOn false' in returns[1]:
                         self.set_print("Current airplane mode is \"Disabled\"")
                     else:
                         status = 2
@@ -1206,20 +1241,183 @@ class CMDS():
                                                             sys.exc_info()[2].tb_lineno))
             return None
 
+    # auto rotate mode on or off
+    def cmd_status_autoRotateOnOff(self, exe_type=1, delay=1):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' auto rotate control 실패 => '2'
+        try:
+            function_name = self.cmd_status_autoRotateOnOff.__name__
+            status = 1
+            # turn on auto rotate case
+            if exe_type == 1:
+                returns = self.execute_cmd(self.autoRotateOn)
+                # cmd 정상 실행 case
+                if returns[0]:
+                    self.set_print("Activate \"{}\" : enable auto rotate window is success".format(function_name))
+                # cmd 비정상 실행 case
+                else:
+                    status = 0
+                    self.set_print("ADB Occurred error \"{}\" cause by can't enable auto rotate window : {}".format(function_name,
+                                                                                                                    returns[1]))
+            # turn off auto rotate case
+            else:
+                returns = self.execute_cmd(self.autoRotateOff)
+                # cmd 정상 실행 case
+                if returns[0]:
+                    self.set_print("Activate \"{}\" : disable wifi is success".format(function_name))
+                # cmd 비정상 실행 case
+                else:
+                    status = 0
+                    self.set_print("ADB Occurred error \"{}\" cause by can't disable auto rotate window : {}".format(function_name,
+                                                                                                                    returns[1]))
+            # check auto rotate status
+            sleep(delay)
+            returns = self.execute_cmd(self.getRotateStatus)
+            # turn on auto rotate case
+            if exe_type == 1:
+                if returns[0] and '1' in returns[1]:
+                    self.set_print("Current auto rotate status is \"Enabled\"")
+                else:
+                    status = 2
+                    self.set_print("Current  auto rotate status is not yet \"Enabled\"\nreturned message :\n{}".format(returns[1]))
+            # turn off auto rotate case
+            else:
+                if returns[0] and '0' in returns[1]:
+                    self.set_print("Current auto rotate status is \"Disabled\"")
+                else:
+                    status = 2
+                    self.set_print("Current auto rotate status is not yet \"Disabled\"\nreturned message :\n{}".format(returns[1]))
+            return status
+
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+    # blueTooth on or off
+    def cmd_status_blueToothOnOff(self, exe_type=1, delay=1):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' bluetooth control 실패 => '2'
+        try:
+            # check blueTooth status whether turn on or turn off
+            function_name = self.cmd_status_blueToothOnOff.__name__
+            status = 1
+            execute_flag = True
+
+            # execute_flag는 현재 디바이스 blueTooth mode 상태 켜져 있는지 확인 후 exe_type 에 맞춰서 함수가 실행되어야 할지 않지 결정함
+            # check current blueTooth status
+            returns = self.execute_cmd(self.getBlueToothStatus)
+            # 실행타입이 On인데 이미 blueTooth 모드가 켜져 있는 경우
+            if exe_type == 1 and "1" in returns[1]:
+                execute_flag = False
+            # 실행타입이 Off인데 이미 blueTooth 모드가 꺼져 있는 경우
+            if exe_type == 0 and "0" in returns[1]:
+                execute_flag = False
+
+            # execute function depend on execute_flag
+            # executes case
+            if execute_flag:
+                # turn on bluetooth mode case
+                if exe_type == 1:
+                    # 먼저 blueTooth mode activity call
+                    self.execute_cmd(self.callBlueToothMode)
+                    sleep(1)
+                    # android.widget.TextView[@text='사용 안 함'] location 얻고 클릭하기
+                    pos = self.get_pos_elements(attr='text', name='사용 안 함')
+                    self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+                    sleep(1)
+                    self.set_print("Activate \"{}\" : enable blueTooth mode is success".format(function_name))
+
+                # turn off bluetooth mode case
+                else:
+                    # 먼저 airplane mode activity call
+                    self.execute_cmd(self.callBlueToothMode)
+                    sleep(1)
+                    # android.widget.TextView[@text='사용 중'] location 얻고 클릭하기
+                    pos = self.get_pos_elements(attr='text', name='사용 중|사용')
+                    self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+                    sleep(1)
+                    self.set_print("Activate \"{}\" : disable blueTooth mode is success".format(function_name))
+
+                # check blueTooth status
+                sleep(delay)
+                returns = self.execute_cmd(self.getBlueToothStatus)
+                # turn on blueTooth case
+                if exe_type == 1:
+                    if returns[0] and '1' in returns[1]:
+                        self.set_print("Current blueTooth mode is \"Enabled\"")
+                    else:
+                        status = 2
+                        self.set_print(
+                            "Current blueTooth mode is not yet \"Enabled\"\nreturned message :\n{}".format(returns[1]))
+                # turn off blueTooth case
+                else:
+                    if returns[0] and '0' in returns[1]:
+                        self.set_print("Current blueTooth mode is \"Disabled\"")
+                    else:
+                        status = 2
+                        self.set_print(
+                            "Current blueTooth mode is not yet \"Disabled\"\nreturned message :\n{}".format(returns[1]))
+            # skip case
+            else:
+                if exe_type == 1:
+                    self.set_print("Activate \"{}\" : blueTooth mode already enabled. skip func".format(function_name))
+                else:
+                    self.set_print("Activate \"{}\" : blueTooth mode already disabled. skip func".format(function_name))
+
+            return status
+
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
 
 if __name__ == "__main__":
 
-    serial_num = 'RF9N604ZM0N'
+    serial_num = '1c25c664460c7ece'
     cmd = CMDS(serial_num, 20)
     # 필수 setup method 반드시 호출
     cmd.setup_test()
-    cmd.cmd_status_airplaneOnOff(exe_type=1, delay=1)
+    # cmd.save_dump_xml()
+    # ########################__비행기 모드 테스트__########################
+    # cmd.cmd_status_airplaneOnOff(exe_type=1, delay=1)
+    # cmd.cmd_status_backButton(iter_count=2)
+    # sleep(2)
+    # cmd.cmd_status_airplaneOnOff(exe_type=0, delay=1)
+    # cmd.cmd_status_backButton(iter_count=2)
+    # sleep(2)
+    # cmd.cmd_status_airplaneOnOff(exe_type=0,delay=1)
+    # cmd.cmd_status_backButton(iter_count=2)
+
+    # cmd.cmd_status_autoRotateOnOff(exe_type=1, delay=2)
+    # sleep(3)
+    # cmd.cmd_status_autoRotateOnOff(exe_type=0, delay=2)
+    # sleep(3)
+    # cmd.cmd_status_backButton(iter_count=2)
+
+
+    # ########################__BlueTooth 모드 테스트__########################
+    cmd.cmd_status_blueToothOnOff(exe_type=1, delay=1)
     cmd.cmd_status_backButton(iter_count=2)
     sleep(2)
-    cmd.cmd_status_airplaneOnOff(exe_type=0, delay=1)
+    cmd.cmd_status_blueToothOnOff(exe_type=0, delay=1)
     cmd.cmd_status_backButton(iter_count=2)
-    cmd.cmd_status_airplaneOnOff(exe_type=0,delay=1)
+    sleep(2)
+    cmd.cmd_status_blueToothOnOff(exe_type=0, delay=1)
     cmd.cmd_status_backButton(iter_count=2)
+
+
+    # # ########################__화면 회전 모드 테스트__########################
+    # cmd.cmd_status_autoRotateOnOff(exe_type=1, delay=2)
+    # sleep(3)
+    # cmd.cmd_status_autoRotateOnOff(exe_type=0, delay=2)
+    # sleep(3)
+    # cmd.cmd_status_backButton(iter_count=2)
+
+
     # cmd.cmd_status_wifiOnOff(delay=1)
     # sleep(3)
     # cmd.cmd_status_wifiOnOff(delay=1)
@@ -1269,4 +1467,3 @@ if __name__ == "__main__":
     # pos = cmd.get_pos_elements(attr='text', name='모두 닫기')
     # cmd.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
     # cmd.set_print('Sample Test 종료!')
-    # cmd.save_dump_xml()
