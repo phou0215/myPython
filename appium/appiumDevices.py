@@ -214,7 +214,7 @@ class Device(QThread):
         self.gpsOn = "adb -s "+uuid+" shell settings put secure location_providers_allowed +gps"
         self.gpsOff = "adb -s "+uuid+" shell settings put secure location_providers_allowed -gps"
         self.gpsNetOn = "adb -s "+uuid+" shell settings put secure location_providers_allowed +network"
-        self.gpsNetOff = "adb -s "+uuid+" shell settings put  secure location_providers_allowed -network"
+        self.gpsNetOff = "adb -s "+uuid+" shell settings put secure location_providers_allowed -network"
         self.gpsGetCurrent = "adb -s "+uuid+" shell settings get secure location_providers_allowed"
         self.back = "adb -s "+uuid+" shell input keyevent 4"
         if flag:

@@ -30,6 +30,7 @@ class CMDS():
         self.current_path = os.getcwd()
         self.xml_device_path = '/sdcard/tmp_uiauto.xml'
         self.xml_local_path = self.current_path + '\\xmlDump\\tmp_uiauto.xml'
+        self.capture_path = ''
 
         # ##########################__Device Control__##########################
         self.deviceSleep = "adb -s "+self.serial_num+" shell input keyevent 223"
@@ -57,6 +58,18 @@ class CMDS():
         self.installApk = "adb -s "+self.serial_num+" install {}"
         # uninstall apk(package name 입력)
         self.uninstallApk = "adb -s "+self.serial_num+" uninstall --user 0 {}"
+        # capture screen shot(only png)
+        self.screen_shot = "adb -s "+self.serial_num+" shell screencap -p /sdcard/{}"
+        # delete file or dir
+        self.delete_path = "adb -s "+self.serial_num+" shell rm {}"
+        self.wifiOn = "adb -s "+self.serial_num+" shell svc wifi enable"
+        self.wifiOff = "adb -s "+self.serial_num+" shell svc wifi disable"
+        self.cellOn = "adb -s "+self.serial_num+" shell svc data enable"
+        self.cellOff = "adb -s "+self.serial_num+" shell svc data disable"
+        self.gpsOn = "adb "+self.serial_num+" shell settings put secure location_providers_allowed +gps"
+        self.gpsOff = "adb "+self.serial_num+" shell settings put secure location_providers_allowed -gps"
+        self.gpsNetOn = "adb "+self.serial_num+" shell settings put secure location_providers_allowed +network"
+        self.gpsNetOff = "adb "+self.serial_num+" shell settings put  secure location_providers_allowed -network"
 
         # #########################__Get adb data__##########################
         self.getDeives = "adb devices"
@@ -71,7 +84,20 @@ class CMDS():
         self.getPackageList = "adb -s "+self.serial_num+" shell pm list packages"
         # mCallState=0 indicates idle, mCallState=1 = ringing, mCallState=2 = active call
         self.getCallState = "adb -s "+self.serial_num+" shell \"dumpsys telephony.registry | grep mCallStat\""
-
+        # get wifi status
+        # 만약 wifi off 상태이면 return 값이 없음
+        # 만약 wifi on 상태이면 return 값이
+        # iface=wlan0 ident=[{type=WIFI, subType=COMBINED, networkId="TESTENCM25G", metered=false, defaultNetwork=true}]
+        # 들어옴
+        self.getWifiStatus = "adb -s "+self.serial_num+" shell \"dumpsys netstats | grep -E iface=wlan.*networkId\""
+        self.getCellStatus = "adb -s "+self.serial_num+" shell telephony.registry"
+        # get gps status
+        # 만약 gps on 상태인 경우 gps,network로 노출되며 그렇지 않은 경우(둘다 없거나 하나만 있는 경우)는 gps off 상태임
+        self.getGpsStatus = "adb -s "+self.serial_num+" shell settings get secure location_providers_allowed"
+        # get airplane status
+        # 만약 켜진 경우 'mAirplaneModeOn true'
+        # 만약 꺼진 경우 'mAirplaneModeOn false'
+        self.getAirplaneStatus = "adb -s "+self.serial_num+" shell \"dumpsys wifi | grep mAirplaneModeOn\""
         # #########################__Action control__##########################
         self.back = "adb -s "+self.serial_num+" shell input keyevent 4"
         self.menu = "adb -s "+self.serial_num+" shell input keyeve 82"
@@ -96,7 +122,7 @@ class CMDS():
         self.cameraExe = "adb -s "+self.serial_num+" shell am start -a android.media.action.STILL_IMAGE_CAMERA"
         self.googleExe = "adb -s "+self.serial_num+" shell am start -a android.intent.action.VIEW http://www.google.com"
         self.callExe = "adb -s "+self.serial_num+" shell input keyevent 5"
-
+        self.callAirplaneMode = "adb -s "+self.serial_num+" shell am start -a android.settings.AIRPLANE_MODE_SETTINGS"
 
     # #######################################__function of utility__##########################################
 
@@ -206,6 +232,11 @@ class CMDS():
             dir_flag = os.path.isdir(self.current_path+'\\xmlDump')
             if not dir_flag:
                 os.makedirs(self.current_path+'\\xmlDump')
+            dir_flag = os.path.isdir(self.current_path+'\\capture')
+            if not dir_flag:
+                os.makedirs(self.current_path+'\\capture')
+            current_time_dir = self.get_current_time()[2]
+            self.capture_path = self.current_path+'\\capture\\'+current_time_dir+'\\'
 
         except:
             self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
@@ -213,7 +244,7 @@ class CMDS():
                                                             sys.exc_info()[2].tb_lineno))
             sys.exit(-1)
 
-    #check device_serial number
+    # check device_serial number
     def check_device_serial(self):
 
         # check device manufacture
@@ -225,7 +256,7 @@ class CMDS():
             self.set_print('Device Serial Number({}) is not in connected device list'.format(self.serial_num))
             sys.exit(-1)
 
-    #check device manufacturer
+    # check device manufacturer
     def check_device_manuInfo(self):
 
         # check device manufacture
@@ -378,10 +409,12 @@ class CMDS():
             # get xml dump file
             self.save_dump_xml()
             list_pos = []
+            list_target = name.split('|')
             tree = et.ElementTree(file=self.xml_local_path)
             list_elements = tree.iter(tag="node")
             for elem in list_elements:
-                if elem.attrib[attr] == name:
+                attr_value = elem.attrib[attr]
+                if attr_value in list_target:
                     bounds = elem.attrib["bounds"]
                     coord = self.pattern.findall(bounds)
                     x = (int(coord[2]) - int(coord[0])) / 2.0 + int(coord[0])
@@ -394,37 +427,18 @@ class CMDS():
                                                             sys.exc_info()[1],
                                                             sys.exc_info()[2].tb_lineno))
             return None
+
+    # 현재 시간 구하여 3가지 타입으로 list return
+    def get_current_time(self):
+
+        nowTime = datetime.now()
+        now_datetime_str = nowTime.strftime('%Y-%m-%d %H:%M:%S')
+        now_datetime_str2 = nowTime.strftime('%Y-%m-%d_%H%M%S')
+        return [nowTime, now_datetime_str, now_datetime_str2]
+
     # ####################################__function of device control__######################################
 
-    # 현재 화면에 노출되고 있는 currnetActivity 확인
-    def cmd_status_currnetActivity(self, name=None):
-
-        # status 정상동작 조건일치 => '1' 정상동작 조건 불일치 => '2' 비정상 동작 => '0'
-        try:
-            status = 1
-            function_name = self.cmd_status_currnetActivity.__name__
-            returns = self.execute_cmd(self.currentActi)
-            # cmd 정상 실행 case
-            if returns[0]:
-                if name not in returns[1]:
-                    status = 2
-                    self.set_print("Activate \"{}\" but {} is not on top".format(function_name, name))
-                else:
-                    self.set_print("Activate \"{}\" and {} is on top".format(function_name, name))
-            # cmd 비정상 실행 case
-            else:
-                status = 0
-                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
-
-            return status
-
-        except:
-            self.set_print('Failed to check Top Activity \"{}\"'.format(name))
-            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
-                                                            sys.exc_info()[1],
-                                                            sys.exc_info()[2].tb_lineno))
-            return None
-
+    # ####################################__return function__####################################
     # package name에 해당하는 process id 반환
     def cmd_return_getPid(self, name=None):
 
@@ -435,7 +449,7 @@ class CMDS():
             if returns[0]:
                 if 'No process found' not in returns[1]:
                     pid = find_between(returns[1], "pid", "[")
-                    self.set_print("Activate \"{}\" and get pid {}".format(function_name, pid))
+                    self.set_print("Activate \"{}\" : get pid {}".format(function_name, pid))
                 else:
                     self.set_print("Activate \"{}\" but No process found".format(function_name))
             else:
@@ -460,7 +474,7 @@ class CMDS():
             if returns[0]:
                 if 'mCallState' in returns[1]:
                     mCallState = find_between(returns[1]+"/e", "mCallState=", "/e").strip()
-                    self.set_print("Activate \"{}\" and get mCallState: {}({})".format(function_name,
+                    self.set_print("Activate \"{}\" : get mCallState: {}({})".format(function_name,
                                                                                        mCallState,
                                                                                        dict_state[mCallState]))
                 else:
@@ -470,6 +484,36 @@ class CMDS():
 
             return mCallState
         except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+    # ####################################__status function__####################################
+    # 현재 화면에 노출되고 있는 currnetActivity 확인
+    def cmd_status_currnetActivity(self, name=None):
+
+        # status 정상동작 조건일치 => '1' 정상동작 조건 불일치 => '2' 비정상 동작 => '0'
+        try:
+            status = 1
+            function_name = self.cmd_status_currnetActivity.__name__
+            returns = self.execute_cmd(self.currentActi)
+            # cmd 정상 실행 case
+            if returns[0]:
+                if name not in returns[1]:
+                    status = 2
+                    self.set_print("Activate \"{}\" but {} is not on top".format(function_name, name))
+                else:
+                    self.set_print("Activate \"{}\" : {} is on top".format(function_name, name))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+
+            return status
+
+        except:
+            self.set_print('Failed to check Top Activity \"{}\"'.format(name))
             self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
                                                             sys.exc_info()[1],
                                                             sys.exc_info()[2].tb_lineno))
@@ -487,9 +531,9 @@ class CMDS():
             if returns[0]:
                 if 'No process found' not in returns[1]:
                     status = 2
-                    self.set_print("Activate \"{}\" and {} But no process found".format(function_name, name))
+                    self.set_print("Activate \"{}\" : {} But no process found".format(function_name, name))
                 else:
-                    self.set_print("Activate \"{}\" and {}".format(function_name, name))
+                    self.set_print("Activate \"{}\" : {}".format(function_name, name))
             # cmd 비정상 실행 case
             else:
                 status = 0
@@ -521,7 +565,7 @@ class CMDS():
 
             # cmd 정상 실행 case
             if returns[0]:
-                self.set_print("Activate \"{}\" and click type={}, X={}, Y={}".format(function_name,
+                self.set_print("Activate \"{}\" : click type={}, X={}, Y={}".format(function_name,
                                                                                       pos_type,
                                                                                       target_x,
                                                                                       target_y))
@@ -560,7 +604,7 @@ class CMDS():
             returns = self.execute_cmd(self.swipe.format(from_x, from_y, to_x, to_y, duration))
             # cmd 정상 실행 case
             if returns[0]:
-                self.set_print("Activate \"{}\" and swipe type={}, "
+                self.set_print("Activate \"{}\" : swipe type={}, "
                                "from_X={}, from_Y={}, to_X={}, to_Y={}, duration={}".format(function_name,
                                                                                             pos_type,
                                                                                             from_x,
@@ -595,7 +639,7 @@ class CMDS():
                 returns = self.execute_cmd(self.normalInput.format(message))
             # cmd 정상 실행 case
             if returns[0]:
-                self.set_print("Activate \"{}\" and send text: {}".format(function_name, message))
+                self.set_print("Activate \"{}\" : send text: {}".format(function_name, message))
             # cmd 비정상 실행 case
             else:
                 status = 0
@@ -619,10 +663,10 @@ class CMDS():
             # cmd 정상 실행 case
             if returns[0]:
                 if 'success' in returns[1].lower():
-                    self.set_print("Activate \"{}\" and install apk path={}".format(function_name, path))
+                    self.set_print("Activate \"{}\" : install apk path={}".format(function_name, path))
                 else:
                     status = 2
-                    self.set_print("Activate \"{}\" and try to install apk But failed!({})".format(function_name,
+                    self.set_print("Activate \"{}\" : try to install apk But failed!({})".format(function_name,
                                                                                                    returns[1]))
             # cmd 비정상 실행 case
             else:
@@ -647,10 +691,10 @@ class CMDS():
             # cmd 정상 실행 case
             if returns[0]:
                 if 'success' in returns[1].lower():
-                    self.set_print("Activate \"{}\" and delete package name {}".format(function_name, path))
+                    self.set_print("Activate \"{}\" : delete package name {}".format(function_name, path))
                 else:
                     status = 2
-                    self.set_print("Activate \"{}\" and try to delete app But failed!({})".format(function_name,
+                    self.set_print("Activate \"{}\" : try to delete app But failed!({})".format(function_name,
                                                                                                   returns[1]))
             # cmd 비정상 실행 case
             else:
@@ -677,7 +721,7 @@ class CMDS():
                 sleep(delay)
             # cmd 정상 실행 case
             if returns[0]:
-                self.set_print("Activate \"{}\" and executes back button : {} delay: {}".format(function_name,
+                self.set_print("Activate \"{}\" : executes back button : {} delay: {}".format(function_name,
                                                                                                 iter_count,
                                                                                                 delay))
             # cmd 비정상 실행 case
@@ -701,7 +745,7 @@ class CMDS():
             returns = self.execute_cmd(self.menu)
             # cmd 정상 실행 case
             if returns[0]:
-                self.set_print("Activate \"{}\" and send text: {}".format(function_name, message))
+                self.set_print("Activate \"{}\" : send text: {}".format(function_name, message))
             # cmd 비정상 실행 case
             else:
                 status = 0
@@ -724,10 +768,10 @@ class CMDS():
             # cmd 정상 실행 case
             if returns[0]:
                 if 'act=android.intent.action.call' in returns[1].lower():
-                    self.set_print("Activate \"{}\" and make phone call number ={}".format(function_name, phone_num))
+                    self.set_print("Activate \"{}\" : make phone call number ={}".format(function_name, phone_num))
                 else:
                     status = 2
-                    self.set_print("Activate \"{}\" and try to make phone call But failed!({})".format(function_name,
+                    self.set_print("Activate \"{}\" : try to make phone call But failed!({})".format(function_name,
                                                                                                        returns[1]))
             # cmd 비정상 실행 case
             else:
@@ -751,12 +795,34 @@ class CMDS():
             # cmd 정상 실행 case
             if returns[0]:
                 if 'act=android.intent.action.call' in returns[1].lower():
-                    self.set_print("Activate \"{}\" and make video phone call number ={}".format(function_name,
+                    self.set_print("Activate \"{}\" : make video phone call number ={}".format(function_name,
                                                                                                  phone_num))
                 else:
                     status = 2
-                    self.set_print("Activate \"{}\" and try to make video phone call But failed!({})".format(function_name,
+                    self.set_print("Activate \"{}\" : try to make video phone call But failed!({})".format(function_name,
                                                                                                              returns[1]))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+            return status
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+    # end of phone call event
+    def cmd_status_endCall(self):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
+        try:
+            status = 1
+            function_name = self.cmd_status_endCall.__name__
+            returns = self.execute_cmd(self.endCall)
+            # cmd 정상 실행 case
+            if returns[0]:
+                self.set_print("Activate \"{}\" : end of phone call".format(function_name))
             # cmd 비정상 실행 case
             else:
                 status = 0
@@ -784,7 +850,7 @@ class CMDS():
 
             # cmd 정상 실행 case
             if status == 1:
-                self.set_print("Activate \"{}\" and SMS text: {}".format(function_name, message))
+                self.set_print("Activate \"{}\" : SMS text: {}".format(function_name, message))
             # cmd 비정상 실행 case
             else:
                 status = 0
@@ -794,29 +860,7 @@ class CMDS():
             self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
                                                             sys.exc_info()[1],
                                                             sys.exc_info()[2].tb_lineno))
-            return None
-
-    # end of phone call event
-    def cmd_status_endCall(self):
-
-        # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
-        try:
-            status = 1
-            function_name = self.cmd_status_endCall.__name__
-            returns = self.execute_cmd(self.endCall)
-            # cmd 정상 실행 case
-            if returns[0]:
-                self.set_print("Activate \"{}\" and end of phone call".format(function_name))
-            # cmd 비정상 실행 case
-            else:
-                status = 0
-                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
-            return status
-        except:
-            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
-                                                            sys.exc_info()[1],
-                                                            sys.exc_info()[2].tb_lineno))
-            return None
+            return None0
 
     # menu button press event
     def cmd_status_menuButton(self):
@@ -828,7 +872,7 @@ class CMDS():
             returns = self.execute_cmd(self.menu)
             # cmd 정상 실행 case
             if returns[0]:
-                self.set_print("Activate \"{}\" and send text: {}".format(function_name, message))
+                self.set_print("Activate \"{}\" : send text: {}".format(function_name, message))
             # cmd 비정상 실행 case
             else:
                 status = 0
@@ -838,15 +882,347 @@ class CMDS():
             self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
                                                             sys.exc_info()[1],
                                                             sys.exc_info()[2].tb_lineno))
+            return None
 
+    # capture screen shot activity
+    def cmd_status_screenShot(self, delay=1, name=''):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
+        try:
+            # check image capture folder is exist
+            dir_flag = os.path.isdir(self.capture_path)
+            if not dir_flag:
+                os.makedirs(self.capture_path)
+
+            status = 1
+            function_name = self.cmd_status_screenShot.__name__
+            sleep(delay)
+            # executes screen capture
+            current_time = self.get_current_time()[2]
+            file_name = name+'_'+current_time+'.png'
+            returns = self.execute_cmd(self.screen_shot.format(file_name))
+            # cmd 정상 실행 case
+            if returns[0]:
+                # pull capture file to local PC
+                returns_pull = self.execute_cmd(self.pullFile.format('/sdcard/'+file_name, self.capture_path+file_name))
+                # capture image delete on device
+                self.execute_cmd(self.delete_path.format('/sdcard/'+file_name))
+                if returns_pull[0]:
+                    self.set_print("Activate \"{}\" : success to take screen shot: {}".format(function_name,
+                                                                                                self.capture_path+file_name))
+                # pull file error
+                else:
+                    status = 0
+                    self.set_print("ADB Occurred error \"{}\" and pull file failed : {}".format(function_name,
+                                                                                                returns_pull[1]))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and screen capture failed : {}".format(function_name,
+                                                                                                 returns[1]))
+            return status
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+    # wifi on or off
+    def cmd_status_wifiOnOff(self, exe_type=1, delay=1):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' wifi control 실패 => '2'
+        try:
+            # check wifi status whether turn on or turn off
+            function_name = self.cmd_status_wifiOnOff.__name__
+            status = 1
+            # turn on wifi case
+            if exe_type == 1:
+                returns = self.execute_cmd(self.wifiOn)
+                # cmd 정상 실행 case
+                if returns[0]:
+                    self.set_print("Activate \"{}\" : enable wifi is success".format(function_name))
+                # cmd 비정상 실행 case
+                else:
+                    status = 0
+                    self.set_print("ADB Occurred error \"{}\" cause by can't turn on wifi: {}".format(function_name,
+                                                                                                      returns[1]))
+            # turn off wifi case
+            else:
+                returns = self.execute_cmd(self.wifiOff)
+                # cmd 정상 실행 case
+                if returns[0]:
+                    self.set_print("Activate \"{}\" : disable wifi is success".format(function_name))
+                # cmd 비정상 실행 case
+                else:
+                    status = 0
+                    self.set_print("ADB Occurred error \"{}\" cause by can't turn off wifi: {}".format(function_name,
+                                                                                                       returns[1]))
+            # check wifi status
+            sleep(delay)
+            returns = self.execute_cmd(self.getWifiStatus)
+            # turn on wifi case
+            if exe_type == 1:
+                if returns[0] and 'type=wifi' in returns[1].lower():
+                    self.set_print("Current wifi status is \"Enabled\"")
+                else:
+                    status = 2
+                    self.set_print("Current wifi status is not yet \"Enabled\"\nreturned message :\n{}".format(returns[1]))
+            # turn off wifi case
+            else:
+                if returns[0] and 'type=wifi' not in returns[1].lower():
+                    self.set_print("Current wifi status is \"Disabled\"")
+                else:
+                    status = 2
+                    self.set_print("Current wifi status is not yet \"Disabled\"\nreturned message :\n{}".format(returns[1]))
+            return status
+
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+    # cellular on or off
+    def cmd_status_cellOnOff(self, exe_type=1, delay=1):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' wifi control 실패 => '2'
+        try:
+            # check cellular status whether turn on or turn off
+            function_name = self.cmd_status_cellOnOff.__name__
+            status = 1
+            # turn on cellular case
+            if exe_type == 1:
+                returns = self.execute_cmd(self.cellOn)
+                # cmd 정상 실행 case
+                if returns[0]:
+                    self.set_print("Activate \"{}\" : enable cellular is success".format(function_name))
+                # cmd 비정상 실행 case
+                else:
+                    status = 0
+                    self.set_print("ADB Occurred error \"{}\" cause by can't turn on cellular: {}".format(function_name,
+                                                                                                          returns[1]))
+            # turn off cellular case
+            else:
+                returns = self.execute_cmd(self.cellOff)
+                # cmd 정상 실행 case
+                if returns[0]:
+                    self.set_print("Activate \"{}\" : disable cellular is success".format(function_name))
+                # cmd 비정상 실행 case
+                else:
+                    status = 0
+                    self.set_print("ADB Occurred error \"{}\" cause by can't turn off cellular: {}".format(function_name,
+                                                                                                           returns[1]))
+            # check cellular status
+            sleep(delay)
+            returns = self.execute_cmd(self.getCellStatus)
+            # turn on cellular case
+            if exe_type == 1:
+                if returns[0] and 'mDataConnectionState=2' in returns[1]:
+                    self.set_print("Current cellular status is \"Enabled\"")
+                else:
+                    status = 2
+                    self.set_print("Current cellular status is not yet \"Enabled\"\nreturned message :\n{}".format(returns[1]))
+            # turn off cellular case
+            else:
+                if returns[0] and 'mDataConnectionState=2' not in returns[1]:
+                    self.set_print("Current cellular status is \"Disabled\"")
+                else:
+                    status = 2
+                    self.set_print("Current cellular status is not yet \"Disabled\"\nreturned message :\n{}".format(returns[1]))
+            return status
+
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+    # gps on or off
+    def cmd_status_gpsOnOff(self, exe_type=1, delay=1):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' wifi control 실패 => '2'
+        try:
+            # check gps status whether turn on or turn off
+            function_name = self.cmd_status_gpsOnOff.__name__
+            status = 1
+            # turn on gps case
+            if exe_type == 1:
+                self.execute_cmd(self.gpsNetOn)
+                returns = self.execute_cmd(self.gpsOn)
+                # cmd 정상 실행 case
+                if returns[0]:
+                    self.set_print("Activate \"{}\" : enable gnss service is success".format(function_name))
+                # cmd 비정상 실행 case
+                else:
+                    status = 0
+                    self.set_print("ADB Occurred error \"{}\" cause by can't turn on gnss service: {}".format(function_name,
+                                                                                                              returns[1]))
+            # turn off gps case
+            else:
+                self.execute_cmd(self.gpsNetOff)
+                returns = self.execute_cmd(self.gpsOff)
+                # cmd 정상 실행 case
+                if returns[0]:
+                    self.set_print("Activate \"{}\" : disable gnss service is success".format(function_name))
+                # cmd 비정상 실행 case
+                else:
+                    status = 0
+                    self.set_print("ADB Occurred error \"{}\" cause by can't turn off gnss service: {}".format(function_name,
+                                                                                                               returns[1]))
+            # check gps status
+            sleep(delay)
+            returns = self.execute_cmd(self.getGpsStatus)
+            # turn on gps case
+            if exe_type == 1:
+                if returns[0] and 'gps,network' in returns[1]:
+                    self.set_print("Current gnss status is \"Enabled\"")
+                else:
+                    status = 2
+                    self.set_print("Current gnss status is not yet \"Enabled\"\nreturned message :\n{}".format(returns[1]))
+            # turn off gps case
+            else:
+                if returns[0] and 'gps,network' not in returns[1]:
+                    self.set_print("Current gnss status is \"Disabled\"")
+                else:
+                    status = 2
+                    self.set_print("Current gnss status is not yet \"Disabled\"\nreturned message :\n{}".format(returns[1]))
+            return status
+
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+    # airplane mode on of off(only samsung or lg)
+    # 제조사마다 해당 airplane mode 각기 다름
+    def cmd_status_airplaneOnOff(self, exe_type=1, delay=1):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' airplane control 실패 => '2'
+        try:
+            # check airplane status whether turn on or turn off
+            function_name = self.cmd_status_airplaneOnOff.__name__
+            status = 1
+            execute_flag = True
+
+            # execute_flag는 현재 디바이스 airplane mode 상태 켜져 있는지 확인 후 exe_type 에 맞춰서 함수가 실행되어야 할지 않지 결정함
+            # check current airplane status
+            returns = self.execute_cmd(self.getAirplaneStatus)
+            # 실행타입이 On인데 이미 비행기 모드가 켜져 있는 경우
+            if exe_type == 1 and "mAirplaneModeOn true" in returns[1]:
+                execute_flag = False
+            # 실행타입이 Off인데 이미 비행기 모드가 꺼져 있는 경우
+            if exe_type == 0 and "mAirplaneModeOn false" in returns[1]:
+                execute_flag = False
+
+            # execute function depend on execute_flag
+            # execute case
+            if execute_flag:               
+                # device LG case
+                if self.manufacturer == "LGE":
+                    # turn on airplane mode case
+                    if exe_type == 1:
+                        # 먼저 airplane mode activity call
+                        self.execute_cmd(self.callAirplaneMode)
+                        sleep(1)
+                        # //android.widget.TextView[@text="비행기 모드"] location 얻고 클릭하기
+                        pos = self.get_pos_elements(attr='text', name='비행기 모드|비행기모드')
+                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+                        sleep(1)
+                        # 설정 팝업에서 //android.widget.Button[@text="사용"|@text="설정"] location 얻고 클릭하기
+                        pos = self.get_pos_elements(attr='text', name='사용|설정')
+                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+                        self.set_print("Activate \"{}\" : LGE device enable airplane mode is success".format(function_name))
+
+                    # turn off airplane mode case
+                    else:
+                        # 먼저 airplane mode activity call
+                        self.execute_cmd(self.callAirplaneMode)
+                        sleep(1)
+                        # //android.widget.TextView[@text="비행기 모드"] location 얻고 클릭하기
+                        pos = self.get_pos_elements(attr='text', name='비행기 모드|비행기모드')
+                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+                        sleep(1)
+                        self.set_print("Activate \"{}\" : LGE device disable airplane mode is success".format(function_name))
+
+                # device samsung case
+                elif self.manufacturer == "SAMSUNG":
+                    # turn on airplane mode case
+                    if exe_type == 1:
+                        # 먼저 airplane mode activity call
+                        self.execute_cmd(self.callAirplaneMode)
+                        sleep(1)
+                        # android.widget.Switch[@text='사용 안 함'] location 얻고 클릭하기
+                        pos = self.get_pos_elements(attr='text', name='사용 안 함')
+                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+                        sleep(1)
+                        self.set_print("Activate \"{}\" : samsung device enable airplane mode is success".format(function_name))
+
+                    # turn off airplane mode case
+                    else:
+                        # 먼저 airplane mode activity call
+                        self.execute_cmd(self.callAirplaneMode)
+                        sleep(1)
+                        # android.widget.Switch[@text='사용 중'] location 얻고 클릭하기
+                        pos = self.get_pos_elements(attr='text', name='사용 중')
+                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+                        sleep(1)
+                        self.set_print("Activate \"{}\" : samsung device disable airplane mode is success".format(function_name))
+                # device not samsung or not lg stauts return 2
+                else:
+                    self.set_print("Activate \"{}\" : device's manufacturer is not in Samsung or not in LGE ".format(
+                        function_name))
+                    status = 0
+                    return status
+                # check gps status
+                sleep(delay)
+                returns = self.execute_cmd(self.getAirplaneStatus)
+                # turn on gps case
+                if exe_type == 1:
+                    if returns[0] and 'mAirplaneModeOn true' in returns[1]:
+                        self.set_print("Current airplane mode is \"Enabled\"")
+                    else:
+                        status = 2
+                        self.set_print("Current airplane mode is not yet \"Enabled\"\nreturned message :\n{}".format(returns[1]))
+                # turn off gps case
+                else:
+                    if returns[0] and 'mAirplaneModeOn false' not in returns[1]:
+                        self.set_print("Current airplane mode is \"Disabled\"")
+                    else:
+                        status = 2
+                        self.set_print("Current airplane mode is not yet \"Disabled\"\nreturned message :\n{}".format(returns[1]))
+            # skip case
+            else:
+                if exe_type == 1:
+                    self.set_print("Activate \"{}\" : airplane mode already enabled. skip func".format(function_name))
+                else:
+                    self.set_print("Activate \"{}\" : airplane mode already disabled. skip func".format(function_name))
+            
+            return status
+
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
 
 
 if __name__ == "__main__":
 
-    serial_num = 'LMQ730N0a97de1c'
+    serial_num = 'RF9N604ZM0N'
     cmd = CMDS(serial_num, 20)
     # 필수 setup method 반드시 호출
     cmd.setup_test()
+    cmd.cmd_status_airplaneOnOff(exe_type=1, delay=1)
+    cmd.cmd_status_backButton(iter_count=2)
+    sleep(2)
+    cmd.cmd_status_airplaneOnOff(exe_type=0, delay=1)
+    cmd.cmd_status_backButton(iter_count=2)
+    cmd.cmd_status_airplaneOnOff(exe_type=0,delay=1)
+    cmd.cmd_status_backButton(iter_count=2)
+    # cmd.cmd_status_wifiOnOff(delay=1)
+    # sleep(3)
+    # cmd.cmd_status_wifiOnOff(delay=1)
     # status = cmd.cmd_status_click(10, 16, pos_type='rate')
     # cmd.set_print("Status Click: {}".format(status))
     # sleep(5)
@@ -854,13 +1230,13 @@ if __name__ == "__main__":
     # cmd.set_print("Status Swipe: {}".format(status))
     # list_pos = cmd.get_pos_elements(attr='content-desc', name='공유하기 버튼')
     # cmd.set_print(list_pos)
-
+    # cmd.cmd_status_screenShot(delay=2, name="f1")
 
     # cmd.execute_cmd(cmd.cameraExe)
     # sleep(2)
     # cmd.execute_cmd('adb -s '+serial_num+' shell input keyevent 27')
     # # 카메라 전환
-    # pos = cmd.get_pos_elements(attr='content-desc', name='전면 카메라로 전환')
+    # pos = cmd.get_pos_elements(attr='text', name='전면 카메라로 전환')
     # cmd.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
     # sleep(2)
     # cmd.execute_cmd('adb -s '+serial_num+' shell input keyevent 27')
@@ -893,4 +1269,4 @@ if __name__ == "__main__":
     # pos = cmd.get_pos_elements(attr='text', name='모두 닫기')
     # cmd.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
     # cmd.set_print('Sample Test 종료!')
-    cmd.save_dump_xml()
+    # cmd.save_dump_xml()
