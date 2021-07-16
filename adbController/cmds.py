@@ -19,6 +19,7 @@ class CMDS():
 
         # self.adbkeyboard_name = 'com.android.adbkeyboard/.AdbIME'
         self.serial_num = uuid
+        self.modelName = ''
         self.wm_divide_count = divide_window
 
         self.width = 0
@@ -30,7 +31,7 @@ class CMDS():
         self.pattern = re.compile(r"\d+")
         self.current_path = os.getcwd()
         self.xml_device_path = '/sdcard/tmp_uiauto.xml'
-        self.xml_local_path = self.current_path + '\\xmlDump\\tmp_uiauto.xml'
+        self.xml_local_path = self.current_path + '\\xmlDump('+self.serial_num+')\\tmp_uiauto.xml'
         self.capture_path = ''
 
         # ##########################__Device Control__##########################
@@ -59,6 +60,8 @@ class CMDS():
         self.installApk = "adb -s "+self.serial_num+" install {}"
         # uninstall apk(package name 입력)
         self.uninstallApk = "adb -s "+self.serial_num+" uninstall --user 0 {}"
+        # keep display on
+        self.keepDisplayOn = "adb -s "+self.serial_num+" shell svc power stayon true"
         # capture screen shot(only png)
         self.screen_shot = "adb -s "+self.serial_num+" shell screencap -p /sdcard/{}"
         # delete file or dir
@@ -77,6 +80,7 @@ class CMDS():
         # #########################__Get adb data__##########################
         self.getDeives = "adb devices"
         self.getManuInfo = "adb -s "+self.serial_num+" shell \"getprop | grep -e ro.product.manufacturer\""
+        self.getModelInfo = "adb -s "+self.serial_num+" shell getprop ro.product.model"
         self.windowSize = "adb -s "+self.serial_num+" shell wm size"
         self.currentActi = "adb -s "+self.serial_num+" shell dumpsys activity recents | find \"Recent #0\""
         self.memInfo = "adb -s "+self.serial_num+" shell dumpsys meminfo {}"
@@ -143,13 +147,18 @@ class CMDS():
     def setup_test(self):
 
         try:
+
             keyboard_flag = False
             default_flag = False
             installed_status = 'Ok'
             # check device serial number
             self.check_device_serial()
+            # check device model name info
+            self.check_device_modelName()
             # check manufacturer device(Only support LGE or SAMSUNG)
             self.check_device_manuInfo()
+            # keep display on
+            self.check_device_displayOn()
 
             # adbkeyboard installed check
             # adbkeyboard package name 'com.android.adbkeyboard'
@@ -242,14 +251,14 @@ class CMDS():
             # check device size
             self.get_window_size()
             # check xml dump file directory
-            dir_flag = os.path.isdir(self.current_path+'\\xmlDump')
+            dir_flag = os.path.isdir(self.current_path+'\\xmlDump('+self.serial_num+')')
             if not dir_flag:
-                os.makedirs(self.current_path+'\\xmlDump')
-            dir_flag = os.path.isdir(self.current_path+'\\capture')
+                os.makedirs(self.current_path+'\\xmlDump('+self.serial_num+')')
+            dir_flag = os.path.isdir(self.current_path+'\\capture('+self.serial_num+')')
             if not dir_flag:
-                os.makedirs(self.current_path+'\\capture')
+                os.makedirs(self.current_path+'\\capture('+self.serial_num+')')
             current_time_dir = self.get_current_time()[2]
-            self.capture_path = self.current_path+'\\capture\\'+current_time_dir+'\\'
+            self.capture_path = self.current_path+'\\capture('+self.serial_num+')\\'+current_time_dir+'\\'
 
         except:
             self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
@@ -285,11 +294,28 @@ class CMDS():
             self.set_print('ADB Controller 프로그램은 삼성 또는 LG 디바이스만 지원합니다.')
             sys.exit(-1)
 
+    # check device manufacturer
+    def check_device_modelName(self):
+
+        # check device manufacture
+        model_info = self.execute_cmd(self.getModelInfo)
+        self.modelName = model_info[1].strip()
+
+    # check device keep display on
+    def check_device_displayOn(self):
+
+        # check device manufacture
+        self.execute_cmd(self.keepDisplayOn)
+        self.set_print('Device Keep Display On Enabled')
+
     # Function of console print
     def set_print(self, text):
 
         current = datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-        print("{}:\n{}".format(current, text) + "\n")
+        if self.serial_num != "" and self.modelName != "":
+            print("[{}({})]{}:\n{}".format(self.modelName, self.serial_num, current, text) + "\n")
+        else:
+            print("{}:\n{}".format(current, text) + "\n")
 
     # 특정 문자 구간 Parsing 함수(앞에서부터)
     def find_between(self, s, first, last):
@@ -448,6 +474,7 @@ class CMDS():
         now_datetime_str = nowTime.strftime('%Y-%m-%d %H:%M:%S')
         now_datetime_str2 = nowTime.strftime('%Y-%m-%d_%H%M%S')
         return [nowTime, now_datetime_str, now_datetime_str2]
+
 
     # ####################################__function of device control__######################################
 
@@ -1400,14 +1427,14 @@ if __name__ == "__main__":
 
 
     # ########################__BlueTooth 모드 테스트__########################
-    cmd.cmd_status_blueToothOnOff(exe_type=1, delay=1)
-    cmd.cmd_status_backButton(iter_count=2)
-    sleep(2)
-    cmd.cmd_status_blueToothOnOff(exe_type=0, delay=1)
-    cmd.cmd_status_backButton(iter_count=2)
-    sleep(2)
-    cmd.cmd_status_blueToothOnOff(exe_type=0, delay=1)
-    cmd.cmd_status_backButton(iter_count=2)
+    # cmd.cmd_status_blueToothOnOff(exe_type=1, delay=1)
+    # cmd.cmd_status_backButton(iter_count=2)
+    # sleep(2)
+    # cmd.cmd_status_blueToothOnOff(exe_type=0, delay=1)
+    # cmd.cmd_status_backButton(iter_count=2)
+    # sleep(2)
+    # cmd.cmd_status_blueToothOnOff(exe_type=0, delay=1)
+    # cmd.cmd_status_backButton(iter_count=2)
 
 
     # # ########################__화면 회전 모드 테스트__########################
