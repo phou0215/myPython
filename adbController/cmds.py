@@ -57,7 +57,7 @@ class CMDS():
         # you have to input pid number
         self.killPid = "adb -s "+self.serial_num+" shell kill {}"
         # install apk(apk 경로 입력)
-        self.installApk = "adb -s "+self.serial_num+" install {}"
+        self.installApk = "adb -s "+self.serial_num+" install -r {}"
         # uninstall apk(package name 입력)
         self.uninstallApk = "adb -s "+self.serial_num+" uninstall --user 0 {}"
         # keep display on
@@ -664,14 +664,14 @@ class CMDS():
             return None
 
     # input text event
-    def cmd_status_sendkey(self, message=''):
+    def cmd_status_sendKey(self, message=''):
 
         # type 'abs' => 절대 좌표 값 'rate' => self.wm_winodw_count에 의해서 분리된 좌표의 중간 표지션
         # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
         try:
             status = 1
             returns = None
-            function_name = self.cmd_status_sendkey.__name__
+            function_name = self.cmd_status_sendKey.__name__
             # check keyboard whether used adbkeyboard or not
             if self.usedAdbKeyboard:
                 returns = self.execute_cmd(self.adbKeyInput.format(message))
@@ -1405,10 +1405,11 @@ class CMDS():
 if __name__ == "__main__":
 
     serial_num = '1c25c664460c7ece'
+    window_count = 20
     cmd = CMDS(serial_num, 20)
     # 필수 setup method 반드시 호출
     cmd.setup_test()
-    # cmd.save_dump_xml()
+    cmd.save_dump_xml()
     # ########################__비행기 모드 테스트__########################
     # cmd.cmd_status_airplaneOnOff(exe_type=1, delay=1)
     # cmd.cmd_status_backButton(iter_count=2)
