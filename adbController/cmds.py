@@ -1156,118 +1156,6 @@ class CMDS():
                                                             sys.exc_info()[2].tb_lineno))
             return None
 
-    # airplane mode on of off(only samsung or lg)
-    # 제조사마다 해당 airplane mode 각기 다름
-    def cmd_status_airplaneOnOff(self, exe_type=1, delay=1):
-
-        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' airplane control 실패 => '2'
-        try:
-            # check airplane status whether turn on or turn off
-            function_name = self.cmd_status_airplaneOnOff.__name__
-            status = 1
-            execute_flag = True
-
-            # execute_flag는 현재 디바이스 airplane mode 상태 켜져 있는지 확인 후 exe_type 에 맞춰서 함수가 실행되어야 할지 않지 결정함
-            # check current airplane status
-            returns = self.execute_cmd(self.getAirplaneStatus)
-            # 실행타입이 On인데 이미 비행기 모드가 켜져 있는 경우
-            if exe_type == 1 and "mAirplaneModeOn true" in returns[1]:
-                execute_flag = False
-            # 실행타입이 Off인데 이미 비행기 모드가 꺼져 있는 경우
-            if exe_type == 0 and "mAirplaneModeOn false" in returns[1]:
-                execute_flag = False
-
-            # execute function depend on execute_flag
-            # execute case
-            if execute_flag:               
-                # device LG case
-                if self.manufacturer == "LGE":
-                    # turn on airplane mode case
-                    if exe_type == 1:
-                        # 먼저 airplane mode activity call
-                        self.execute_cmd(self.callAirplaneMode)
-                        sleep(1)
-                        # //android.widget.TextView[@text="비행기 모드"] location 얻고 클릭하기
-                        pos = self.get_pos_elements(attr='text', name='비행기 모드|비행기모드')
-                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
-                        sleep(1)
-                        # 설정 팝업에서 //android.widget.Button[@text="사용"|@text="설정"] location 얻고 클릭하기
-                        pos = self.get_pos_elements(attr='text', name='사용|설정')
-                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
-                        self.set_print("Activate \"{}\" : LGE device enable airplane mode is success".format(function_name))
-
-                    # turn off airplane mode case
-                    else:
-                        # 먼저 airplane mode activity call
-                        self.execute_cmd(self.callAirplaneMode)
-                        sleep(1)
-                        # //android.widget.TextView[@text="비행기 모드"] location 얻고 클릭하기
-                        pos = self.get_pos_elements(attr='text', name='비행기 모드|비행기모드')
-                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
-                        sleep(1)
-                        self.set_print("Activate \"{}\" : LGE device disable airplane mode is success".format(function_name))
-
-                # device samsung case
-                elif self.manufacturer == "SAMSUNG":
-                    # turn on airplane mode case
-                    if exe_type == 1:
-                        # 먼저 airplane mode activity call
-                        self.execute_cmd(self.callAirplaneMode)
-                        sleep(1)
-                        # android.widget.Switch[@text='사용 안 함'] location 얻고 클릭하기
-                        pos = self.get_pos_elements(attr='text', name='사용 안 함')
-                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
-                        sleep(1)
-                        self.set_print("Activate \"{}\" : samsung device enable airplane mode is success".format(function_name))
-
-                    # turn off airplane mode case
-                    else:
-                        # 먼저 airplane mode activity call
-                        self.execute_cmd(self.callAirplaneMode)
-                        sleep(1)
-                        # android.widget.Switch[@text='사용 중'] location 얻고 클릭하기
-                        pos = self.get_pos_elements(attr='text', name='사용 중')
-                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
-                        sleep(1)
-                        self.set_print("Activate \"{}\" : samsung device disable airplane mode is success".format(function_name))
-                # device not samsung or not lg stauts return 2
-                else:
-                    self.set_print("Activate \"{}\" : device's manufacturer is not in Samsung or not in LGE ".format(
-                        function_name))
-                    status = 0
-                    return status
-                # check airplane mode status
-                sleep(delay)
-                returns = self.execute_cmd(self.getAirplaneStatus)
-                # turn on airplane mode case
-                if exe_type == 1:
-                    if returns[0] and 'mAirplaneModeOn true' in returns[1]:
-                        self.set_print("Current airplane mode is \"Enabled\"")
-                    else:
-                        status = 2
-                        self.set_print("Current airplane mode is not yet \"Enabled\"\nreturned message :\n{}".format(returns[1]))
-                # turn off airplane mode case
-                else:
-                    if returns[0] and 'mAirplaneModeOn false' in returns[1]:
-                        self.set_print("Current airplane mode is \"Disabled\"")
-                    else:
-                        status = 2
-                        self.set_print("Current airplane mode is not yet \"Disabled\"\nreturned message :\n{}".format(returns[1]))
-            # skip case
-            else:
-                if exe_type == 1:
-                    self.set_print("Activate \"{}\" : airplane mode already enabled. skip func".format(function_name))
-                else:
-                    self.set_print("Activate \"{}\" : airplane mode already disabled. skip func".format(function_name))
-            
-            return status
-
-        except:
-            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
-                                                            sys.exc_info()[1],
-                                                            sys.exc_info()[2].tb_lineno))
-            return None
-
     # auto rotate mode on or off
     def cmd_status_autoRotateOnOff(self, exe_type=1, delay=1):
 
@@ -1400,6 +1288,119 @@ class CMDS():
                                                             sys.exc_info()[1],
                                                             sys.exc_info()[2].tb_lineno))
             return None
+
+    # airplane mode on of off(only samsung or lg)
+    # 제조사마다 해당 airplane mode 각기 다름
+    def cmd_status_airplaneOnOff(self, exe_type=1, delay=1):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' airplane control 실패 => '2'
+        try:
+            # check airplane status whether turn on or turn off
+            function_name = self.cmd_status_airplaneOnOff.__name__
+            status = 1
+            execute_flag = True
+
+            # execute_flag는 현재 디바이스 airplane mode 상태 켜져 있는지 확인 후 exe_type 에 맞춰서 함수가 실행되어야 할지 않지 결정함
+            # check current airplane status
+            returns = self.execute_cmd(self.getAirplaneStatus)
+            # 실행타입이 On인데 이미 비행기 모드가 켜져 있는 경우
+            if exe_type == 1 and "mAirplaneModeOn true" in returns[1]:
+                execute_flag = False
+            # 실행타입이 Off인데 이미 비행기 모드가 꺼져 있는 경우
+            if exe_type == 0 and "mAirplaneModeOn false" in returns[1]:
+                execute_flag = False
+
+            # execute function depend on execute_flag
+            # execute case
+            if execute_flag:               
+                # device LG case
+                if self.manufacturer == "LGE":
+                    # turn on airplane mode case
+                    if exe_type == 1:
+                        # 먼저 airplane mode activity call
+                        self.execute_cmd(self.callAirplaneMode)
+                        sleep(1)
+                        # //android.widget.TextView[@text="비행기 모드"] location 얻고 클릭하기
+                        pos = self.get_pos_elements(attr='text', name='비행기 모드|비행기모드')
+                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+                        sleep(1)
+                        # 설정 팝업에서 //android.widget.Button[@text="사용"|@text="설정"] location 얻고 클릭하기
+                        pos = self.get_pos_elements(attr='text', name='사용|설정')
+                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+                        self.set_print("Activate \"{}\" : LGE device enable airplane mode is success".format(function_name))
+
+                    # turn off airplane mode case
+                    else:
+                        # 먼저 airplane mode activity call
+                        self.execute_cmd(self.callAirplaneMode)
+                        sleep(1)
+                        # //android.widget.TextView[@text="비행기 모드"] location 얻고 클릭하기
+                        pos = self.get_pos_elements(attr='text', name='비행기 모드|비행기모드')
+                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+                        sleep(1)
+                        self.set_print("Activate \"{}\" : LGE device disable airplane mode is success".format(function_name))
+
+                # device samsung case
+                elif self.manufacturer == "SAMSUNG":
+                    # turn on airplane mode case
+                    if exe_type == 1:
+                        # 먼저 airplane mode activity call
+                        self.execute_cmd(self.callAirplaneMode)
+                        sleep(1)
+                        # android.widget.Switch[@text='사용 안 함'] location 얻고 클릭하기
+                        pos = self.get_pos_elements(attr='text', name='사용 안 함')
+                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+                        sleep(1)
+                        self.set_print("Activate \"{}\" : samsung device enable airplane mode is success".format(function_name))
+
+                    # turn off airplane mode case
+                    else:
+                        # 먼저 airplane mode activity call
+                        self.execute_cmd(self.callAirplaneMode)
+                        sleep(1)
+                        # android.widget.Switch[@text='사용 중'] location 얻고 클릭하기
+                        pos = self.get_pos_elements(attr='text', name='사용 중')
+                        self.cmd_status_click(width=pos[0][0], height=pos[0][1], pos_type='abs')
+                        sleep(1)
+                        self.set_print("Activate \"{}\" : samsung device disable airplane mode is success".format(function_name))
+                # device not samsung or not lg stauts return 2
+                else:
+                    self.set_print("Activate \"{}\" : device's manufacturer is not in Samsung or not in LGE ".format(
+                        function_name))
+                    status = 0
+                    return status
+                # check airplane mode status
+                sleep(delay)
+                returns = self.execute_cmd(self.getAirplaneStatus)
+                # turn on airplane mode case
+                if exe_type == 1:
+                    if returns[0] and 'mAirplaneModeOn true' in returns[1]:
+                        self.set_print("Current airplane mode is \"Enabled\"")
+                    else:
+                        status = 2
+                        self.set_print("Current airplane mode is not yet \"Enabled\"\nreturned message :\n{}".format(returns[1]))
+                # turn off airplane mode case
+                else:
+                    if returns[0] and 'mAirplaneModeOn false' in returns[1]:
+                        self.set_print("Current airplane mode is \"Disabled\"")
+                    else:
+                        status = 2
+                        self.set_print("Current airplane mode is not yet \"Disabled\"\nreturned message :\n{}".format(returns[1]))
+            # skip case
+            else:
+                if exe_type == 1:
+                    self.set_print("Activate \"{}\" : airplane mode already enabled. skip func".format(function_name))
+                else:
+                    self.set_print("Activate \"{}\" : airplane mode already disabled. skip func".format(function_name))
+            
+            return status
+
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
 
 
 if __name__ == "__main__":
