@@ -1404,8 +1404,8 @@ class CMDS():
 
 
 if __name__ == "__main__":
-
-    serial_num = '1c25c664460c7ece'
+    # RF9N604ZM0N
+    serial_num = 'RF9N604ZM0N'
     window_count = 20
     cmd = CMDS(serial_num, 20)
     # 필수 setup method 반드시 호출
@@ -1457,7 +1457,7 @@ if __name__ == "__main__":
     # cmd.set_print("Status Swipe: {}".format(status))
     # list_pos = cmd.get_pos_elements(attr='content-desc', name='공유하기 버튼')
     # cmd.set_print(list_pos)
-    # cmd.cmd_status_screenShot(delay=2, name="f1")
+    cmd.cmd_status_screenShot(delay=2, name="f1")
 
     # cmd.execute_cmd(cmd.cameraExe)
     # sleep(2)

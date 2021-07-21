@@ -155,11 +155,12 @@ public void setCmd(String num) throws Exception{
 		pull = "adb -s "+num+" pull /sdcard/";
 		melonExe = "adb -s "+num+" shell monkey -p skplanet.musicmate -c android.intent.category.LAUNCHER 1";
 		mediaPlay = "adb -s "+num+" shell input keyevent 126";
+		mediaRewind = "adb -s "+num+" shell input keyevent 89";
 		mediaPause = "adb -s "+num+" shell input keyevent 127";
 		mkdir = "adb -s "+num+" shell mkdir /sdcard/autoCall/";
 
 		//Doze mode
-		unplug = "adb -s "+num+" shell dumpsys battery unplug";
+		unplug = "adb -s "+num+" shell dumpsys battery unplug";3
 		deviceIdle = "adb -s "+num+" shell dumpsys deviceidle step";
 		deviceStatus = "adb -s "+num+" shell \"dumpsys deviceidle | grep mState\"";
 		plugReset = "adb -s "+num+" shell dumpsys battery reset";
