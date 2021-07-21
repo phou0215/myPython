@@ -66,6 +66,15 @@ class CMDS():
         self.screen_shot = "adb -s "+self.serial_num+" shell screencap -p /sdcard/{}"
         # delete file or dir
         self.delete_path = "adb -s "+self.serial_num+" shell rm {}"
+        # wireless tcpip connect
+        # set port
+        # 정상의 경우 restarting in TCP mode port: 5555 response 됨
+        self.setPort = "adb -s "+self.serial_num+" tcpip:5555"
+        # set connect tcpip
+        # 정상 연결의 경우 connected to 192.168.1.32:5555 response 됨
+        # 비정상 연결 실패의 경우 annot connect to 192.168.1.31:5555: 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다. (10061)
+        self.setConnect = "adb -s "+self.serial_num+" connect {}:5555"
+
         self.wifiOn = "adb -s "+self.serial_num+" shell svc wifi enable"
         self.wifiOff = "adb -s "+self.serial_num+" shell svc wifi disable"
         self.cellOn = "adb -s "+self.serial_num+" shell svc data enable"
@@ -91,6 +100,9 @@ class CMDS():
         self.getPackageList = "adb -s "+self.serial_num+" shell pm list packages"
         # mCallState=0 indicates idle, mCallState=1 = ringing, mCallState=2 = active call
         self.getCallState = "adb -s "+self.serial_num+" shell \"dumpsys telephony.registry | grep mCallStat\""
+        # wifi ipv4 주소 get
+        # wifi 정상적 연결 상태라면 "192.168.1.0/24 dev wlan0 proto kernel scope link src 192.168.1.32" 값 노출
+        self.getWifiAddress = "adb -s "+self.serial_num+" shell ip route"
         # get wifi status
         # 만약 wifi off 상태이면 return 값이 없음
         # 만약 wifi on 상태이면 return 값이
@@ -266,6 +278,37 @@ class CMDS():
                                                             sys.exc_info()[2].tb_lineno))
             sys.exit(-1)
 
+    # wifi wireless adb connect
+    def setup_wireless(self, ):
+        try:
+            wireless_flag = input("adb를 wifi로 연결하시겠습니까? (y/n): ")
+            ignore_flag.lower()
+            # check ignore_flag
+            if ignore_flag == 'y':
+                self.set_print("AdbKeyboard 설치 과정을 skip 처리합니다. text 입력에서 영문 이외에는 입력하실 수 없습니다.")
+                installed_status = "Skip"
+                pass
+            elif ignore_flag == 'n':
+                self.set_print("수동으로 AdbKeyboard apk를 설치 후에 프로그램 재실행을 부탁드립니다. 프로그램을 종료합니다.")
+                sys.exit(0)
+            else:
+                while ignore_flag != "y" and ignore_flag != "n":
+                    ignore_flag = input("잘못입력하셨습니다. \"y\" 또는 \"n\"을 입력하여 주세요: ")
+                    ignore_flag.lower()
+                    if ignore_flag == 'n':
+                        self.set_print("메뉴얼로 AdbKeyboard apk 설치 후에 프로그램 재실행을 부탁드립니다. 프로그램을 종료합니다.")
+                        sys.exit(0)
+                    elif ignore_flag == 'y':
+                        self.set_print("AdbKeyboard 설치 과정을 skip 처리합니다. text 입력에서 영문 이외에는 입력하실 수 없습니다.")
+                        break
+                    else:
+                        continue
+
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            sys.exit(-1)
     # check device_serial number
     def check_device_serial(self):
 
@@ -581,6 +624,33 @@ class CMDS():
 
             return status
 
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+    # launch APP
+    def cmd_status_launchApp(self, name=''):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' App 실행 실패 => '2'
+        try:
+            status = 1
+            function_name = self.cmd_status_launchApp.__name__
+            returns = self.execute_cmd(self.appExecute.format(name))
+            # cmd 정상 실행 case
+            if returns[0]:
+                if 'events injected: 1' in returns[1].lower():
+                    self.set_print("Activate \"{}\" : app launched package name ={}".format(function_name, name))
+                else:
+                    status = 2
+                    self.set_print("Activate \"{}\" : try to launch app But failed!({})".format(function_name,
+                                                                                                returns[1]))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+            return status
         except:
             self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
                                                             sys.exc_info()[1],
@@ -1400,8 +1470,6 @@ class CMDS():
                                                             sys.exc_info()[1],
                                                             sys.exc_info()[2].tb_lineno))
             return None
-
-
 
 if __name__ == "__main__":
     # RF9N604ZM0N
