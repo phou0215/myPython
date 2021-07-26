@@ -207,12 +207,15 @@ class CMDS():
         # USB 충전 여부 USB powered: true
         # Wireless 충전 여부 Wireless powered: false
         self.getBatteryStatus = "adb -s " + self.serial_num + " shell dumpsys battery"
+        # display 전원 On Off status 체크
+        self.getDisplayStatus = "adb -s " + self.serial_num + " shell \"dumpsys power | grep mHolding\""
 
         # #########################__Action control__##########################
         self.back = "adb -s " + self.serial_num + " shell input keyevent 4"
         self.menu = "adb -s " + self.serial_num + " shell input keyeve 82"
         self.home = "adb -s " + self.serial_num + " shell input keyevent 3"
         self.power = "adb -s " + self.serial_num + " shell input keyevent 26"
+        self.clear = "adb -s " + self.serial_num + " shell input keyevent 28"
         self.killApp = "adb -s " + self.serial_num + " shell am force-stop"
         self.appSwitch = "adb -s " + self.serial_num + " shell input keyevent 187"
         self.click = "adb -s " + self.serial_num + " shell input touchscreen tap {} {}"
@@ -1685,7 +1688,7 @@ if __name__ == "__main__":
     # cmd.set_print("Status Swipe: {}".format(status))
     # list_pos = cmd.get_pos_elements(attr='content-desc', name='공유하기 버튼')
     # cmd.set_print(list_pos)
-    cmd.cmd_status_screenShot(delay=2, name="f1")
+    # cmd.cmd_status_screenShot(delay=2, name="f1")
 
     # cmd.execute_cmd(cmd.cameraExe)
     # sleep(2)
