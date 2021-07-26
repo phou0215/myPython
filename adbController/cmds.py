@@ -945,7 +945,7 @@ class CMDS():
             # cmd 정상 실행 case
             if returns[0]:
                 if 'success' in returns[1].lower():
-                    self.set_print("Activate \"{}\" : delete package name {}".format(function_name, path))
+                    self.set_print("Activate \"{}\" : delete package name {}".format(function_name, name))
                 else:
                     status = 2
                     self.set_print("Activate \"{}\" : try to delete app But failed!({})".format(function_name,
@@ -999,7 +999,7 @@ class CMDS():
             returns = self.execute_cmd(self.menu)
             # cmd 정상 실행 case
             if returns[0]:
-                self.set_print("Activate \"{}\" : send text: {}".format(function_name, message))
+                self.set_print("Activate \"{}\" : press power button".format(function_name))
             # cmd 비정상 실행 case
             else:
                 status = 0
@@ -1137,7 +1137,7 @@ class CMDS():
             self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
                                                             sys.exc_info()[1],
                                                             sys.exc_info()[2].tb_lineno))
-            return None0
+            return None
 
     # menu button press event
     def cmd_status_menuButton(self):
@@ -1149,7 +1149,7 @@ class CMDS():
             returns = self.execute_cmd(self.menu)
             # cmd 정상 실행 case
             if returns[0]:
-                self.set_print("Activate \"{}\" : send text: {}".format(function_name, message))
+                self.set_print("Activate \"{}\" : press menu button".format(function_name))
             # cmd 비정상 실행 case
             else:
                 status = 0
