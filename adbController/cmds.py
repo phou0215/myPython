@@ -87,6 +87,7 @@ class CMDS():
         self.back = ""
         self.menu = ""
         self.home = ""
+        self.enter = ""
         self.power = ""
         self.killApp = ""
         self.appSwitch = ""
@@ -214,6 +215,7 @@ class CMDS():
         self.back = "adb -s " + self.serial_num + " shell input keyevent 4"
         self.menu = "adb -s " + self.serial_num + " shell input keyeve 82"
         self.home = "adb -s " + self.serial_num + " shell input keyevent 3"
+        self.enter = "adb -s " + self.serial_num + " shell input keyevent 66"
         self.power = "adb -s " + self.serial_num + " shell input keyevent 26"
         self.clear = "adb -s " + self.serial_num + " shell input keyevent 28"
         self.killApp = "adb -s " + self.serial_num + " shell am force-stop"
@@ -630,7 +632,7 @@ class CMDS():
             self.set_print('Error occured : {}'.format(e))
 
     # get list X and Y positions selected elements
-    def get_pos_elements(self, attr='', name=''):
+    def get_pos_elements(self, attr='', name='', include=False):
         # attr type = (text, class, resource-id, content-desc)
         try:
             # get xml dump file
@@ -639,14 +641,25 @@ class CMDS():
             list_target = name.split('|')
             tree = et.ElementTree(file=self.xml_local_path)
             list_elements = tree.iter(tag="node")
-            for elem in list_elements:
-                attr_value = elem.attrib[attr]
-                if attr_value in list_target:
-                    bounds = elem.attrib["bounds"]
-                    coord = self.pattern.findall(bounds)
-                    x = (int(coord[2]) - int(coord[0])) / 2.0 + int(coord[0])
-                    y = (int(coord[3]) - int(coord[1])) / 2.0 + int(coord[1])
-                    list_pos.append((x, y))
+            if not include:
+                for elem in list_elements:
+                    attr_value = elem.attrib[attr]
+                    if attr_value in list_target:
+                        bounds = elem.attrib["bounds"]
+                        coord = self.pattern.findall(bounds)
+                        x = (int(coord[2]) - int(coord[0])) / 2.0 + int(coord[0])
+                        y = (int(coord[3]) - int(coord[1])) / 2.0 + int(coord[1])
+                        list_pos.append((x, y))
+            else:
+                for elem in list_elements:
+                    attr_value = elem.attrib[attr]
+                    for item in list_target:
+                        if item in attr_value:
+                            bounds = elem.attrib["bounds"]
+                            coord = self.pattern.findall(bounds)
+                            x = (int(coord[2]) - int(coord[0])) / 2.0 + int(coord[0])
+                            y = (int(coord[3]) - int(coord[1])) / 2.0 + int(coord[1])
+                            list_pos.append((x, y))
             return list_pos
         except:
             self.set_print('Failed to get position selected elements attr:{}, name:{}'.format(attr, name))
@@ -1000,6 +1013,50 @@ class CMDS():
             # cmd 정상 실행 case
             if returns[0]:
                 self.set_print("Activate \"{}\" : press power button".format(function_name))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+            return status
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+    #  device home button press event
+    def cmd_status_homeButton(self):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
+        try:
+            status = 1
+            function_name = self.cmd_status_homeButton.__name__
+            returns = self.execute_cmd(self.home)
+            # cmd 정상 실행 case
+            if returns[0]:
+                self.set_print("Activate \"{}\" : press home button".format(function_name))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+            return status
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
+
+    #  device enter button press event
+    def cmd_status_enterButton(self):
+
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
+        try:
+            status = 1
+            function_name = self.cmd_status_enterButton.__name__
+            returns = self.execute_cmd(self.enter)
+            # cmd 정상 실행 case
+            if returns[0]:
+                self.set_print("Activate \"{}\" : press enter button".format(function_name))
             # cmd 비정상 실행 case
             else:
                 status = 0

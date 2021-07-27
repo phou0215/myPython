@@ -8,61 +8,122 @@ from time import sleep
 from datetime import datetime
 from cmds import CMDS
 
-class SAMPLE_Test():
+class YOUTUBE_Test():
 
     def __init__(self, uuid, divide_window=10):
 
         super().__init__()
         self.cmd = CMDS(uuid, divide_window)
-        # self.display_flag = False
-        # self.end_flag = False
+        self.limit_count = 5
+        self.delay_time = 20
+        self.item_pos = None
+        self.search_pos = None
 
+    def launch_youTube(self):
+
+        try:
+            # check displayOn
+            return_status = self.cmd.execute_cmd(self.cmd.getDisplayStatus)
+            # displayOn 상태
+            if "mholdingdisplaysuspendblocker=true" in return_status[1].lower():
+                pass
+            # display off 상태
+            else:
+                self.cmd.cmd_status_powerButton()
+
+            # youTube Run
+            self.cmd.cmd_status_launchApp(name="com.google.android.youtube")
+            # check runing status
+            status = self.cmd.cmd_status_currnetActivity(name="com.google.android.youtube")
+            if status != 1:
+                while True:
+                    self.cmd.cmd_status_backButton(iter_count=5)
+                    self.cmd.cmd_status_launchApp(name="com.google.android.youtube")
+                    sleep(2)
+                    status = self.cmd.cmd_status_currnetActivity(name="com.google.android.youtube")
+                    if status == 1:
+                        if not self.search_pos:
+                            self.cmd.save_dump_xml()
+                            self.search_pos = self.cmd.get_pos_elements(attr="content-desc", name="검색")
+
+                        self.cmd.cmd_status_click(width=self.search_pos[0][0],
+                                                  height=self.search_pos[0][1],
+                                                  pos_type="abs")
+                        # 검색창에 'ytn 입력'
+                        self.cmd.cmd_status_sendKey(message="ytn")
+                        # 엔터 입력
+                        self.cmd.cmd_status_enterButton()
+                        if not self.item_pos:
+                            self.cmd.save_dump_xml()
+                            self.item_pos = self.cmd.get_pos_elements(attr="content-desc", name="[LIVE]", include=True)
+                        sleep(2)
+                        self.cmd.cmd_status_click(width=self.item_pos[0][0],
+                                                  height=self.item_pos[0][1],
+                                                  pos_type="abs")
+                        break
+            else:
+                if not self.search_pos:
+                    self.cmd.save_dump_xml()
+                    self.search_pos = self.cmd.get_pos_elements(attr="content-desc", name="검색")
+
+                self.cmd.cmd_status_click(width=self.search_pos[0][0],
+                                          height=self.search_pos[0][1],
+                                          pos_type="abs")
+                # 검색창에 'ytn 입력'
+                self.cmd.cmd_status_sendKey(message="ytn")
+                # 엔터 입력
+                self.cmd.cmd_status_enterButton()
+                if not self.item_pos:
+                    self.cmd.save_dump_xml()
+                    self.item_pos = self.cmd.get_pos_elements(attr="content-desc", name="[LIVE]", include=True)
+                sleep(2)
+                self.cmd.cmd_status_click(width=self.item_pos[0][0],
+                                          height=self.item_pos[0][1],
+                                          pos_type="abs")
+
+            self.cmd.set_print("YouTube YTN 실행이 완료되었습니다.")
+        except:
+            self.cmd.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                                sys.exc_info()[1],
+                                                                sys.exc_info()[2].tb_lineno))
 
     def run_script(self):
 
-        # 필수 setup method 반드시 호출
-        self.cmd.setup_test()
-        # ########################__비행기 모드 테스트__########################
-        # self.cmd.cmd_status_airplaneOnOff(exe_type=1, delay=1)
-        # self.cmd.cmd_status_backButton(iter_count=2)
-        # sleep(2)
-        # self.cmd.cmd_status_airplaneOnOff(exe_type=0, delay=1)
-        # self.cmd.cmd_status_backButton(iter_count=2)
-        # sleep(2)
-        # self.cmd.cmd_status_airplaneOnOff(exe_type=0,delay=1)
-        # self.cmd.cmd_status_backButton(iter_count=2)
-        #
-        # self.cmd.cmd_status_autoRotateOnOff(exe_type=1, delay=2)
-        # sleep(3)
-        # self.cmd.cmd_status_autoRotateOnOff(exe_type=0, delay=2)
-        # sleep(3)
-        # self.cmd.cmd_status_backButton(iter_count=2)
-        for i in range(3):
-            # ########################__BlueTooth 모드 테스트__########################
-            self.cmd.cmd_status_blueToothOnOff(exe_type=1, delay=1)
-            self.cmd.cmd_status_backButton(iter_count=2)
-            sleep(2)
-            self.cmd.cmd_status_blueToothOnOff(exe_type=0, delay=1)
-            self.cmd.cmd_status_backButton(iter_count=2)
-            sleep(2)
-            self.cmd.cmd_status_blueToothOnOff(exe_type=0, delay=1)
-            self.cmd.cmd_status_backButton(iter_count=2)
+        try:
+            # 필수 setup method 반드시 호출
+            self.cmd.setup_test()
+            self.cmd.cmd_status_backButton(iter_count=5)
+            # limit count 실행 Case
+            if self.limit_count != 0:
+                i = 0
+                while i <= self.limit_count:
+                    self.launch_youTube()
+                    current_time = self.cmd.get_current_time()[1]
+                    self.cmd.set_print("==================={} {}번 Delay_Time {} Test===================".
+                                       format(current_time, i, self.delay_time))
+                    i += 1
+                    sleep(self.delay_time)
+                    self.cmd.cmd_status_backButton(iter_count=5)
+            # 무제한 실행 Case
+            else:
+                i = 0
+                while True:
+                    self.launch_youTube()
+                    current_time = self.cmd.get_current_time()[1]
+                    self.cmd.set_print("==================={} {}번 Delay_Time {} Test===================".
+                                       format(current_time, i, self.delay_time))
+                    i += 1
+                    sleep(self.delay_time)
+                    self.cmd.cmd_status_backButton(iter_count=5)
 
-            # # ########################__화면 회전 모드 테스트__########################
-            self.cmd.cmd_status_autoRotateOnOff(exe_type=1, delay=2)
-            sleep(3)
-            self.cmd.cmd_status_autoRotateOnOff(exe_type=0, delay=2)
-            sleep(3)
-            self.cmd.cmd_status_backButton(iter_count=2)
-            self.cmd.cmd_status_screenShot(delay=2, name='sample_test1')
-
-
+        except:
+            self.cmd.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                                sys.exc_info()[1],
+                                                                sys.exc_info()[2].tb_lineno))
 if __name__ == "__main__":
 
-    g960 = SAMPLE_Test('1c25c664460c7ece', divide_window=20)
-    # lm350 = SAMPLE_Test('LMV350N7a33ed5c', divide_window=20)
+    g960 = YOUTUBE_Test('1c25c664460c7ece', divide_window=20)
     g960.run_script()
-    # lm350.run_script()
 
 
 

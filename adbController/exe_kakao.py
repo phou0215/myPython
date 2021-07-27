@@ -116,5 +116,5 @@ class KAKAOTALK_Test():
 
 if __name__ == "__main__":
 
-    g960 = KAKAOTALK_Test('RF9N604ZM0N', divide_window=10)
-    g960.run_script()
+    kakao = KAKAOTALK_Test('RF9N604ZM0N', divide_window=10)
+    kakao.run_script()
