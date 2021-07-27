@@ -47,6 +47,7 @@ class KAKAOTALK_Test():
                         chat_room_pos = self.cmd.get_pos_elements(attr="resource-id",
                                                                   name="com.kakao.talk:id/chat_room_list_item")
                         self.cmd.cmd_status_click(width=chat_room_pos[0][0], height=chat_room_pos[0][1], pos_type="abs")
+                        sleep(1)
                         # get pos 전송 버튼
                         self.cmd.cmd_status_sendKey(message="Find_Pos")
                         self.cmd.save_dump_xml()
@@ -60,6 +61,7 @@ class KAKAOTALK_Test():
                 chat_room_pos = self.cmd.get_pos_elements(attr="resource-id",
                                                           name="com.kakao.talk:id/chat_room_list_item")
                 self.cmd.cmd_status_click(width=chat_room_pos[0][0], height=chat_room_pos[0][1], pos_type="abs")
+                sleep(1)
                 # get pos 전송 버튼
                 self.cmd.cmd_status_sendKey(message="Find_Pos")
                 self.cmd.save_dump_xml()

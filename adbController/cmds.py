@@ -901,7 +901,8 @@ class CMDS():
             function_name = self.cmd_status_sendKey.__name__
             # check keyboard whether used adbkeyboard or not
             if self.usedAdbKeyboard:
-                returns = self.execute_cmd(self.adbKeyInput.format(message))
+                # returns = self.execute_cmd(self.adbKeyInput.format(message))
+                returns = self.execute_cmd(self.normalInput.format(message))
             else:
                 returns = self.execute_cmd(self.normalInput.format(message))
             # cmd 정상 실행 case
