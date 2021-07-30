@@ -64,6 +64,8 @@ class CMDS():
         self.gpsNetOff = ""
         self.autoRotateOff = ""
         self.autoRotateOn = ""
+        self.volumeUp = ""
+        self.volumeDown = ""
         # #########################__Get adb data__##########################
         self.getDeives = "adb devices"
         self.getManuInfo = ""
@@ -154,7 +156,6 @@ class CMDS():
         # 정상 연결의 경우 connected to 192.168.1.32:5555 response 됨
         # 비정상 연결 실패의 경우 annot connect to 192.168.1.31:5555: 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다. (10061)
         self.setConnect = "adb -s " + self.serial_num + " connect {}:5555"
-
         self.wifiOn = "adb -s " + self.serial_num + " shell svc wifi enable"
         self.wifiOff = "adb -s " + self.serial_num + " shell svc wifi disable"
         self.cellOn = "adb -s " + self.serial_num + " shell svc data enable"
@@ -165,6 +166,8 @@ class CMDS():
         self.gpsNetOff = "adb -s " + self.serial_num + " shell settings put  secure location_providers_allowed -network"
         self.autoRotateOff = "adb -s " + self.serial_num + " shell settings put system accelerometer_rotation 0"
         self.autoRotateOn = "adb -s " + self.serial_num + " shell settings put system accelerometer_rotation 1"
+        self.volumeUp = "adb -s " + self.serial_num + " shell input keyevent 24"
+        self.volumeDown = "adb -s " + self.serial_num + " shell input keyevent 25"
 
         # #########################__Get adb data__##########################
         self.getDeives = "adb devices"
@@ -247,6 +250,7 @@ class CMDS():
 
             keyboard_flag = False
             default_flag = False
+            useKeyboard_flag = ''
             installed_status = 'Ok'
             connect_type = 'USB'
             # check device serial number
@@ -258,92 +262,101 @@ class CMDS():
             # keep display on
             self.check_device_displayOn()
 
-            # adbkeyboard installed check
-            # adbkeyboard package name 'com.android.adbkeyboard'
-            check_returns = self.execute_cmd(self.getPackageList)
-            if 'com.android.adbkeyboard' in check_returns[1]:
-                keyboard_flag = True
-                # check default keyboard is adbkeyboard or not
-                check_returns = self.execute_cmd(self.getDefaultKeyboard)
-                if "com.android.adbkeyboard/.AdbIME" in check_returns[1]:
-                    default_flag = True
-                    self.usedAdbKeyboard = True
+            useKeyboard_flag = input("AdbKeyboard를 사용하시겠습니까?(y/n): ")
+            useKeyboard_flag.lower()
+            while useKeyboard_flag != "y" and useKeyboard_flag != "n":
+                useKeyboard_flag = input("잘못입력하셨습니다. \"y\" 또는 \"n\"을 입력하여 주세요: ")
+                useKeyboard_flag.lower()
+                if useKeyboard_flag == 'y' or useKeyboard_flag == 'n':
+                    break
+                else:
+                    continue
 
-            # adbkeyboard 미설치의 Case 분기처리
-            if not keyboard_flag:
-                # install keyboard adb
-                self.set_print("AdbKeyboard 설치를 진행합니다.")
-                status = self.cmd_status_install(path=self.current_path + '\\adbkeyboard.apk')
+            if useKeyboard_flag == 'y':
+                # adbkeyboard installed check
+                # adbkeyboard package name 'com.android.adbkeyboard'
+                check_returns = self.execute_cmd(self.getPackageList)
+                if 'com.android.adbkeyboard' in check_returns[1]:
+                    keyboard_flag = True
+                    # check default keyboard is adbkeyboard or not
+                    check_returns = self.execute_cmd(self.getDefaultKeyboard)
+                    if "com.android.adbkeyboard/.AdbIME" in check_returns[1]:
+                        default_flag = True
+                        self.usedAdbKeyboard = True
 
-                # 설치가 정상적이지 않은 경우 무시 절차 유무 진행
-                if status != 1:
-                    ignore_flag = input("AdbKeyboard를 정상적으로 설치하지 않았습니다. 이 절차를 무시합니까?(y/n): ")
-                    ignore_flag.lower()
-                    # check ignore_flag
-                    if ignore_flag == 'y':
-                        self.set_print("AdbKeyboard 설치 과정을 skip 처리합니다. text 입력에서 영문 이외에는 입력하실 수 없습니다.")
-                        installed_status = "Skip"
-                        pass
-                    elif ignore_flag == 'n':
-                        self.set_print("수동으로 AdbKeyboard apk를 설치 후에 프로그램 재실행을 부탁드립니다. 프로그램을 종료합니다.")
-                        sys.exit(0)
+                # adbkeyboard 미설치의 Case 분기처리
+                if not keyboard_flag:
+                    # install keyboard adb
+                    self.set_print("AdbKeyboard 설치를 진행합니다.")
+                    status = self.cmd_status_install(path=self.current_path + '\\adbkeyboard.apk')
+
+                    # 설치가 정상적이지 않은 경우 무시 절차 유무 진행
+                    if status != 1:
+                        ignore_flag = input("AdbKeyboard를 정상적으로 설치하지 않았습니다. 이 절차를 무시합니까?(y/n): ")
+                        ignore_flag.lower()
+                        # check ignore_flag
+                        if ignore_flag == 'y':
+                            self.set_print("AdbKeyboard 설치 과정을 skip 처리합니다. text 입력에서 영문 이외에는 입력하실 수 없습니다.")
+                            installed_status = "Skip"
+                            pass
+                        elif ignore_flag == 'n':
+                            self.set_print("수동으로 AdbKeyboard apk를 설치 후에 프로그램 재실행을 부탁드립니다. 프로그램을 종료합니다.")
+                            sys.exit(0)
+                        else:
+                            while ignore_flag != "y" and ignore_flag != "n":
+                                ignore_flag = input("잘못입력하셨습니다. \"y\" 또는 \"n\"을 입력하여 주세요: ")
+                                ignore_flag.lower()
+                                if ignore_flag == 'n':
+                                    self.set_print("메뉴얼로 AdbKeyboard apk 설치 후에 프로그램 재실행을 부탁드립니다. 프로그램을 종료합니다.")
+                                    sys.exit(0)
+                                elif ignore_flag == 'y':
+                                    self.set_print("AdbKeyboard 설치 과정을 skip 처리합니다. text 입력에서 영문 이외에는 입력하실 수 없습니다.")
+                                    break
+                                else:
+                                    continue
+
+                    # 설치가 정상인 경우
                     else:
-                        while ignore_flag != "y" and ignore_flag != "n":
-                            ignore_flag = input("잘못입력하셨습니다. \"y\" 또는 \"n\"을 입력하여 주세요: ")
-                            ignore_flag.lower()
-                            if ignore_flag == 'n':
-                                self.set_print("메뉴얼로 AdbKeyboard apk 설치 후에 프로그램 재실행을 부탁드립니다. 프로그램을 종료합니다.")
-                                sys.exit(0)
-                            elif ignore_flag == 'y':
-                                self.set_print("AdbKeyboard 설치 과정을 skip 처리합니다. text 입력에서 영문 이외에는 입력하실 수 없습니다.")
-                                break
+                        # 설치가 정상적으로 된 경우 sequence 절차 진행
+                        input("설정 > 일반 > 키보드 설정에서 AdbKeyboard를 기본 키보드로 설정해주신 후 enter 를 입력하세요.: ")
+                        # 기본 키보드에 AdbKeyboard로 되어 있는지 확인
+                        while not default_flag:
+                            # adb driver reconnect
+                            self.execute_cmd(self.getDeives)
+                            # check default keyboard is adbkeyboard or not
+                            check_returns = self.execute_cmd(self.getDefaultKeyboard)
+                            if "com.android.adbkeyboard/.AdbIME" in check_returns[1]:
+                                default_flag = True
+                                self.usedAdbKeyboard = True
+                                self.set_print("AdbKeyboard가 정상적으로 기본 키보드로 설정되었습니다.")
                             else:
-                                continue
+                                input("아직 기본 키보드로 설정되지 않았습니다. 키보드 설정에서 AdbKeyboard를 "
+                                      "기본 키보드로 설정해주신 후 enter 를 입력하세요.: ")
 
-                # 설치가 정상인 경우
+                # adbkeyboard 설치의 Case 분기처리
                 else:
-                    # 설치가 정상적으로 된 경우 sequence 절차 진행
-                    input("설정 > 일반 > 키보드 설정에서 AdbKeyboard를 기본 "
-                          "키보드로 설정해주신 후 아무키나 입력하세요.(설정 후 디바이스 다시 시작 진행해주세요): ")
-                    # 기본 키보드에 AdbKeyboard로 되어 있는지 확인
-                    while not default_flag:
-                        # adb driver reconnect
-                        self.execute_cmd(self.getDeives)
-                        # check default keyboard is adbkeyboard or not
-                        check_returns = self.execute_cmd(self.getDefaultKeyboard)
-                        if "com.android.adbkeyboard/.AdbIME" in check_returns[1]:
-                            default_flag = True
-                            self.usedAdbKeyboard = True
-                            self.set_print("AdbKeyboard가 정상적으로 기본 키보드로 설정되었습니다.")
-                        else:
-                            input("아직 기본 키보드로 설정되지 않았습니다. 키보드 설정에서 AdbKeyboard를 "
-                                  "기본 키보드로 설정해주신 후 아무키나 입력하세요(설정 후 디바이스 reboot 진행): ")
+                    # 기본 키보드에 AdbKeyboard로 되어 있지 않는 경우
+                    if not default_flag:
+                        # 설치가 정상적으로 된 경우 sequence 절차 진행
+                        input("설정 > 일반 > 키보드 설정에서 AdbKeyboard를 기본 키보드로 설정해주신 후 enter 를 입력하세요.: ")
+                        # 기본 키보드에 AdbKeyboard로 되어 있는지 확인
+                        while not default_flag:
+                            # adb driver reconnect
+                            self.execute_cmd(self.getDeives)
+                            # check default keyboard is adbkeyboard or not
+                            check_returns = self.execute_cmd(self.getDefaultKeyboard)
+                            if "com.android.adbkeyboard/.AdbIME" in check_returns[1]:
+                                default_flag = True
+                                self.usedAdbKeyboard = True
+                                self.set_print("AdbKeyboard가 정상적으로 기본 키보드로 설정되었습니다.")
+                            else:
+                                input("아직 기본 키보드로 설정되지 않았습니다. 키보드 설정에서 AdbKeyboard를 "
+                                      "기본 키보드로 설정해주신 후 enter 를 입력하세요.: ")
 
-            # adbkeyboard 설치의 Case 분기처리
-            else:
-                # 기본 키보드에 AdbKeyboard로 되어 있지 않는 경우
-                if not default_flag:
-                    # 설치가 정상적으로 된 경우 sequence 절차 진행
-                    input("설정 > 일반 > 키보드 설정에서 AdbKeyboard를 기본 "
-                          "키보드로 설정해주신 후 아무키나 입력하세요.(설정 후 디바이스 다시 시작 진행해주세요): ")
-                    # 기본 키보드에 AdbKeyboard로 되어 있는지 확인
-                    while not default_flag:
-                        # adb driver reconnect
-                        self.execute_cmd(self.getDeives)
-                        # check default keyboard is adbkeyboard or not
-                        check_returns = self.execute_cmd(self.getDefaultKeyboard)
-                        if "com.android.adbkeyboard/.AdbIME" in check_returns[1]:
-                            default_flag = True
-                            self.usedAdbKeyboard = True
-                            self.set_print("AdbKeyboard가 정상적으로 기본 키보드로 설정되었습니다.")
-                        else:
-                            input("아직 기본 키보드로 설정되지 않았습니다. 키보드 설정에서 AdbKeyboard를 "
-                                  "기본 키보드로 설정해주신 후 아무키나 입력하세요.(설정 후 디바이스 reboot 진행): ")
-
-                # 기본 키보드가 AdbKeyboard인 경우
-                else:
-                    self.usedAdbKeyboard = True
-                    pass
+                    # 기본 키보드가 AdbKeyboard인 경우
+                    else:
+                        self.usedAdbKeyboard = True
+                        pass
 
             # check device size
             self.get_window_size()
@@ -380,7 +393,12 @@ class CMDS():
                         self.setup_wireless()
                     else:
                         continue
-            self.set_print('ADBKeyboard: 설치완료({})\r\n기본키보드: AdbKeyboard({})'.format(installed_status, installed_status))
+
+            if useKeyboard_flag == 'y':
+                self.set_print('ADBKeyboard: 설치완료({})\r\n기본키보드: AdbKeyboard({})'.format(installed_status,
+                                                                                        installed_status))
+            else:
+                self.set_print('기본 ADB 키보드 사용')
             self.set_print("ADB 연결 상태 : {}".format(connect_type))
 
         except:
@@ -688,7 +706,7 @@ class CMDS():
             returns = self.execute_cmd(self.memInfo.format(name))
             if returns[0]:
                 if 'No process found' not in returns[1]:
-                    pid = find_between(returns[1], "pid", "[")
+                    pid = self.find_between(returns[1], "pid", "[")
                     self.set_print("Activate \"{}\" : get pid {}".format(function_name, pid))
                 else:
                     self.set_print("Activate \"{}\" but No process found".format(function_name))
@@ -713,7 +731,7 @@ class CMDS():
 
             if returns[0]:
                 if 'mCallState' in returns[1]:
-                    mCallState = find_between(returns[1] + "/e", "mCallState=", "/e").strip()
+                    mCallState = self.find_between(returns[1] + "/e", "mCallState=", "/e").strip()
                     self.set_print("Activate \"{}\" : get mCallState: {}({})".format(function_name,
                                                                                      mCallState,
                                                                                      dict_state[mCallState]))
@@ -901,8 +919,8 @@ class CMDS():
             function_name = self.cmd_status_sendKey.__name__
             # check keyboard whether used adbkeyboard or not
             if self.usedAdbKeyboard:
-                # returns = self.execute_cmd(self.adbKeyInput.format(message))
-                returns = self.execute_cmd(self.normalInput.format(message))
+                returns = self.execute_cmd(self.adbKeyInput.format(message))
+                # returns = self.execute_cmd(self.normalInput.format(message))
             else:
                 returns = self.execute_cmd(self.normalInput.format(message))
             # cmd 정상 실행 case
@@ -989,9 +1007,10 @@ class CMDS():
                 sleep(delay)
             # cmd 정상 실행 case
             if returns[0]:
-                self.set_print("Activate \"{}\" : executes back button : {} delay: {}".format(function_name,
-                                                                                              iter_count,
-                                                                                              delay))
+                self.set_print("Activate \"{}\" : executes back button "
+                               "iter_count: {} delay: {}".format(function_name,
+                                                                 iter_count,
+                                                                 delay))
             # cmd 비정상 실행 case
             else:
                 status = 0
@@ -1323,7 +1342,7 @@ class CMDS():
     # cellular on or off
     def cmd_status_cellOnOff(self, exe_type=1, delay=1):
 
-        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' wifi control 실패 => '2'
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' cellular control 실패 => '2'
         try:
             # check cellular status whether turn on or turn off
             function_name = self.cmd_status_cellOnOff.__name__
@@ -1381,7 +1400,7 @@ class CMDS():
     # gps on or off
     def cmd_status_gpsOnOff(self, exe_type=1, delay=1):
 
-        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' wifi control 실패 => '2'
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0' gps control 실패 => '2'
         try:
             # check gps status whether turn on or turn off
             function_name = self.cmd_status_gpsOnOff.__name__
@@ -1694,6 +1713,41 @@ class CMDS():
                                                             sys.exc_info()[2].tb_lineno))
             return None
 
+    # volume UP or DOWN
+    def cmd_status_volumeUpDown(self, exe_type=1, iter_count=1, delay=0):
+
+        # iter_count 는 volume 조절 버튼 반복 실행 수 delay는 다음 volume 조절 실행 delay 시간
+        # status 정상동작 조건일치 => '1' 비정상 동작 => '0'
+        try:
+            status = 1
+            returns = None
+            function_name = self.cmd_status_volumeUpDown.__name__
+            adjusting_type = 'UP'
+            if exe_type != 1:
+                adjusting_type = 'DOWN'
+            for i in range(iter_count):
+                if exe_type == 1:
+                    returns = self.execute_cmd(self.volumeUp)
+                else:
+                    returns = self.execute_cmd(self.volumeDown)
+                sleep(delay)
+            # cmd 정상 실행 case
+            if returns[0]:
+                self.set_print("Activate \"{}\" : executes  volume {} button "
+                               "iter_count: {} delay: {}".format(function_name,
+                                                                 adjusting_type,
+                                                                 iter_count,
+                                                                 delay))
+            # cmd 비정상 실행 case
+            else:
+                status = 0
+                self.set_print("ADB Occurred error \"{}\" and cause by : {}".format(function_name, returns[1]))
+            return status
+        except:
+            self.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
+                                                            sys.exc_info()[1],
+                                                            sys.exc_info()[2].tb_lineno))
+            return None
 
 if __name__ == "__main__":
     # RF9N604ZM0N
