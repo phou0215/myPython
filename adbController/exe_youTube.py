@@ -14,8 +14,8 @@ class YOUTUBE_Test():
 
         super().__init__()
         self.cmd = CMDS(uuid, divide_window)
-        self.limit_count = 5
-        self.delay_time = 60
+        self.limit_count = 6
+        self.delay_time = 120
         self.item_pos = None
         self.search_pos = None
 
