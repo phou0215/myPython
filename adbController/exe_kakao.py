@@ -15,7 +15,8 @@ class KAKAOTALK_Test():
         super().__init__()
         self.cmd = CMDS(uuid, divide_window)
         self.limit_count = 0
-        self.delay_time = 5
+        self.delay_time = 20
+        self.dict_result = {}
         self.send_button_pos = None
         # self.display_flag = False
         # self.end_flag = False
@@ -69,7 +70,6 @@ class KAKAOTALK_Test():
                 self.cmd.cmd_status_click(width=self.send_button_pos[0][0],
                                           height=self.send_button_pos[0][1],
                                           pos_type="abs")
-
             self.cmd.set_print("카카오톡 실행이 완료되었습니다.")
         except:
             self.cmd.set_print('Error: {}. {}, line: {}'.format(sys.exc_info()[0],
